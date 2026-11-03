@@ -1,0 +1,19 @@
+{
+  "title": "Pick the pin that fits the hole and seat it",
+  "category": "Impact on jobs",
+  "keywords": [
+    "fitting",
+    "part selection",
+    "insertion",
+    "bimanual",
+    "relay between arms"
+  ],
+  "instruction": "Find the pin that fits the hole in the fixture block and push it all the way down into the hole.",
+  "context": "Seating a locating pin is a routine fitting step: the fitter picks the pin that matches the hole from a mixed set, by eye or by trying, and drives it to the bottom. Here the pins are out of the fixture arm's reach, so a pin has to pass from one arm to the other. Done by: industrial machinery mechanics and assemblers.",
+  "setup": "The two arm bases stand 61 cm apart on an oak table. Three bare steel pins, each 80 mm tall, stand upright in a row straight in front of the left arm's base, at 18, 26 and 34 cm out: 26 mm across (333 g), 20 mm across (197 g) and 23 mm across (261 g), in that order. An aluminium fixture block (62 x 62 mm, 25 mm tall) is fixed to the table 30 cm straight in front of the right arm's base. A square hole 22 mm across and 25 mm deep goes through its centre; the table is the hole's floor.",
+  "scoring": "Only the 20 mm pin counts. 1.0 if it stands in the hole with its bottom within 3 mm of the floor (at least 22 mm of its length inside the block) and tilts at most 7 degrees (either end up), and stays still for 1 s. 0.5 if it has entered the hole (the centre of its lower end over the hole, its bottom at least 2 mm below the block's top face, tilted at most 30 degrees) but is not fully down. 0.25 if it stands upright (tilted at most 10 degrees) on the table or on the block's top face (its bottom within 3 mm of that surface), with its centre within 5 cm of the hole's centre. Otherwise 0. Any pin that ends up off the table: 0.",
+  "run_limit": "2,400 steps (2 minutes at 20 Hz)",
+  "reset_notes": "Stand the three pins back in their row in front of the left arm.",
+  "fidelity": "A real fixture would use a round 22 mm bore; the task-file format has no round holes, so this one is square, 22 mm across, built from four fixed blocks. A pin fits if and only if its diameter is under 22 mm, the same choice as with the bore. The hole has no chamfer. Pins are plain cylinders. Every object has the same rubber-like friction (1.2 static, 1.0 dynamic), more than steel on aluminium.",
+  "scores": "Dream-1 run: 0; demo: 1.0"
+}
