@@ -15,5 +15,6 @@
   "run_limit": "1,200 steps (1 minute at 20 Hz)",
   "reset_notes": "Stand the ladder back upright on its end against the wall's face.",
   "fidelity": "The ladder is a plain bar at about 1/25 scale, with no rungs or feet. The 4 to 1 rule fixes an angle, so it holds at any scale. The top rests on the wall's top edge, as on a roof edge, not against a face. The ladder and wall have rubber-like friction (1.2 static, 1.0 dynamic) and the table the simulator's default (0.5), so a ladder that would slide out in reality may hold in the sim. The scorer checks the angle, not whether it slides.",
-  "scores": "Dream-1 run: 0; demo: 1.0"
+  "scores": "Dream-1 run: 0; demo: 1.0",
+  "media": "M-8WD2JV"
 }
