@@ -1,0 +1,19 @@
+{
+  "title": "Register a workpiece against a corner stop",
+  "category": "Impact on jobs",
+  "keywords": [
+    "machining setup",
+    "fixturing",
+    "registration",
+    "bimanual",
+    "relay between arms"
+  ],
+  "instruction": "Put the aluminium block flat in the corner of the L-shaped stop, pressed against both stop faces and square to them.",
+  "context": "Before a part is machined or inspected, the setter pushes it into the fixture's stops so it sits in the same place every time; the stops are the reference, and a gap of a millimetre shows up in the finished part. Here the block starts out of the stop arm's reach, so it has to pass from one arm to the other. Done by: machine setters and CNC machine operators.",
+  "setup": "The two arm bases stand 61 cm apart on an oak table. A bare aluminium block (60 x 40 x 40 mm, 259 g) lies flat with its centre 22 cm straight in front of the left arm's base, turned 20 degrees counterclockwise from square, seen from above. A steel L-shaped stop is fixed to the table in front of the right arm's base, made of two rails 20 mm wide and 12 mm tall: a far stop 12 cm long, running across the table, whose inner face is 37 cm out from the arm bases and centred on the right arm's base; and a side stop 10 cm long, running toward the arms from the far stop, whose inner face is 4 cm outside the right arm's base, away from the left arm. The two inner faces meet at a square corner.",
+  "scoring": "Gaps are measured with a feeler gauge at both ends of the block's edge that faces each stop; the largest of the four counts. 1.0 if the block lies flat on the table on one of its four 60 x 40 mm faces (tilted at most 2 degrees, its lowest point within 1 mm of the table), every gap is at most 1 mm, and its sides are within 2 degrees of square to the stop, and it stays still for 1 s. 0.5 if it lies flat with every gap at most 3 mm and within 5 degrees of square. 0.25 if it lies flat on the table with every gap at most 10 mm. Otherwise 0, including a block standing on its 40 x 40 mm end, resting on a rail or off the table. Either side of the block may face the far stop, either way up.",
+  "run_limit": "2,400 steps (2 minutes at 20 Hz)",
+  "reset_notes": "Lay the block back 22 cm in front of the left arm, turned 20 degrees counterclockwise, seen from above.",
+  "fidelity": "The block and rails are plain boxes with sharp edges. Every object has the same rubber-like friction (1.2 static, 1.0 dynamic), more than aluminium on steel or wood, so sliding the block takes more force than on a real fixture. The stop is fixed to the table, as if bolted. Sim contacts let a pressed block sit up to 0.5 mm into a stop, so a gap down to -0.5 mm counts as touching (5 mm for the 0.5 and 0.25 levels, for a block still being pushed).",
+  "scores": "Dream-1 run: 0; demo: 1.0"
+}
