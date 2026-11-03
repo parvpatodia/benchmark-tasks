@@ -15,5 +15,6 @@
   "run_limit": "2,400 steps (2 minutes at 20 Hz)",
   "reset_notes": "Lay the block back 22 cm in front of the left arm, turned 20 degrees counterclockwise, seen from above.",
   "fidelity": "The block and rails are plain boxes with sharp edges. Every object has the same rubber-like friction (1.2 static, 1.0 dynamic), more than aluminium on steel or wood, so sliding the block takes more force than on a real fixture. The stop is fixed to the table, as if bolted. Sim contacts let a pressed block sit up to 0.5 mm into a stop, so a gap down to -0.5 mm counts as touching (5 mm for the 0.5 and 0.25 levels, for a block still being pushed).",
-  "scores": "Dream-1 run: 0; demo: 1.0"
+  "scores": "Dream-1 run: 0; demo: 1.0",
+  "media": "M-NPETYC"
 }
