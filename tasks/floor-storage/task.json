@@ -15,5 +15,6 @@
   "run_limit": "1,200 steps (1 minute at 20 Hz)",
   "reset_notes": "Put the bundles back beside the hoistway and the parapet as in the setup.",
   "fidelity": "The building is at 1:50; the bundles are about 1.2 x 1.5 x 0.9 m at that scale, solid blocks rather than strapped stacks of boards or sheets. The hoistway is a 3 mm recess, not a hole through the floor. The slab and walls are fixed. Every object, the slab and walls included, has rubber-like friction (1.2 static, 1.0 dynamic); only the table under the slab uses the sim's default (0.5).",
-  "scores": "Dream-1 run: 0; demo: 1.0"
+  "scores": "Dream-1 run: 0; demo: 1.0",
+  "media": "M-W34HU9"
 }
