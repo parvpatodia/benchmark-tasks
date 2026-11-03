@@ -15,5 +15,6 @@
   "run_limit": "1,200 steps (1 minute at 20 Hz)",
   "reset_notes": "Put the three cases back in a row on the table in front of the road.",
   "fidelity": "The road and truck are at 1:100. The cases are about 5 times too big for that scale so the grippers can hold them, and they stay folded. The road and truck are fixed, and there is no traffic. Every object has rubber-like friction (1.2 static, 1.0 dynamic).",
-  "scores": "Dream-1 run: 0; demo: 1.0"
+  "scores": "Dream-1 run: 0; demo: 1.0",
+  "media": "M-LYG8Y3"
 }
