@@ -15,5 +15,6 @@
   "run_limit": "1,200 steps (1 minute at 20 Hz)",
   "reset_notes": "Stand the three cylinders back in their row: acetylene, oxygen, acetylene.",
   "fidelity": "The cylinders are at 1:20 in height but about 1.4 times too thick, so the grippers can hold them. They have no valves, caps or chains, and their mass is even rather than bottom-heavy. The walls are fixed masonry, taken as noncombustible with at least the half-hour fire rating the rule asks for. Every object has rubber-like friction (1.2 static, 1.0 dynamic) except the table, which uses the sim's default (0.5).",
-  "scores": "Dream-1 run: 0; demo: 1.0"
+  "scores": "Dream-1 run: 0; demo: 1.0",
+  "media": "M-C5XZ2T"
 }
