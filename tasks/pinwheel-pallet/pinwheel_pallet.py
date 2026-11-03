@@ -1,7 +1,7 @@
 """On the station table: four identical corrugated cartons (100 x 50 x 40 mm), lying flat with their 100 mm sides
 pointing away from the arms, two in front of each arm. A fixed blue plastic pallet (170 x 170 mm, 20 mm tall) stands on
 the midline between the arms. A carton fills a pallet corner when it lies flat on the pallet (a 100 x 50 mm face down),
-square to the pallet, with its two outer sides each at most 10 mm inside the pallet's edges (3 mm past is allowed).
+square to the pallet, with its two outer sides each at most 15 mm inside the pallet's edges (3 mm past is allowed).
 Two cartons that share a pallet edge can't both lie along it (2 x 100 mm is more than 170 mm), so four filled corners
 make a pinwheel: two cartons turned 90 degrees from the other two, each one's end next to the next one's side. Set
 4 mm inside the edges, the cartons have 12 mm between them along each edge, room for a finger.
@@ -38,7 +38,10 @@ PALLET = Box("pallet", pos=(*PALLET_XY, TOP + PALLET_H / 2), size=(PALLET_SIDE, 
              color=(0.15, 0.32, 0.65))  # WHY: saturated blue; a pale pallet vanishes into the table on the top camera
 OBJECTS = [*CARTONS, PALLET]
 
-FLUSH_MM = 10.0  # an outer side at most this far inside the pallet's edge
+# WHY: a pinwheel packed tight, the cartons touching and centred, sits 10 mm inside every edge. 15 mm lets it sit up to
+# 5 mm off centre and still count; a larger limit would not undo the pinwheel (two cartons along one edge only overlap
+# more the further inside they sit).
+FLUSH_MM = 15.0  # an outer side at most this far inside the pallet's edge
 OVERHANG_MM = 3.0  # or at most this far past it
 MAX_SQUARE_DEG = 5.0
 MAX_TILT_DEG = 5.0
@@ -84,11 +87,12 @@ def _footprint_xy(carton) -> np.ndarray:
 
 def _insets_mm(carton, corner) -> tuple[float, float]:
     """How far the carton's outermost point toward a pallet corner is inside the pallet's x edge and its y edge there
-    (mm); negative past the edge."""
-    rel = _footprint_xy(carton) - np.array(PALLET_XY)
-    sx, sy = corner
-    half = PALLET_SIDE / 2
-    return 1000.0 * (half - (sx * rel[:, 0]).max()), 1000.0 * (half - (sy * rel[:, 1]).max())
+    (mm); negative past the edge. From the carton's bounding box, which is exact for a box, so a tilted carton's
+    raised corner counts too."""
+    half, (sx, sy) = PALLET_SIDE / 2, corner
+    reach = [float(carton.high[i]) - PALLET_XY[i] if s > 0 else PALLET_XY[i] - float(carton.low[i])
+             for i, s in enumerate((sx, sy))]
+    return 1000.0 * (half - reach[0]), 1000.0 * (half - reach[1])
 
 
 def _fills(carton, corner) -> bool:

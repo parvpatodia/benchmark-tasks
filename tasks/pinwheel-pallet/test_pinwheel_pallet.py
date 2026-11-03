@@ -124,8 +124,8 @@ def test_each_filled_corner_scores_a_quarter(filled):
     assert M.score(scene(*pinwheel()[:filled])) == 0.25 * filled
 
 
-@pytest.mark.parametrize(("inset_mm", "ok"), [(9.9, True), (10.5, False), (-2.9, True), (-3.5, False)])
-def test_flush_within_10_mm_and_at_most_3_mm_past_the_edge(inset_mm, ok):
+@pytest.mark.parametrize(("inset_mm", "ok"), [(14.9, True), (15.5, False), (-2.9, True), (-3.5, False)])
+def test_flush_within_15_mm_and_at_most_3_mm_past_the_edge(inset_mm, ok):
     s = scene(in_corner((1, -1), True, inset_mm))
     assert M.score(s) == (0.25 if ok else 0.0)
 
@@ -133,6 +133,25 @@ def test_flush_within_10_mm_and_at_most_3_mm_past_the_edge(inset_mm, ok):
 @pytest.mark.parametrize(("yaw_deg", "ok"), [(4.0, True), (-4.0, True), (6.0, False)])
 def test_square_within_5_degrees(yaw_deg, ok):
     assert M.score(scene(in_corner((1, -1), True, yaw_deg=yaw_deg))) == (0.25 if ok else 0.0)
+
+
+def _shifted(c, dx):
+    d = np.array([dx, 0.0, 0.0])
+    return ObjectState(pos=c.pos + d, quat_xyzw=c.quat_xyzw, lin_vel=c.lin_vel, ang_vel=c.ang_vel, low=c.low + d,
+                       high=c.high + d)
+
+
+@pytest.mark.parametrize("dx_mm", [0.0, 4.9, -4.9])
+def test_a_tight_pinwheel_counts_centred_or_a_little_off(dx_mm):
+    """Cartons touching, the layer centred: 10 mm inside every edge. Shifted, one side goes to 15 mm."""
+    s = scene(*(_shifted(c, dx_mm / 1000) for c in pinwheel(inset_mm=10.0)))
+    assert M.success(s)
+
+
+def test_a_tilted_cartons_raised_corner_counts_for_flush():
+    """Rolled 4 degrees, the 50 mm side reaches 1.3 mm further out than its footprint: 2 mm past becomes 3.3 mm."""
+    assert M.score(scene(in_corner((1, -1), True, inset_mm=-2.0))) == 0.25
+    assert M.score(scene(in_corner((1, -1), True, inset_mm=-2.0, roll_deg=4))) == 0.0
 
 
 def test_upside_down_counts():

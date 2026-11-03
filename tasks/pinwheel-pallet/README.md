@@ -14,13 +14,13 @@ On a machine set up with the official simulator (the Robocurve Brev launchable, 
 # Dream-1
 inspect-robots run --embodiment yam_arena --policy dream \
   -E task=pinwheel_pallet.py -E object_jitter=0 -E control_hz=20 -E cam_width=320 -E cam_height=176 \
-  --instruction "Put one carton in each corner of the pallet, lying flat and square to the pallet, with its two outer sides flush with the pallet's edges." \
+  --instruction "Put one carton in each corner of the pallet, lying flat on its largest face and square to the pallet, with its two outer sides flush with the pallet's edges." \
   --scorer task_score --max-steps 2400 --store-frames --log-dir ~/yam-eval/pinwheel-dream
 
 # The scripted demo, which reaches full score
 inspect-robots run --embodiment yam_arena --policy yam_scripted \
   -E task=pinwheel_pallet.py -E object_jitter=0 -E control_hz=20 -E cam_width=320 -E cam_height=176 \
-  --instruction "Put one carton in each corner of the pallet, lying flat and square to the pallet, with its two outer sides flush with the pallet's edges." \
+  --instruction "Put one carton in each corner of the pallet, lying flat on its largest face and square to the pallet, with its two outer sides flush with the pallet's edges." \
   --scorer task_score --max-steps 2400 --store-frames --log-dir ~/yam-eval/pinwheel-demo
 
 # One MP4 per camera, next to each run's frames
@@ -32,10 +32,10 @@ The run prints `task_score` at the end. The trial ends with 1.0 when `success()`
 
 ## Scoring
 A carton fills a pallet corner when all of these hold:
-- it lies flat on the pallet on a 100 x 50 mm face: its 40 mm side within 5 degrees of vertical, its bottom within
-  1 mm of the pallet's top (so not on another carton, and not held above it);
+- it lies flat on its largest (100 x 50 mm) face, resting on the pallet itself, not on another carton or held above it:
+  its 40 mm side within 5 degrees of vertical, and in the sim its bottom within 1 mm of the pallet's top;
 - its sides are within 5 degrees of square to the pallet's edges;
-- each of its two outer sides is between 3 mm past and 10 mm inside the pallet's edge at that corner.
+- each of its two outer sides is between 3 mm past and 15 mm inside the pallet's edge at that corner.
 
 | Score | Condition | Check on a real table |
 |---|---|---|
@@ -46,8 +46,10 @@ A carton fills a pallet corner when all of these hold:
 Two cartons along one edge overlap by at least 30 mm, less the 2 x 3 mm they may stand past it, so the only way to
 fill all four corners is a pinwheel, either way round. One carton can't fill two corners and two can't share one, so the
 score counts cartons too. `score()` gives 1.0 for four filled corners even while a carton moves; `success()` also
-needs every carton still. The hooks don't see the grippers, so a carton held still in a corner counts only while its
-bottom is within 1 mm of the pallet, that is, resting on it; one set down reads 0.0 mm in the sim.
+needs every carton still. The hooks don't see the grippers, so a carton held above the pallet doesn't count (its bottom
+must be within 1 mm of the top; one set down reads 0.0 mm in the sim), but one held still while touching the pallet
+does: the hooks can't tell it from one set down. The flush check uses each carton's bounding box, so a tilted
+carton's raised corner counts.
 
 ## The demo's aim offsets
 In the sim a gripped carton hangs about 22 mm off the TCP along the closing axis and centres again when it touches
