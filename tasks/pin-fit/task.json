@@ -15,5 +15,6 @@
   "run_limit": "2,400 steps (2 minutes at 20 Hz)",
   "reset_notes": "Stand the three pins back in their row in front of the left arm.",
   "fidelity": "A real fixture would use a round 22 mm bore; the task-file format has no round holes, so this one is square, 22 mm across, built from four fixed blocks. A pin fits if and only if its diameter is under 22 mm, the same choice as with the bore. The hole has no chamfer. Pins are plain cylinders. Every object has the same rubber-like friction (1.2 static, 1.0 dynamic), more than steel on aluminium.",
-  "scores": "Dream-1 run: 0; demo: 1.0"
+  "scores": "Dream-1 run: 0; demo: 1.0",
+  "media": "M-NWJY7V"
 }
