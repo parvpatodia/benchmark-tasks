@@ -15,5 +15,6 @@
   "run_limit": "1,200 steps (1 minute at 20 Hz)",
   "reset_notes": "Put the first-aid kit back on the high ledge and the bandages on the low ledge.",
   "fidelity": "The wall and ledges are at 1:10, and so are the kit and the bandage box (a 24 x 30 cm kit). The table stands for the floor. The whole item must be in range, so it doesn't matter which part a person reaches for. The wall, ledges and items have rubber-like friction (1.2 static, 1.0 dynamic).",
-  "scores": "Dream-1 run: 0; demo: 1.0"
+  "scores": "Dream-1 run: 0; demo: 1.0",
+  "media": "M-DLJF9S"
 }
