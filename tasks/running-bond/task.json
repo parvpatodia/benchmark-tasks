@@ -15,5 +15,6 @@
   "run_limit": "2,400 steps (2 minutes at 20 Hz)",
   "reset_notes": "Lay the three loose pieces back where they started, lengths pointing away from the arms; the first course stays.",
   "fidelity": "Bricks are rigid boxes at about 0.4 scale (a modular brick is 194 mm long) with the joints kept at 10 mm, close to the real 9.5 mm. There is no mortar: joints are open gaps and the first course is fixed to the table. Every object has the same rubber-like friction (1.2 static, 1.0 dynamic), more than clay brick on brick.",
-  "scores": "Dream-1 run: 0; demo: 1.0"
+  "scores": "Dream-1 run: 0; demo: 1.0",
+  "media": "M-KC78BZ"
 }
