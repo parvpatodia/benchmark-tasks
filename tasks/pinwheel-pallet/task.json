@@ -15,5 +15,6 @@
   "run_limit": "2,400 steps (2 minutes at 20 Hz)",
   "reset_notes": "Lay the cartons back, two in front of each arm, their 100 mm sides pointing away from the arms.",
   "fidelity": "Cartons are filled, rigid 150 g boxes with sharp edges: no flaps, no give. The pallet is a solid square block fixed to the table. Its side is a carton's length plus its width plus 20 mm of play, so the fingers fit between cartons; real layers are tight. Every object has the same rubber-like friction (1.2 static, 1.0 dynamic), more than cardboard on plastic.",
-  "scores": "Dream-1 run: 0; demo: 1.0"
+  "scores": "Dream-1 run: 0; demo: 1.0",
+  "media": "M-UV3R6M"
 }
