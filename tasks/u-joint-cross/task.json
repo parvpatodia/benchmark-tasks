@@ -14,5 +14,6 @@
   "run_limit": "2,400 steps (2 minutes at 20 Hz)",
   "reset_notes": "Lift the cross out of the yoke and stand it back in its holder with its flat pair turned as the setup says.",
   "fidelity": "The yoke is fixed, as if clamped in a vise, and the cross is one rigid steel body with smooth journals (no needle rollers, seals or grease fitting). Hole and outer-face sizes are the Spicer 1310 catalog's (1.062 in caps, 3.219 in over the caps). The journals' 73 mm span and diameter, the ear thickness (so the 59.8 mm gap), hub size and mass are our estimates. Every object has rubber-like friction (1.2 static, 1.0 dynamic).",
-  "scores": "Dream-1 run: 0 (2,400 steps); demo: 1.0 (success at 33.5 s)"
+  "scores": "Dream-1 run: 0 (2,400 steps); demo: 1.0 (success at 33.5 s)",
+  "media": "M-YZNZ23"
 }
