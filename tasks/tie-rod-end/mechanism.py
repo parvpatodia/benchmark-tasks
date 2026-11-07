@@ -145,6 +145,8 @@ class Mechanism(Box):
             for shape in link.shapes:
                 if shape.kind not in ("box", "cylinder", "capsule") or shape.axis not in AXES:
                     raise ValueError(f"{self.name}.{link.name}: unknown shape {shape.kind!r} or axis {shape.axis!r}")
+                if not all(v > 0 for v in shape.size):
+                    raise ValueError(f"{self.name}.{link.name}: shape sizes must be positive, got {shape.size}")
                 if shape.material not in self.materials:
                     raise ValueError(f"{self.name}.{link.name}: no friction given for material {shape.material!r}")
         for joint in self.joints:

@@ -90,7 +90,8 @@ def _stud_shapes():
     steps, and the threaded end."""
     y, z0 = -L, JOINT_Z
     top = z0 - BALL_TO_TAPER
-    shapes = [_cyl((0, y, (z0 + HOUSING_LOW + top) / 2), TAPER_LARGE_R - 0.0005, top - z0 - HOUSING_LOW, "Z", STEEL,
+    # the neck runs from the housing's bottom (z0 + HOUSING_LOW) down to the taper's large end (top)
+    shapes = [_cyl((0, y, (z0 + HOUSING_LOW + top) / 2), TAPER_LARGE_R - 0.0005, z0 + HOUSING_LOW - top, "Z", STEEL,
                    "steel")]
     step = TAPER_L / STEPS
     for k in range(STEPS):
@@ -241,10 +242,13 @@ def distance(objects):
 
 
 def score(objects):
-    """Partial credit (success scores 1.0): 0.3 with the stud's thread 2 mm down in the hole and the stud within 2
-    degrees of square, not seated. A stud beside the hole, on its rim, or cocked more than 2 degrees scores nothing."""
-    if seated(objects):
+    """1.0 only when seated and still (the trial ends at 1.0 once that has held 1 s). 0.6 seated but still moving.
+    0.3 with the stud's thread 2 mm down in the hole and the stud within 2 degrees of square, not seated. A stud
+    beside the hole, on its rim, or cocked more than 2 degrees scores nothing."""
+    if success(objects):
         return 1.0
+    if seated(objects):
+        return 0.6
     if in_hole(objects):
         return 0.3
     return 0.0

@@ -9,14 +9,14 @@ a truck tie rod there, a car's here). Service technicians do this step. The same
 its hole as a safety fault: the knuckle must be replaced, and using it "may result in a stud fracture and partial loss
 of steering."
 
-The hard part is physical. The robot holds the outer end, not the stud: the stud is a peg on a ball joint, at the end
-of a 36 cm rod that also turns on a ball joint. The stud swivels up to 20 degrees each way about two axes and swings
-whenever the end moves. Its threaded tip is 71 mm below the ball, so each degree of lean moves the tip 1.2 mm. The
-thread is 13.5 mm across and the hole 18.0 mm at its mouth and 14.7 mm at its bottom, so the stud has 2.3 mm of play
-at the mouth and 0.6 mm at the bottom, and its taper only seats home within 2 degrees of square. The outer end moves on
-a sphere around the inner joint, so lowering it also pulls it toward the rack. Held still 3.5 mm off the hole's axis
-and lowered, the thread caught the edge of the mouth and the stud tipped over on its ball until it stood 16 degrees
-from upright, jammed: score 0.
+The hard part is physical. The stud is a peg on a ball joint at the end of a 36 cm rod that itself turns on a ball
+joint. Held by the outer end, the stud swivels on its ball, up to 20 degrees each way about two axes: it lags behind
+every move and settles back toward hanging straight. Its threaded tip is 71 mm below the ball, so each degree of lean
+moves the tip 1.2 mm. The thread is 13.5 mm across and the hole 18.0 mm at its mouth and 14.7 mm at its bottom, so the
+stud has 2.3 mm of play at the mouth and 0.6 mm at the bottom. The outer end moves on a sphere around the inner joint,
+so it cannot go straight down: lowering it also moves it along the rod. Held still 3.5 mm off the hole's axis and
+lowered, the thread caught the edge of the mouth and the stud tipped over on its ball until it stood 16 degrees from
+upright, jammed: score 0. The scorer does not check the grasp, so holding the stud itself is allowed.
 
 ## The scripted demo
 `demo()` uses the right arm. It grips the housing from above, lifts the outer end 30 mm off its block and swings it
@@ -54,18 +54,22 @@ The run prints `task_score` at the end. The trial ends with 1.0 when `success()`
 | Condition | Number | Check on a real bench |
 |---|---|---|
 | seated | the taper's large end within 1 mm of the hole's axis and within 0.5 mm of its home depth (0.6 mm below the hole's top); the stud's axis within 2 degrees of the hole's | the stud does not rock; a square on the steering arm |
-| in the hole | the threaded tip at least 2 mm below the hole's top, the stud's axis within 2.4 mm of the hole's at the hole's top (so the 13.5 mm thread is inside the 18.0 mm mouth), no deeper than seated, within 2 degrees of upright | the thread is in the hole, square |
+| in the hole | the threaded tip at least 2 mm below the hole's top, the stud's axis within 2.42 mm of the hole's at the hole's top (so the 13.5 mm thread is inside the 18.0 mm mouth), no deeper than seated, within 2 degrees of upright | the thread is in the hole, square |
 | still | the stud's taper and the tie rod's outer end under 0.01 m/s, both under 0.5 rad/s | |
 
 | Score | Condition |
 |---|---|
 | 1.0 | seated and still for 1 s (ends the trial) |
+| 0.6 | seated at the last step but still moving |
 | 0.3 | in the hole, not seated |
 | 0 | beside the hole, on its rim, cocked more than 2 degrees, dropped, or at the start |
 
 A stud cocked more than 2 degrees scores nothing, in the hole or not: a stud wedged in the taper can sit cocked, and
 square within 2 degrees it is at most about 3 mm from home. A thread end resting on the rim dips under 2 mm into the
-mouth, so it scores nothing either. The hooks don't see the grippers, so a stud held seated counts the same as one let go.
+mouth, so it scores nothing either.
+
+**The scorer does not check the grasp or the release.** The hooks don't see the grippers, so a stud held seated by
+the gripper scores the same as one let go, although the instruction says to let go.
 
 ## Runtime and seeds
 - One fixed layout: `-E object_jitter=0`, so the seed doesn't change the start.
@@ -76,7 +80,11 @@ mouth, so it scores nothing either. The hooks don't see the grippers, so a stud 
 ## Fidelity
 The stud's taper and the hole are from a passenger-car outer tie rod end (NAPA 269-3444: taper 0.71 in to 0.58 in over
 0.76 in, M14 stud thread, M16 rod thread). The taper is four short cylinders just inside the cone and the hole is 24
-flat segments, so the stud seats 0.6 mm deeper than flush. Each ball joint is two hinges at right angles; the stud's
-20 degree stops stand in for its neck meeting the socket's mouth, and the ball swings with little drag. The moving
-parts weigh 170 g in all; solid steel parts of this size weigh about 1.2 kg. The knuckle is fixed and has rubber-like
-friction (1.2 static, 1.0 dynamic); the stud has 0.5 and 0.4. There is no castle nut and no thread form.
+flat segments, so the stud seats 0.6 mm deeper than flush. Each ball joint is two hinges at right angles with light
+damping; the stud's 20 degree stops stand in for its neck meeting the socket's mouth. The stud lags and settles rather
+than swinging freely, but its ball has no preload. A real socket's bearings "maintain preload" (the same ATRO sheet,
+benefit 2), so a real stud is stiffer on its ball than this one. The moving parts weigh 170 g in all; solid steel parts
+of this size weigh about 1.2 kg. The knuckle is fixed and has rubber-like friction (1.2 static, 1.0 dynamic); the stud
+has 0.5 and 0.4. There is no castle nut and no thread form. Estimated, not from a source: the rod's length (36 cm), the
+ball to the taper (30 mm), the 20 degree swivel, the thread's length (22 mm), the housing, the rack and the knuckle's
+body.

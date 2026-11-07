@@ -192,8 +192,24 @@ def test_a_stud_deeper_than_its_seat_is_not_in_the_hole():
 
 
 def test_success_needs_the_stud_and_rod_still():
-    assert not M.success(seated_at(stud_moving=True)) and M.score(seated_at(stud_moving=True)) == 1.0
+    assert not M.success(seated_at(stud_moving=True))
     assert not M.success(seated_at(rod_moving=True))
+
+
+@pytest.mark.parametrize("kw", [{"stud_moving": True}, {"rod_moving": True}])
+def test_seated_but_moving_scores_less_than_full(kw):
+    """The last step's score() is the trial's score when success never held 1 s: a stud seated but still moving
+    then earns 0.6, not 1.0."""
+    assert M.score(seated_at(**kw)) == pytest.approx(0.6)
+    assert M.score(seated_at()) == 1.0
+
+
+def test_every_shape_has_a_positive_size():
+    for link in (MECH.base, *MECH.links):
+        for shape in link.shapes:
+            assert all(v > 0 for v in shape.size), (link.name, shape.size)
+    neck = MECH.links[3].shapes[0]
+    assert abs(neck.size[1] - (M.BALL_TO_TAPER + M.HOUSING_LOW)) < 1e-12  # 15 mm, housing bottom to taper top
 
 
 def test_stillness_is_judged_at_the_stud_not_the_frame_origin():
