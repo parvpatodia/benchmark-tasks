@@ -15,5 +15,6 @@
   "run_limit": "2,400 steps (2 minutes at 20 Hz)",
   "reset_notes": "Lift the gears off the shafts and lay them back where the setup puts them.",
   "fidelity": "The plate and gears are the Isaac Lab Factory gear assets at full size, collided by their meshes, so teeth and bores touch as modeled. The plate is fixed. The gears are lighter than solid plastic parts of this size would be (solid acetal: about 106, 49 and 13 g). Every object has rubber-like friction (1.2 static, 1.0 dynamic), so teeth grip each other more than greased metal gears would.",
-  "scores": "Dream-1 run: 0 (2,400 steps); demo: 1.0 (success at 93.9 s)"
+  "scores": "Dream-1 run: 0 (2,400 steps); demo: 1.0 (success at 93.9 s)",
+  "media": "M-73YDYZ"
 }
