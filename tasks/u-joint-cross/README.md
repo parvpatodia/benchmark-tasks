@@ -1,12 +1,12 @@
-# Fit a U-joint cross that is longer than its yoke's ear gap
+# Fit a U-joint cross longer than its yoke's ear gap: push one journal through, swing it level, slide it back to centre
 
 A driveshaft service step at Spicer 1310 size. A universal-joint cross goes into a tube yoke whose bearing cups are
 out, so each ear has a bare 27 mm cross hole. The source is the Spicer driveshaft service manual's reassembly steps:
 "Position the journal cross in the yoke cross holes", then "Move one end of the journal cross to cause a trunnion to
 project through the cross hole beyond the outer machined face of the yoke ear"
 ([Spicer Driveshafts Service Manual DSSM3264, page 17, steps 2 and 3](https://www.truckid.com/images/spicer/pdf/driveshafts-service-manual.pdf)).
-Driveline and heavy-truck technicians do this every time they replace a U-joint. A cross left cocked or off centre
-cannot take its bearing cups, which the next step slides over a trunnion lined up with its cross hole.
+Driveline and heavy-truck technicians do this every time they replace a U-joint. The task ends at step 2, the cross
+sitting in both holes; until it does, no bearing cup can go on.
 
 The hard part is the geometry. The cross's pair of journals is 73 mm tip to tip and the ears are 59.8 mm apart, so
 each tip overlaps its ear by 6.6 mm: set down level, the cross lands on the ears' tops. Centred between the ears it
@@ -14,7 +14,7 @@ can only turn within 9.5 degrees of line, where its journals are already in the 
 meets an ear or the yoke's crotch. So one journal has to go into its hole at an angle and be pushed at least 11.4 mm
 past its ear's inner face, out through the 11 mm ear (the manual's step 3), before the other journal can swing into
 its hole. Then the cross is slid back until both journals are in their holes by the same depth. The 27 mm holes leave
-6 mm of play round the 15 mm journals and nothing stops the cross at centre, so it has to be centred by position.
+6 mm of radial play round the 15 mm journals and nothing stops the cross at centre, so it has to be centred by position.
 
 ## The scripted demo
 `demo()` uses the right arm. It grips the top journal, lifts the cross out of its holder, and lowers it between the
@@ -53,7 +53,7 @@ Either pair of journals can be the one that goes in; the pair nearer the holes' 
 | Condition | Number | Check on a real bench |
 |---|---|---|
 | journal in its hole | cross centre between the ears' inner faces; tip at least 1 mm past its ear's inner face; tip centre within 8 mm of the holes' axis | the journal is visible inside the hole from outside the ear |
-| installed | both journals of the pair in their holes, each tip at least 3.5 mm past its ear's inner face (6.6 mm when centred: within 3.1 mm of centred); pair within 5 degrees of the holes' axis | a depth gauge into each hole from outside reads the same to 3 mm |
+| installed | both journals of the pair in their holes, each tip at least 3.5 mm past its ear's inner face (6.6 mm when centred: within 3.1 mm of centred); pair within 5 degrees of the holes' axis | a depth gauge into each hole from outside reads 4.4 mm, give or take 3.1 mm |
 
 | Score | Condition |
 |---|---|
@@ -76,5 +76,5 @@ The yoke is fixed, as if clamped in a vise, with simple slab ears round the hole
 200 g, with smooth journals (no needle rollers, seals or grease fitting). The hole size and the distance over the ears'
 outer faces are the Spicer 1310 catalog's figures (1.062 in bearing caps, 3.219 in over the caps,
 [Spicer K350 catalog, Outside Snap Ring style, kit 5-153X](https://cdn.shopify.com/s/files/1/0077/1538/9503/files/K350-2-DAG-122017.pdf)).
-The journal diameter, ear thickness, hub size and the cross's mass are not in the catalog and are set to look like a
-1310 cross. Every object has rubber-like friction (1.2 static, 1.0 dynamic).
+The journals' tip-to-tip span (73 mm), their diameter, the ear thickness (and so the 59.8 mm ear gap), the hub size
+and the cross's mass are not in the catalog; they are our estimates, set to look like a 1310 cross. Every object has rubber-like friction (1.2 static, 1.0 dynamic).
