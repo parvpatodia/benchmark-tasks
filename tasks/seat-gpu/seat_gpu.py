@@ -70,6 +70,11 @@ SEAT_X_TOL, SEAT_Y_TOL = 0.0015, 0.0010   # the slot allows 0.5 mm along it and 
 MAX_TILT, MAX_YAW = 2.0, 2.0              # degrees
 IN_SLOT_Z = 0.0080                        # fingers below the slot's top (they are 8.5 mm tall)
 LINED_XY, LINED_YAW, LINED_Z = 0.003, 3.0, 0.040
+# Card-frame points (make_meshes.py): the bottoms of the gold fingers at the connector's two ends, and the body's
+# bottom edge at the middle of the support channel
+CONNECTOR_ENDS = (np.array([0.040, 0.0, 0.0]), np.array([0.040 + 0.01165 + 0.0020 + 0.07165, 0.0, 0.0]))
+FAR_BOTTOM = np.array([0.225, 0.0155, 0.0085])
+GUIDE_TOP = 0.065   # support channel's top above the riser's frame origin (make_meshes.GUIDE_TOP)
 
 
 def _rot(q):
@@ -79,31 +84,53 @@ def _rot(q):
                      [2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)]])
 
 
+def _frame(o):
+    """The card's rotation matrix and its frame origin (world)."""
+    r = _rot(o.quat_xyzw)
+    return r, np.asarray(o.pos, dtype=float) - r @ POS_OFF
+
+
 def card_pose(o):
     """(error of the card's frame origin from its seated place (m, world), tilt from upright (deg), yaw (deg))."""
-    r = _rot(o.quat_xyzw)
-    origin = np.asarray(o.pos, dtype=float) - r @ POS_OFF
+    r, origin = _frame(o)
     tilt = math.degrees(math.acos(float(np.clip(r[2, 2], -1.0, 1.0))))
     yaw = math.degrees(math.atan2(r[1, 0], r[0, 0]))
     return origin - SEATED_O, tilt, yaw
 
 
+def connector_heights(o):
+    """Heights (m) of the gold fingers' bottoms at the connector's two ends above the slot floor."""
+    r, origin = _frame(o)
+    return [float((origin + r @ p)[2] - SEATED_O[2]) for p in CONNECTOR_ENDS]
+
+
+def far_end_in_channel(o):
+    """The card's bottom edge at the support channel is below the channel's top."""
+    r, origin = _frame(o)
+    return float((origin + r @ FAR_BOTTOM)[2]) < RISER_O[2] + GUIDE_TOP
+
+
 def lined_up(objects):
     """Bracket end toward the robot, over the slot and low enough that the far end is in the support channel."""
-    e, tilt, yaw = card_pose(objects["card"])
+    c = objects["card"]
+    e, tilt, yaw = card_pose(c)
     return (abs(yaw) <= LINED_YAW and tilt <= 5.0 and max(abs(e[0]), abs(e[1])) <= LINED_XY
-            and -SEAT_Z_TOL <= e[2] <= LINED_Z)
+            and -SEAT_Z_TOL <= min(connector_heights(c)) and e[2] <= LINED_Z and far_end_in_channel(c))
 
 
 def in_slot(objects):
-    """Gold fingers started into the slot, not all the way down."""
+    """Gold fingers started into the slot along the whole connector, not all the way down."""
     e, tilt, yaw = card_pose(objects["card"])
-    return (lined_up(objects) and e[2] <= IN_SLOT_Z and abs(e[0]) <= SEAT_X_TOL and abs(e[1]) <= SEAT_X_TOL)
+    return (lined_up(objects) and max(connector_heights(objects["card"])) <= IN_SLOT_Z
+            and abs(e[0]) <= SEAT_X_TOL and abs(e[1]) <= SEAT_X_TOL)
 
 
 def seated(objects):
+    """Both ends of the connector within 1 mm of the slot floor (so pitch along the card is under about 0.7 deg),
+    centred, and upright and square."""
     e, tilt, yaw = card_pose(objects["card"])
-    return (abs(e[2]) <= SEAT_Z_TOL and abs(e[0]) <= SEAT_X_TOL and abs(e[1]) <= SEAT_Y_TOL
+    return (all(abs(h) <= SEAT_Z_TOL for h in connector_heights(objects["card"]))
+            and abs(e[0]) <= SEAT_X_TOL and abs(e[1]) <= SEAT_Y_TOL
             and tilt <= MAX_TILT and abs(yaw) <= MAX_YAW)
 
 
@@ -166,6 +193,9 @@ def demo(delay=0.0):
          Waypoint(4.0, (*put, seat_z + 0.030), g, "into the channel", CARRY_YAW),
          Waypoint(1.0, (*put, seat_z + 0.030), g, "settle", CARRY_YAW),
          Waypoint(3.0, (*put, seat_z + 0.010), g, "bracket in", CARRY_YAW),
+         # WHY: let go 2 mm short of seated (tried 2026-11-07), the card caught on the slot's mouth 5 mm up at a 0.05 s
+         # start delay and wedged with its bracket end 3 mm up; three presses aimed 15 mm past seated moved it 0.3 mm.
+         # So the card is pushed down while held; success fires at the end of the push or as the fingers open (step 536)
          Waypoint(3.0, (*put, seat_z - 0.001), g, "into the slot", CARRY_YAW),
          Waypoint(0.8, (*put, seat_z - 0.001), g, "hold", CARRY_YAW),
          Waypoint(0.6, (*put, seat_z - 0.001), FINGER_OPEN, "let go", CARRY_YAW),

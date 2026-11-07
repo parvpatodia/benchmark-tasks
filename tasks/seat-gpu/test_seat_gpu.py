@@ -101,9 +101,45 @@ def tilt_along(deg):
     return np.array([0.0, math.sin(b), 0.0, math.cos(b)])
 
 
-@pytest.mark.parametrize("tilt,dz,want", [(1.9, 0.0, 1.0), (2.1, 0.0, 0.5), (4.9, 20 * MM, 0.2), (5.1, 20 * MM, 0.0)])
+def pitched(deg, lift=0.0, **kw):
+    """Pitched along the card (positive: far end down), its lower connector end ``lift`` above the slot floor."""
+    s = math.sin(math.radians(deg))
+    dz = max(float(p[0]) * s for p in M.CONNECTOR_ENDS) + lift
+    return card(dz=dz, q=tilt_along(deg), **kw)
+
+
+@pytest.mark.parametrize("deg", [0.6, -0.6])
+def test_pitched_within_1_mm_at_both_connector_ends_is_seated(deg):
+    assert M.score(objs(pitched(deg))) == 1.0
+
+
+@pytest.mark.parametrize("deg,lift", [(0.7, 0.0), (-0.7, 0.0), (1.0, 0.9 * MM), (-1.0, 0.9 * MM), (1.9, 0.0),
+                                      (-1.9, 0.9 * MM)])
+def test_pitched_with_one_connector_end_out_is_not_seated(deg, lift):
+    # e.g. far end up 1.9 deg: fingers 2.2 to 5.1 mm above the floor; only started into the slot
+    assert M.score(objs(pitched(deg, lift))) == 0.5
+
+
+def test_one_connector_end_above_the_slot_is_not_started():
+    # pitched 3.5 deg far end up: near end 3 mm up, far end of the connector 8.2 mm up, so not in along its length
+    assert M.score(objs(pitched(-3.5, 3.0 * MM))) == 0.2
+    assert M.score(objs(pitched(-3.5, 2.5 * MM))) == 0.5
+
+
+def test_square_card_on_the_key_rib_scores_as_started():
+    assert M.score(objs(card(dz=3.5 * MM))) == 0.5
+
+
+@pytest.mark.parametrize("tilt,dz,want", [(4.9, 20 * MM, 0.2), (5.1, 20 * MM, 0.0), (-4.9, 20 * MM, 0.2)])
 def test_tilt_along_the_card(tilt, dz, want):
     assert M.score(objs(card(dz=dz, q=tilt_along(tilt)))) == want
+
+
+def test_far_end_above_the_support_channel_scores_nothing():
+    # far end up 4.9 deg, 35 mm above seated: the body's bottom at the channel is above the channel's top
+    c = card(dz=35 * MM, q=tilt_along(-4.9))
+    assert not M.far_end_in_channel(c) and M.score(objs(c)) == 0.0
+    assert M.score(objs(card(dz=39 * MM))) == 0.2 and M.far_end_in_channel(card(dz=39 * MM))
 
 
 @pytest.mark.parametrize("yaw,want", [(1.9, 1.0), (2.1, 0.5), (3.1, 0.0), (-1.9, 1.0), (-2.1, 0.5), (-3.1, 0.0)])
