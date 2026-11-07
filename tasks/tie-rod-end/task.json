@@ -15,5 +15,6 @@
   "run_limit": "2,400 steps (2 minutes at 20 Hz)",
   "reset_notes": "Lift the stud out of the knuckle, let it hang straight down, and lay the tie rod's outer end back on its block.",
   "fidelity": "Taper as four short cylinders just inside the cone, hole as 24 flat segments: the stud seats 0.6 mm deeper than flush. Each ball joint is two damped hinges; the stud lags and settles but has no preload (real socket bearings \"maintain preload\"). 170 g moving, against about 1.2 kg solid steel. Knuckle fixed, friction 1.2/1.0; stud 0.5/0.4. No nut or thread. Rod length, ball to taper, swivel range, thread length, housing and knuckle body are estimates.",
-  "scores": "Dream-1 run: 0 (2,400 steps, on the earlier fixture, before the stud's 15 mm neck cylinder was given a positive height; nothing else in the scene changed); demo: 1.0 (success at 21.1 s)"
+  "scores": "Dream-1 run: 0 (2,400 steps, on the earlier fixture, before the stud's 15 mm neck cylinder was given a positive height; nothing else in the scene changed); demo: 1.0 (success at 21.1 s)",
+  "media": "M-PUMQKB"
 }
