@@ -14,5 +14,6 @@
   "run_limit": "2,400 steps (2 minutes at 20 Hz)",
   "reset_notes": "Lift the card out of the slot and stand it back in the foam stand, bracket toward the bases.",
   "fidelity": "Rigid boxes and prisms at full size; card height, length and fingers are published PCIe sizes, its 35 mm thickness, bracket and riser our estimates. No connector contacts or springs: no insertion force. The riser cage latch the source closes after this step is left out; gravity holds the card. Slot lead-in and channel flare are wider than real. No flex; 350 g is likely light. Friction 1.2 static, 1.0 dynamic.",
-  "scores": "Dream-1 run: 0 (2,400 steps, on this scene and demo before the last scoring change; the card stays in its foam stand); demo: 1.0 (success at step 536)"
+  "scores": "Dream-1 run: 0 (2,400 steps, on this scene and demo before the last scoring change; the card stays in its foam stand); demo: 1.0 (success at step 536)",
+  "media": "M-E5C65Z"
 }
