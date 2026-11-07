@@ -1,4 +1,4 @@
-# Seat a graphics card in a keyed x16 slot: edge connector, bracket gap and far guide engage at once, so it must come down square
+# Seat a graphics card in a keyed x16 slot: connector, bracket gap and far guide engage at once, so it must go in square
 
 A data-center install step at full size. A dual-slot graphics card (254 mm long, 111 mm tall, 350 g) stands in a foam
 stand beside a fixed server riser board. The robot lifts it out, lines it up over the riser's x16 slot and presses it
