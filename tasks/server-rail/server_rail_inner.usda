@@ -1,0 +1,26 @@
+#usda 1.0
+(
+    defaultPrim = "server_rail_inner"
+    metersPerUnit = 1
+    upAxis = "Z"
+)
+
+def Xform "server_rail_inner" (
+    prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI"]
+)
+{
+    bool physics:kinematicEnabled = 0
+
+    def Mesh "member" (
+        prepend apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+    )
+    {
+        uniform token physics:approximation = "convexHull"
+        int[] faceVertexCounts = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+        int[] faceVertexIndices = [3, 2, 1, 0, 8, 9, 10, 11, 0, 1, 5, 4, 1, 2, 6, 5, 2, 3, 7, 6, 3, 0, 4, 7, 4, 5, 9, 8, 5, 6, 10, 9, 6, 7, 11, 10, 7, 4, 8, 11]
+        point3f[] points = [(-0.125000, -0.015000, -0.004000), (-0.125000, 0.015000, -0.004000), (-0.125000, 0.015000, 0.004000), (-0.125000, -0.015000, 0.004000), (0.095000, -0.015000, -0.004000), (0.095000, 0.015000, -0.004000), (0.095000, 0.015000, 0.004000), (0.095000, -0.015000, 0.004000), (0.125000, -0.012500, -0.001500), (0.125000, 0.012500, -0.001500), (0.125000, 0.012500, 0.001500), (0.125000, -0.012500, 0.001500)]
+        float3[] extent = [(-0.125000, -0.015000, -0.004000), (0.125000, 0.015000, 0.004000)]
+        color3f[] primvars:displayColor = [(0.10, 0.30, 0.85)]
+        uniform token subdivisionScheme = "none"
+    }
+}
