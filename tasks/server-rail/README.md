@@ -98,8 +98,8 @@ steps; the scripted demo takes 39.8 s (left arm; right arm 12.5 s). One seed; ob
 
 - Dream-1, 2,400 steps: 0. The run used the same scene, meshes, retainer and docstring as these files, scored before
   two changes to the order memory: the rolling allowance now counts from the first meeting, and a meeting starts at the
-  cage's front bar instead of the front rollers. In the top camera the member never enters the channel, so neither
-  change can raise its 0.
+  cage's front bar instead of the front rollers. In top-camera frames every 7.5 s the member stays at its start on the
+  table, so neither change can raise its 0.
 - Scripted demo, official runner, these files: 1.0, success at step 709 (the filmed run).
 - Logging copies of the same files (score() also writes poses): started 0, 0.05 and 0.10 s late, 1.0 at steps 698,
   734 and 734. Left arm aimed 1 mm to -x: 0.69, the end push stopped 4.8 mm short of home (a known margin; aiming the
