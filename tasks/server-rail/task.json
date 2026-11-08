@@ -15,5 +15,6 @@
   "run_limit": "2,400 steps (2 minutes at 20 Hz)",
   "reset_notes": "Pull the inner member out, lay it flat on its start mark, and slide the retainer back 90 mm from its front stop.",
   "fidelity": "Approximate: the channel is fixed boxes, open side up; no outer member. Each ball pair is one 5 mm roller on a free hinge, three stations; upper rollers sprung down about 40 N so a stalled pair skids only above about 48 N, stiffer than a real slide. Retainer drag is a pad on the floor. Stop block 30 mm short of flush so a gripper can push the end. Section, mass (aluminium), ball size and retainer travel are estimates; length is the 3832-C10's. Friction 1.2/1.0.",
-  "scores": "Dream-1 run: 0 (2,400 steps; scored before two order-memory changes, same scene and meshes; the member stays on the table, so neither change can raise it); demo: 1.0 (success at step 709)"
+  "scores": "Dream-1 run: 0 (2,400 steps; scored before two order-memory changes, same scene and meshes; the member stays on the table, so neither change can raise it); demo: 1.0 (success at step 709)",
+  "media": "M-RYQ6RP"
 }
