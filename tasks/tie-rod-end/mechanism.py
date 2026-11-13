@@ -1,7 +1,8 @@
 # This file is adapted from robocurve/benchmark-tasks pull request #223 ("Open a panel held shut by a spring
 # plunger", tasks/spring-plunger-panel/mechanism.py), which is published under the MIT License. Changes here: a joint
 # may hang from another link (``Joint.parent``), so links form a chain; self-collision can be turned off
-# (``Mechanism.self_collide``); and the state reports each link's pose and velocity (``MechanismState.links``). The original licence:
+# (``Mechanism.self_collide``); the state reports each link's pose and velocity (``MechanismState.links``); and
+# functions registered with ``on_step`` run with the environment before each step is scored. The original licence:
 #
 #   MIT License
 #
@@ -34,6 +35,9 @@ Importing this module hooks yam_arena without modifying it:
 - ``yam_arena.scene.object_states`` reports a ``MechanismState`` for it;
 - after ``YamArenaEmbodiment.reset`` returns, every mechanism's joints are put back to 0 at rest, its spring
   targets are set, the scene settles again as the reset does, and functions registered with :func:`on_reset` run;
+- before each control step is scored, functions registered with :func:`on_step` run with the Isaac Lab environment
+  (the technique of robocurve/benchmark-tasks tasks/analytical-balance/labkit.py ``on_step``: wrap the embodiment's
+  ``_task_step``, which builds the object states and calls success() and score());
 - with the environment variable ``TOP_CAM_VIDEO=path.mp4`` set, the top camera of each episode is recorded there
   at its full render size (see :class:`_TopCamRecorder`).
 
@@ -54,7 +58,7 @@ from dataclasses import dataclass, field
 import numpy as np
 from yam_arena.task_file import Box, ObjectState
 
-__all__ = ["Shape", "Link", "Joint", "Mechanism", "MechanismState", "on_reset", "install", "top_cam_frame"]
+__all__ = ["Shape", "Link", "Joint", "Mechanism", "MechanismState", "on_reset", "on_step", "install", "top_cam_frame"]
 
 Color = tuple[float, float, float]
 AXES = ("X", "Y", "Z")
@@ -420,6 +424,16 @@ def on_reset(fn):
     return fn
 
 
+_STEP: list = []
+
+
+def on_step(fn):
+    """Register ``fn(environment)`` to run after every control step of a task file's trial, before that step's
+    object states are read and success() and score() are called."""
+    _STEP.append(fn)
+    return fn
+
+
 # -- hooking yam_arena -----------------------------------------------------------------------------------------------
 
 
@@ -501,7 +515,7 @@ def _patch_embodiment(module) -> None:
     cls = module.YamArenaEmbodiment
     if getattr(cls, "_mechanism_patched", False):
         return
-    reset, step, close = cls.reset, cls.step, cls.close
+    reset, step, close, task_step = cls.reset, cls.step, cls.close, cls._task_step
 
     def patched_reset(self, scene, *, seed=None):
         observation = reset(self, scene, seed=seed)
@@ -530,7 +544,14 @@ def _patch_embodiment(module) -> None:
         _RECORDER.close()
         return close(self)
 
-    cls.reset, cls.step, cls.close = patched_reset, patched_step, patched_close
+    def patched_task_step(self, *args, **kwargs):
+        # WHY: step() calls self._task_step() only when a task file is loaded; it reads the object states and calls
+        # success() and score() for this step, so a hook run here is always fresh for the step being scored
+        for fn in _STEP:
+            fn(self._env)
+        return task_step(self, *args, **kwargs)
+
+    cls.reset, cls.step, cls.close, cls._task_step = patched_reset, patched_step, patched_close, patched_task_step
     cls._mechanism_patched = True
 
 

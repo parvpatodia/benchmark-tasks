@@ -8,10 +8,12 @@ steering arm carries a tapered hole, 18.0 mm across at its top and 14.7 mm at it
 upright and its top 90.6 mm above the table.
 
 The stud goes down into the tapered hole until its taper seats in the hole's taper, square to it, with the tie rod
-sloping 3.3 degrees down from the rack. The stud's taper is the same as the hole's; its 13.5 mm threaded end, 22 mm
-long, comes out under the steering arm.
+sloping 3.3 degrees down from the rack. The stud's taper is the same as the hole's; seated, its 13.5 mm threaded end
+comes out 22.6 mm under the steering arm. Then the gripper lets go and moves away: it counts only once no part of
+either arm is within 10 mm of the tie rod, its outer end or the stud, with the stud still seated.
 """
 
+import functools
 import math
 import pathlib
 import sys
@@ -19,7 +21,7 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 import numpy as np  # noqa: E402
-from mechanism import Joint, Link, Shape, mechanism  # noqa: E402
+from mechanism import Joint, Link, Shape, mechanism, on_reset, on_step  # noqa: E402
 from yam_arena.constants import FINGER_OPEN  # noqa: E402
 from yam_arena.demo import Waypoint  # noqa: E402
 from yam_arena.task_file import TABLE_TOP, Asset, Box  # noqa: E402
@@ -171,9 +173,17 @@ TAPER_TOP_M = np.array([0.0, -L, JOINT_Z - BALL_TO_TAPER])  # on the stud, in th
 TIP_M = np.array([0.0, -L, JOINT_Z - BALL_TO_TAPER - TAPER_L - THREAD_L])
 
 SEAT_XY = 0.001        # the taper's large end from the hole's axis
-SEAT_DEPTH = SINK      # the taper's large end below the hole's top when seated
-SEAT_Z = 0.0005        # either way: 0.5 mm proud of home is a stud wedged high, not seated
 MAX_TILT = 2.0         # degrees between the stud's axis and the hole's
+# Home, as on the real parts. MOOG's installation tip (moogparts.com, MG211049, step 1) has the technician test-fit the
+# clean stud in the clean tapered hole by hand: it must seat firmly without rocking, and only its thread may come out
+# under the knuckle. Home is where the matched stud stops in that test fit, read as the thread's protrusion below the
+# steering arm's bottom face (a caliper's depth rod standing on that face, its tip on the thread's end).
+# WHY: the sim's matched parts give that protrusion from their geometry: the thread below the taper plus how far the
+# stepped taper sinks past flush (SINK). A stud stopped 0.5 mm short of it is one held off its seat (by a burr, grease,
+# a cocked entry or a hand), not seated
+ARM_BOTTOM_Z = HOLE_TOP_Z - TAPER_L  # the steering arm's bottom face: the boss is as thick as the taper is long
+P_HOME = THREAD_L + SINK             # 22.58 mm in this sim
+P_TOL = 0.0005                       # either way
 # WHY: the thread is inside the mouth only with the stud's axis within 18.03/2 - 13.5/2 = 2.27 mm of the hole's at the
 # hole's top. A tip resting on the rim dips at most 1 mm (the chamfer step) plus under 0.7 mm (a lean of up to 6
 # degrees), so 2 mm down means the thread is in the hole, not on its edge
@@ -196,11 +206,17 @@ def stud_pose(objects):
     return top, tip, tilt
 
 
+def protrusion(objects):
+    """How far the stud's threaded end stands below the steering arm's bottom face (m), along the hole's axis."""
+    _, tip, _ = stud_pose(objects)
+    return float(ARM_BOTTOM_Z - tip[2])
+
+
 def seated(objects):
-    """The stud's taper home in the hole's taper and square to it."""
+    """The stud's taper home in the hole's taper and square to it: its thread out under the steering arm by its home
+    protrusion, within 0.5 mm."""
     top, _, tilt = stud_pose(objects)
-    depth = HOLE_TOP_Z - top[2]
-    return (float(np.linalg.norm(top[:2] - HOLE)) <= SEAT_XY and abs(depth - SEAT_DEPTH) <= SEAT_Z
+    return (float(np.linalg.norm(top[:2] - HOLE)) <= SEAT_XY and abs(protrusion(objects) - P_HOME) <= P_TOL
             and tilt <= MAX_TILT)
 
 
@@ -209,8 +225,7 @@ def in_hole(objects):
     top, tip, tilt = stud_pose(objects)
     axis = (tip - top) / np.linalg.norm(tip - top)
     at_top = top + axis * (HOLE_TOP_Z - top[2]) / axis[2] if abs(axis[2]) > 1e-6 else top
-    depth = HOLE_TOP_Z - top[2]
-    return bool(tip[2] < HOLE_TOP_Z - IN_TIP and depth <= SEAT_DEPTH + SEAT_Z
+    return bool(tip[2] < HOLE_TOP_Z - IN_TIP and protrusion(objects) <= P_HOME + P_TOL
                 and np.linalg.norm(at_top[:2] - HOLE) < IN_XY and tilt <= IN_TILT)
 
 
@@ -231,22 +246,196 @@ def _still(objects):
     return _point_still(links["stud"], TAPER_TOP_M) and _point_still(links["rod"], BALL_M)
 
 
+# -- the hands: let go and clear ----------------------------------------------------------------------------------
+# success() and score() get object states only. A hook run before each scored step (mechanism.on_step) reads every
+# body of both YAM arms from the simulator, so the scorer can see a hand still holding the tie rod.
+ARMS = {"left": "left_robot", "right": "right_robot"}  # the embodiment's scene keys
+# every rigid body of a YAM arm: the URDF's links, the bodies of the converted USD
+ARM_LINKS = ("base", "link1", "link2", "link3", "link4", "link5", "gripper", "tip_left", "tip_right")
+# WHY 10 mm: any hand nearer than that may be touching (the arm lags its target 2 to 5 mm when moving, and the
+# colliders' contact offsets add 1 to 2 mm), and on a real rig a 10 mm gap shows in a photo. Fully open pads stand
+# (94 - 40) / 2 = 27 mm off the housing's sides, so opening alone clears the fingers; a hand that rests on the housing,
+# props the rod from below or pushes the stud down does not clear
+HAND_CLEAR = 0.010
+SAMPLE = 0.002      # spacing of the points laid over the tie rod's and stud's colliders
+CLEAR_CAP = 0.05    # clearances are reported up to this; farther is "at least 50 mm"
+# this step's arm body poses (world, 4x4) and finger joints, from the hook; the hook's step count; the last clearance
+_HANDS = {"poses": None, "finger": None, "step": 0, "memo": None}
+
+
+def _np(x) -> np.ndarray:
+    x = getattr(x, "torch", x)  # Isaac Lab 3.0 wraps some buffers
+    if hasattr(x, "detach"):
+        x = x.detach().cpu().numpy()
+    return np.asarray(x, dtype=float)
+
+
+def read_arms(environment):
+    """(poses, finger): the world pose (4x4, the task's frame) of every body of both arms, and each arm's finger
+    joints (m, 0 closed, -0.047 open)."""
+    base = environment.unwrapped
+    origin = _np(base.scene.env_origins)[0]
+    poses, finger = {}, {}
+    for arm, key in ARMS.items():
+        robot = base.scene[key]
+        bodies = _np(robot.data.body_link_pose_w)[0]
+        names = list(robot.body_names)
+        poses[arm] = {}
+        for link in ARM_LINKS:
+            p = bodies[names.index(link)]  # a missing body raises: the check never passes quietly
+            t = np.eye(4)
+            t[:3, :3] = _rot(p[3:7])
+            t[:3, 3] = p[:3] - origin
+            poses[arm][link] = t
+        q = _np(robot.data.joint_pos)[0]
+        joints = list(robot.joint_names)
+        finger[arm] = [float(q[joints.index(j)]) for j in ("joint7", "joint8")]
+    return poses, finger
+
+
+@on_step
+def _watch_arms(environment):
+    _HANDS["poses"], _HANDS["finger"] = read_arms(environment)
+    _HANDS["step"] += 1
+
+
+@on_reset
+def _forget_arms():
+    _HANDS["poses"] = _HANDS["finger"] = _HANDS["memo"] = None
+
+
+def _surface(shape, h=SAMPLE):
+    """Points over a cylinder's side and end faces, at most ``h`` apart (mechanism frame)."""
+    r, length = shape.size
+    axis = "XYZ".index(shape.axis)
+    others = [k for k in range(3) if k != axis]
+    n_t = max(8, math.ceil(2 * math.pi * r / h))
+    t = np.linspace(0, 2 * math.pi, n_t, endpoint=False)
+    rings = [(r, a) for a in np.linspace(-length / 2, length / 2, max(2, math.ceil(length / h) + 1))]
+    for rr in np.linspace(0, r, max(2, math.ceil(r / h) + 1))[:-1]:
+        rings += [(rr, -length / 2), (rr, length / 2)]
+    pts = []
+    for rr, a in rings:
+        ring = np.zeros((n_t, 3))
+        ring[:, axis] = a
+        ring[:, others[0]], ring[:, others[1]] = rr * np.cos(t), rr * np.sin(t)
+        pts.append(ring)
+    return np.vstack(pts) + np.asarray(shape.center, float)
+
+
+# the tie rod's moving parts: the rod with the outer end's body and housing, and the stud (the gimbals sit inside them)
+_PARTS = {"rod": np.vstack([_surface(s) for s in _rod_shapes()]),
+          "stud": np.vstack([_surface(s) for s in _stud_shapes()])}
+
+
+@functools.lru_cache(maxsize=1)
+def _arm_hulls():
+    """Each arm body's collision hulls in its own frame, as (vertices, unique face planes n . x = d), from the URDF's
+    CoACD pieces (yam_arena.analysis.link_hulls)."""
+    from yam_arena.analysis import link_hulls
+
+    with np.errstate(all="ignore"):  # WHY: macOS numpy's matmul raises spurious FP flags here; the planes are checked
+        hulls = link_hulls()
+    out = {}
+    for link in ARM_LINKS:
+        out[link] = []
+        for h in hulls[link]:
+            planes = np.unique(np.round(h.planes, 9), axis=0)
+            if not np.isfinite(planes).all():
+                raise ValueError(f"{link}: a hull plane is not finite")
+            out[link].append((h.vertices, planes))
+    return out
+
+
+def part_points(objects):
+    """The points over the tie rod's and stud's colliders, in the world."""
+    links = objects["tie_rod"].links
+    with np.errstate(all="ignore"):  # WHY: spurious matmul FP flags on macOS numpy (seen 2026-11-12); checked below
+        world = np.vstack([np.asarray(links[n].pos, float) + m @ _rot(links[n].quat_xyzw).T for n, m in _PARTS.items()])
+    if not np.isfinite(world).all():
+        raise ValueError("tie rod points are not finite")
+    return world
+
+
+def arm_clearance(points, poses):
+    """A lower bound (m) on the gap between any body of one arm and the tie rod's moving parts, capped at CLEAR_CAP;
+    -SAMPLE means touching or overlapping. For each point over the parts, the bound is the larger of the distance to a
+    hull's box and the hull's face-plane distance max_i(n_i . p - d_i): neither is more than the true distance to that
+    convex hull. Every point of the parts' surfaces is within SAMPLE of a laid point, so the true gap is at least the
+    smallest point bound minus SAMPLE."""
+    with np.errstate(all="ignore"):  # WHY: spurious matmul FP flags on macOS numpy (seen 2026-11-12); checked below
+        gap = _gap(points, poses)
+    if not math.isfinite(gap):
+        raise ValueError("arm clearance is not finite")
+    return gap
+
+
+def _gap(points, poses):
+    lo, hi = points.min(axis=0), points.max(axis=0)
+    best = CLEAR_CAP + SAMPLE  # the smallest point bound so far
+    for link, t in poses.items():
+        r, p = t[:3, :3], t[:3, 3]
+        for verts, planes in _arm_hulls()[link]:
+            v = verts @ r.T + p
+            vlo, vhi = v.min(axis=0), v.max(axis=0)
+            if (vlo - hi).max() >= best or (lo - vhi).max() >= best:
+                continue  # this hull's box is farther than the best bound from every point
+            box = np.linalg.norm(np.maximum(np.maximum(vlo - points, points - vhi), 0.0), axis=1)
+            near = box < best
+            if not near.any():
+                continue
+            n = planes[:, :3] @ r.T
+            d = planes[:, 3] + n @ p
+            bound = np.maximum((points[near] @ n.T - d).max(axis=1), box[near])
+            best = min(best, float(bound.min()))
+    return min(best - SAMPLE, CLEAR_CAP)
+
+
+def hand_clearance(objects, poses=None):
+    """{arm: lower bound on its gap to the tie rod's moving parts (m)} for this step, or None if no arm poses were
+    read (the hook has not run since the reset)."""
+    if poses is not None:
+        return {arm: arm_clearance(part_points(objects), poses[arm]) for arm in ARMS}
+    if _HANDS["poses"] is None:
+        return None
+    # WHY: success(), score() and a logging copy each ask once per step; the answer is the same for the same step
+    # (the hook's count, and the very poses object, which the memo keeps alive) and the same tie rod pose
+    links = objects["tie_rod"].links
+    key = (_HANDS["step"], *(float(v) for n in _PARTS for v in (*links[n].pos, *links[n].quat_xyzw)))
+    memo = _HANDS["memo"]
+    if memo is None or memo[0] is not _HANDS["poses"] or memo[1] != key:
+        gaps = {arm: arm_clearance(part_points(objects), _HANDS["poses"][arm]) for arm in ARMS}
+        _HANDS["memo"] = memo = (_HANDS["poses"], key, gaps)
+    return dict(memo[2])
+
+
+def hands_clear(objects):
+    """Both arms at least 10 mm from the tie rod, its outer end and the stud. Unknown counts as not clear."""
+    gaps = hand_clearance(objects)
+    return gaps is not None and all(gaps[arm] >= HAND_CLEAR for arm in ARMS)
+
+
 def success(objects):
-    """The stud seated square in the taper and the tie rod still. Holds for 1 s."""
-    return seated(objects) and _still(objects)
+    """The stud seated square in the taper, the tie rod still, and both hands let go and at least 10 mm clear of the
+    tie rod and stud. Holds for 1 s."""
+    return seated(objects) and _still(objects) and hands_clear(objects)
 
 
 def distance(objects):
-    top, _, _ = stud_pose(objects)
-    return float(np.linalg.norm([top[0] - HOLE[0], top[1] - HOLE[1], HOLE_TOP_Z - SEAT_DEPTH - top[2]]))
+    top, tip, _ = stud_pose(objects)
+    return float(np.linalg.norm([top[0] - HOLE[0], top[1] - HOLE[1], tip[2] - (ARM_BOTTOM_Z - P_HOME)]))
+
+
+TOP_SCORE = 0.8
 
 
 def score(objects):
-    """1.0 only when seated and still (the trial ends at 1.0 once that has held 1 s). 0.6 seated but still moving.
-    0.3 with the stud's thread 2 mm down in the hole and the stud within 2 degrees of square, not seated. A stud
-    beside the hole, on its rim, or cocked more than 2 degrees scores nothing."""
+    """0.8 seated, still and both hands clear: only success() holding for 1 s pays 1.0 (the trial then ends at 1.0).
+    0.6 seated but still moving, or with a hand within 10 mm of the tie rod or stud. 0.3 with the stud's thread 2 mm
+    down in the hole and the stud within 2 degrees of square, not seated. A stud beside the hole, on its rim, or
+    cocked more than 2 degrees scores nothing."""
     if success(objects):
-        return 1.0
+        return TOP_SCORE
     if seated(objects):
         return 0.6
     if in_hole(objects):
