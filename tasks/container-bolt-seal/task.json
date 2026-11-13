@@ -20,5 +20,6 @@
   "run_limit": "2,400 steps (2 minutes at 20 Hz)",
   "reset_notes": "Lay the bolt in its tray and the barrel on the table at their starts, apart. Nothing else moves.",
   "fidelity": "Approximate. A real barrel locks onto a groove in the tip and cannot be pulled off; here the scorer judges the seal closed once the barrel seats on the shoulder and latches a wrong or spent close, while the parts stay free in the sim. Hasp sizes are ours (real hasps vary). The seal is drawn without its printed number and the bolt has no groove. The scorer reads poses and hand hulls, not forces.",
-  "scores": "Dream-1 run: 0 (2,400 steps); demo: 1.0 (success at 31.95 s, step 639)"
+  "scores": "Dream-1 run: 0 (2,400 steps); demo: 1.0 (success at 31.95 s, step 639)",
+  "media": "M-G8RWA5"
 }
