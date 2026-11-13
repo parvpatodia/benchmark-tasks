@@ -16,5 +16,5 @@
   "reset_notes": "Lift the gears off the shafts and lay them back where the setup puts them.",
   "fidelity": "The plate and gears are the Isaac Lab Factory gear assets (NIST models of MISUMI parts) at full size, collided by their meshes. The plate is fixed. The gears weigh 60, 30 and 10 g, near the real polyacetal parts (about 51, 25 and 5 g). Every object has rubber-like friction (1.2 static, 1.0 dynamic), so teeth grip each other and the shafts more than dry acetal on acetal or steel would.",
   "scores": "Dream-1 run: 0 (2,400 steps, run with the instruction before the let-go clause was added); demo: 1.0 (success at 94.45 s, step 1,889)",
-  "media": "M-73YDYZ"
+  "media": "M-TYJ5V9"
 }
