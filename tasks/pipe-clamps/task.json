@@ -18,5 +18,6 @@
   "run_limit": "2,400 steps (2 minutes at 20 Hz)",
   "reset_notes": "Lay the tube in its two cradles; the clamps start open (pads up, arms open). Nothing else moves.",
   "fidelity": "Approximate. Oatey publishes no click force, so the springs and the detent are ours; the real clamp's arms close by its own linkage, here by the pad pressing their tails. The lock is a spring detent holding about 5 N against a pull on the pad, where the real clamp is rated 134 lb. The tube is a solid cylinder of the tube's mass. The scorer reads joints, poses and hand hulls, not forces.",
-  "scores": "Dream-1 run: 0 (2,400 steps); demo: 1.0 (success at 14.4 s, step 288)"
+  "scores": "Dream-1 run: 0 (2,400 steps); demo: 1.0 (success at 14.4 s, step 288)",
+  "media": "M-Z8VSB7"
 }
