@@ -18,5 +18,6 @@
   "run_limit": "2,400 steps (2 minutes at 20 Hz)",
   "reset_notes": "Stand the weight upright on the centre of its stand; empty the platter and let it settle (it rests at its top, reading 0). Nothing else moves.",
   "fidelity": "Approximate: the scale is fixed boxes plus a platter box on a vertical spring joint (4000 N/m, softer than a real load cell) whose force is the indication. An ideal scale, no off-centre error: the task scores the procedure. No working display. The knob weight is one 48 x 80 mm cylinder (knob filled in). The stand's top is level with the platter to keep the carry in reach. The scorer sees poses, the platter joint and the arms' bodies, not contact forces.",
-  "scores": "Dream-1 run: 0 (2,400 steps); demo: 1.0 (success at 96.4 s, step 1,928)"
+  "scores": "Dream-1 run: 0 (2,400 steps); demo: 1.0 (success at 96.4 s, step 1,928)",
+  "media": "M-DPVTPM"
 }
