@@ -264,7 +264,8 @@ Round 2, final files with the hand check (SAG_SCALE 0.7), 2,400-step limit [RUN,
 
 Media, on the final files (sha256 of `scale_eccentricity.py`, `mechanism.py` and `task.json` checked equal to the
 runs' before the `scores` field was filled in), inspect-robots 1.0.0: the filmed demo scored 1.0 with success at step
-1,928 (96.4 s); the one Dream-1 run scored 0 over 2,400 steps. The screenshot is the top view at the centre reading
+1,928 (96.4 s); the Dream-1 run on the final instruction scored 0 over 2,400 steps (an earlier run, on a longer
+instruction the board does not accept, also scored 0 and is not used). The screenshot is the top view at the centre reading
 (18 s): at the start the weight on its stand sits under the left wrist in that view.
 
 The hook read both arms on every row of every run (1,928 of 1,928 in p_feas). With the hand closed on it, p_nogo's

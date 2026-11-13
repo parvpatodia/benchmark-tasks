@@ -1,21 +1,11 @@
-"""On the station table, to the robot's left, stands a 3 kg bench scale (capacity 3000 g, 1 g display): a dark
-housing 286 mm wide and 316 mm deep, and at its back a bare stainless steel platter 263 mm wide (left to right) and
-203 mm deep, its top 126.5 mm above the table. The platter's centre is 27 cm out from the arm bases and 24 cm left of
-the midline. The platter rides on the scale's load cell, a stiff spring: it sinks 2.45 mm per kilogram on it, and
-the scale's indication is the force on the platter in grams. Farther left, beside the scale, a 1 kg test weight (a
-knob weight, a brass-coloured metal cylinder 48 mm across and 80 mm tall) stands on a dark weight stand whose
-80 x 80 mm top is level with the platter.
-
-Run the scale's eccentricity test. Put the weight's centre on five points of the platter: first the platter's centre,
-then, in any order, the four points half way from the centre to each corner along the diagonals (front left, back
-left, back right, front right; front is the edge nearer the robot). The platter has no marks: find the points from
-its edges. At each point let go and move both arms clear: no part of either arm within 10 mm of the weight or the
-platter. A reading is taken once the indication has stayed within 3 g of 1000 g for 2 s with the weight and the
-platter still, nothing but the weight on the platter and no part of either arm within 10 mm of the weight or the
-platter; readings at the four corner points count only after the centre's. The empty platter must read zero (within
-3 g for 2 s, no part of either arm within 10 mm of it) before the centre's reading. Set the weight down gently and lift it clear to move it: do not slide it across the platter. Do not
-drop it, knock it over or put it on the table, and do not press on or strike the platter. Finish with the weight back
-on its stand, still for 2 s, the platter empty and no part of either arm within 10 mm of the weight or the platter.
+"""A 3 kg bench scale (1 g display) stands on the table to the robot's left; at its back is a bare stainless steel platter
+263 mm wide and 203 mm deep. Farther left, a 1 kg test weight (a brass knob weight 48 mm across and 80 mm tall) stands
+on a weight stand level with the platter. Run the scale's eccentricity test: put the weight's centre on five points of
+the platter, first its centre, then, in any order, the four points half way from the centre to each corner along the
+diagonals. The platter has no marks: find the points from its edges. The empty platter must read zero before the centre
+is loaded. At each point let go and keep every part of both arms at least 10 mm from the weight and the platter until
+the reading has held 1000 g (within 3 g) for 2 s. Lift the weight to move it: do not slide, drop or knock it over, and
+do not press on the platter. Finish with the weight back on its stand and both arms clear.
 """
 
 import functools
