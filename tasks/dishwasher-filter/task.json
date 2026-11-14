@@ -17,5 +17,6 @@
   "run_limit": "2,400 steps (2 minutes at 20 Hz)",
   "reset_notes": "Lay both filters at their start poses beside the tub; the detent pin starts up. Nothing else moves.",
   "fidelity": "Approximate. Whirlpool gives the steps and the quarter turn but no drawings; the cup's size is from a parts listing, and the plate, tabs, collar, lugs, neck and pin are ours. The real lock is a plastic snap; here a sloped spring pin (0.5 N as a lug rides over it) stands in the lugs' path, so a locked cup does not turn freely back. The mesh is solid. The scorer reads poses and hand hulls, not forces.",
-  "scores": "Dream-1 run: 0 (2,400 steps); demo: 1.0 (success at 38.95 s, step 779)"
+  "scores": "Dream-1 run: 0 (2,400 steps); demo: 1.0 (success at 38.95 s, step 779)",
+  "media": "M-BAUTQD"
 }
