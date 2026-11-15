@@ -18,5 +18,6 @@
   "run_limit": "3,000 steps (150 s at 20 Hz)",
   "reset_notes": "The tube in the closed bar's 3/8 opening, its end 4 mm proud; the yoke at the seed's place, the T-bar up, the cone set to the seed's start height. Nothing else moves.",
   "fidelity": "Approximate. The clamp holds the tube by our model, not by contact: 0.4 turn past contact, the model stops the cone's 15 N push on the tube (a loose tube is pushed down). PhysX cannot form copper: the cone does not collide; the handle's turns set its height and the model records the flare (not drawn). No torque on the handle or T-bar; the clamp tip is posed from the T-bar's turns. The real bar has no spring: here a light one holds the tube until clamped. No flare nut. Sizes scaled from a photo.",
-  "scores": "Dream-1 run: 0 (3,000 steps); demo: 1.0 (success at 115.7 s, step 2,314)"
+  "scores": "Dream-1 run: 0 (3,000 steps); demo: 1.0 (success at 115.7 s, step 2,314)",
+  "media": "M-5ERTW8"
 }
