@@ -118,26 +118,80 @@ flow model (20 uL a face). It shows the task can be done.
 Hardware: IKEA DINERA mugs (stoneware), one tube of LePage Extreme Glue No Drip Gel per session, a balance (0.01 g
 readability, 2 kg or more capacity, for the mug, the cradle and the press) with the foam cradle fixed to its pan and
 the balance fixed to the table, a felt pad and a tube holder on blocks so their tops stand at the heights the sim's
-have over the cradle, a 0.001 g scale, and at each joint a side camera with a backlight behind it and a 0.6 mm shim
-fixed in view beside the joint as a reference.
+have over the cradle, a 0.001 g scale, at each joint a side camera with a backlight opposite it and a 0.6 mm shim fixed in view beside
+the joint as a reference, an overhead camera over the mug, a raking light, a PTFE sheet, polyethylene film for the cradle and the pad, polyethylene film of at most 0.1 mm for the
+gripper-pad covers, mineral spirits, nitrile and cut-resistant gloves, safety glasses and a sharps bin.
+The mug lies with its axis along y and both broken faces up, so each side camera sits level with its stub's face and
+looks across the mug along x at that stub alone. The cameras stand on the far side of the mug from the arms (x over
+0.3 m); each backlight stands on the arms' side, its top at least 10 mm above the broken faces [CHOICE] so the bead, the
+0.6 mm gap and a 2 mm lift are all seen against it; the tube
+works from above the face, out of that line except the nozzle tip while it squeezes. A dry run with the demo before the trials confirms each camera sees its
+own bead and shim with nothing between, and that no arm link or the tube comes within 20 mm of a camera or a
+backlight. The cameras and backlights are set for each layout from its template, sliding only along y and keeping
+their distance and height, so each stub and its shim are in view on all three (the mug shifts by up to 20 mm along y)
+and the bead calibration's scale holds for every layout. The same dry run, with the pad covers on, shows the press still
+reads at least 612 g on the balance for 0.5 s and the tube does not slip in the grip; the film's grip on the glaze and
+the tube is not verified until then. If it fails, a thinner cover is tried and the dry run repeated; no trial
+runs until one passes.
 
 - Consumables: each trial needs a mug with its handle off. Score the handle's root with a tile saw 1 mm deep at both
   ends and snap it off, so the breaks are near the sim's stubs; clean and dry the faces (out of scope). A handle that
   breaks elsewhere is discarded. Before the trial, ink dots on the handle and on the mug beside each joint.
 - Seeds: the handle is put on the pad and the mug in the cradle by printed templates, one per layout.
-- Glue: the tube is weighed on the 0.001 g scale before and after the run (never during it): the total, at specific
-  gravity 1.17 (10 uL is 11.7 mg), must be 20 to 60 uL. The balance, tared before the run, gives each face's bead
-  from the video, read once steady with nothing touching the mug or the cradle (the second face's is the change in the
-  reading). One count (0.01 g) is 8.5 uL, so the real check is coarser than the sim's: each face must read 0.01 to
-  0.03 g, which is 4 to 30 uL of true glue, against the sim's 10 to 30 uL.
+- Protecting the shared rig (for the trial, not part of the task):
+  - Gripper pads: each pad's face is covered with polyethylene film no more than 0.1 mm thick, wrapped round it and
+    taped at its sides away from the contact face, and replaced before every trial. In the sim the holding grip
+    presses each wall in 1.0 mm, 1 N + 2000 N/m x 1.0 mm = 3 N against the gel's 4 N yield, so 0.1 mm more film adds
+    about 0.2 N and leaves the hold under the yield. After each trial the covers are looked at under the raking light
+    before they go. The gel is a silane moisture-curing polymer with a 3 to 5 minute open time (maker's data sheet),
+    so uncured glue that reaches a pad through a torn cover is wiped off at once with mineral spirits. If a finger
+    touches wet glue on the mug or the handle, the arm is put in protective stop, the gripper is opened from the
+    controller with the arm stopped, and the finger is cleaned; the arm is never moved to free it.
+  - Work surface: a PTFE sheet [CHOICE: the gel's hold on PTFE is not verified; if it holds, the sheet is replaced
+    rather than peeled] over the bench under the cradle, the pad, the holder and the arms' reach, taped down flat so
+    the templates still register. The cradle's foam and the felt pad are covered with polyethylene film, the balance
+    pan under the cradle's film. The pad's and the cradle's films are replaced before every trial, and the sheet and
+    every surface the stray check covers are photographed under the raking light before each trial as its baseline,
+    so a spot left from an earlier trial is not counted again. Uncured glue is wiped off with mineral spirits; cured
+    glue is cut away with a blade, as the data sheet directs.
+  - Broken ceramic: handles are snapped off away from the rig, inside a cloth bag, in cut-resistant gloves; a handle
+    that sheds a chip is discarded. After each trial the sheet is looked over for chips, which are swept into a sharps
+    bin; the glued mugs go out with them.
+  - Adhesive: the data sheet warns that methanol is released during application and cure and says to use the gel only
+    in a well-ventilated area, so the trials run in a ventilated room; the operator wears nitrile gloves and safety
+    glasses; the tube is capped between trials and its nozzle wiped; a tube that leaks at the crimp is replaced.
+- Glue, in total: the tube is weighed on the 0.001 g scale before and after the run (never during it): the total, at
+  specific gravity 1.17 (10 uL is 11.7 mg, so one count is 0.85 uL), must be 20 to 60 uL.
+- Glue, on each face: read from the video, with no step added to the run. Each face's bead is measured in one fixed
+  frame: the last frame after the second face's squeeze in which no handle, tube or hand is over either face. It is
+  read in two views: its height and its width along y in its side
+  camera, against its backlight and the 0.6 mm shim, and its footprint (the bead's area on the face) in the overhead
+  camera. In the demo both beads lie open for over 10 s before the handle comes down. The balance is not used for this
+  (one 0.01 g count is 8.5 uL, too coarse); it only reads the press.
+  - Calibration [CHOICE], before the trials, with the same cameras and light: beads of 5, 10, 20, 30 and 40 uL are
+    squeezed from a tube of the same gel onto the broken faces of spare snapped stubs, five of each, the way the demo
+    lays them (nozzle over the face, one squeeze). Each bead's amount is the stub's gain on the 0.001 g scale (one
+    count is 0.85 uL), and it is measured in both views after the same wait as in a trial. A face passes when its
+    height, width and footprint all lie within the ranges spanned by the 10 uL and 30 uL beads; any one over its
+    range counts the face as over, and otherwise any one under its range counts it as under. The trials are run
+    only if every 5 uL and every 40 uL bead falls outside a range (so the check tells a bead under 10 uL or over 30 uL
+    from one inside it); if not, the cameras are moved closer and the calibration is repeated.
+  - Scoring a face, as in the sim: outside the range either way is not a thin bead, so that run cannot reach "both
+    beads" (0.4) or anything above it; over the range, seating an end on it also scores 0. This camera reading is the
+    only volume rule for a face.
+  - Joint band [CHOICE]: in the calibration, the 30 uL beads are each pressed at 6 N under a spare handle end and the
+    glue's reach past the joint's edge is measured (side cameras, then calipers); the band is the widest of these
+    plus a 1 mm margin [CHOICE]. Five beads only sample the reach, so a trial joint can still reach further; that is
+    scored as astray, the strict side.
 - Astray glue: after the run, photograph every surface the nozzle passed over (the glaze, the cradle, the pad, the
-  table and the holder's rim) under raking light with a scale in view, then wipe them. Outside a band 1 mm wide along
-  each joint line (the fillet below), the spots' summed area over 3 mm2 (about 1 uL at 0.3 mm thick, the sim's
-  allowance) scores 0.
-- Squeezed out: a real thin bead pressed down leaves a small fillet at the joint's edge, which the sim does not model.
-  [CHOICE] Before the trials, a 20 uL and a 40 uL bead are each pressed at 6 N on a spare mug and their fillets
-  measured; glue reaching beyond either joint's edge further than midway between the two (side cameras, then
-  calipers) scores 0, standing in for the sim's over-30-uL rule.
+  table and the holder's rim) under raking light with a scale in view, and compare with that trial's baseline. Any new
+  glue spot outside the joint band scores 0. This is stricter than the sim's 1 uL allowance, because the volume of a
+  clear spot cannot be read from a photo.
+  - Detection check [CHOICE], each session: an assistant puts 0.2 uL drops of the gel (positive-displacement pipette)
+    at unmarked places on each of those surfaces, they are photographed the same way, and a judge who did not see them
+    placed must find every one. If one is missed, the light or the camera is changed and the check repeated. Whether
+    0.2 uL can be found at all is not verified; this check is what decides it, and if it cannot be passed the trials
+    are not run.
 - Order and time: from the video, the dry fit seated on both stubs at once (no line of backlight through either joint
   as wide as the 0.6 mm shim), then the handle standing on the pad and both hands off it, before the first squeeze;
   the tube in its holder before the handle is seated on its glue; both ends seated within 5 minutes of the first
