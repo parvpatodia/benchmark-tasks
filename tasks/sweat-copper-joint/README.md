@@ -77,10 +77,55 @@ Hardware:
 - Protection (for the trial, not part of the task): work to ANSI Z49.1, which the CDA guide cites.
   - A sheet-steel bench top, a fume extractor hood 30 cm over the joint, a fibreglass heat shield behind the vise, a
     fire extinguisher at hand, and an operator on the e-stop.
+  - Shields on both arms: each arm's forearm, wrist and gripper housing is covered with an aluminized fibreglass
+    sleeve over a silicone-coated fibreglass wrap, leaving only the finger pads and the cameras' lenses bare (the
+    wrist cameras look out through cut-outs). The left (torch) hand also carries a sheet-steel guard, 80 by 60 mm
+    [CHOICE], clipped to its housing between the torch's head and the wrist; the dry run below checks that it clears
+    the rest, the vise and the right arm. The right (wire) hand's pads stay bare, so a thermocouple on one pad is
+    fitted for every trial (below).
+  - The torch's rest: the steel block stands on a ceramic fibre board, with a sheet-steel back plate behind the torch's
+    head, so a torch put back lit, or dropped near its rest, points its flame at steel and board, not at the bench,
+    the hose or an arm's base. A switch under the block reads whether the torch lies on its rest.
+  - Automatic fuel shutoff: a normally closed, propane-rated solenoid valve, powered through a latching safety relay,
+    sits in the hose at the overhead hanger, so about 1 m of hose is left between it and the torch [CHOICE]. Any
+    condition below opens the relay and the valve closes; loss of power also closes it. The robot is put in
+    protective stop at the same time, the torch staying in the hand. The relay stays open until the operator resets
+    it by hand after finding the cause. A trial stopped by a safety trip (the flame-axis, box, grip, tilt and
+    temperature checks) ends there and scores 0; one stopped by the e-stop for an outside reason, a heartbeat loss or a
+    power fault is not the policy's doing and is voided and rerun.
+    - the e-stop pressed, or the robot controller's protective stop;
+    - no heartbeat from the trial computer for 0.5 s [CHOICE] (a watchdog on the relay);
+    - the flame's axis (the line out of the nozzle's end, from the left arm's joint encoders and forward kinematics at
+      the control rate) passing within 40 mm [CHOICE] of any link of the right arm, pads included, within 300 mm of
+      the nozzle; at the demo's feed pose the wire hand's pads are about 60 mm over the axis [ARITH, from the pads 47
+      mm over the coupling's mouth and the flame 12.7 mm under it];
+    - the nozzle's end outside its working box: the box holds the nozzle's whole path in a dry run of the scripted
+      demo with the flame off, grown by 50 mm on every side [CHOICE], and no more;
+    - the torch off its rest (the rest's switch) while the left gripper's finger width differs from the 22 mm handle
+      by more than 3 mm [CHOICE] (open off it, or closed past it as the torch slips out), or a tilt switch on the
+      torch's body past 45 degrees from level [CHOICE] (the demo's flame runs level): a torch slipping or dropped;
+    - a type K thermocouple under each arm's sleeve at the wrist over 80 C [CHOICE: no rating for the arm's wrist
+      motors was found, so this is set low], or the wire hand's pad thermocouple over 150 C [CHOICE];
+    - the cup thermocouple over 650 F [CHOICE] (the trial has already failed: burnt flux);
+    - the flame out with the valve open (a thermocouple in the torch's flame, as a flame-failure check), except while
+      the operator lights the torch: a hold-to-light button on the relay box bypasses only this check, for at most
+      5 s [CHOICE], with the torch on its rest;
+  - At the trial's 150 s limit (3,000 steps at 20 Hz, counted from the policy's first action) the relay also closes
+    the valve. That is the normal end, not a trip: the trial scores by the ladder at that moment, as in the sim.
+  - The dry run, with the flame off and the scripted demo on each seed in the table above, sets the working box and must not trip the
+    flame-axis, grip, tilt or box checks; its smallest flame-axis distance to the right arm is recorded. If it trips
+    one, the trial is not run until the checks are set again.
+  - Before each session: each condition is tripped once by hand with the flame lit at the rest (the arm moved past
+    the box, the heartbeat stopped, a thermocouple warmed with a heat gun). The grip and tilt checks need the torch off
+    its rest: they are tripped with the torch lying lit on its rest and the rest's switch held open by hand at its
+    actuator, then the gripper opened, and the torch's tilt switch tipped by hand. The time from each trip to the flame going out (the gas left in the hose burns off) is read from the
+    flame thermocouple's log and must be under 3 s [CHOICE]; a session with any condition that fails to trip or to put
+    the flame out in time is not run.
   - A soapy-water leak check of the hose and fittings before each session.
   - The flame heads across the joint, under the wire hand. The wire hand's pads are 58 mm above the wire's tip (about
-    47 mm over the coupling's mouth at full feed) and wrapped in silicone tape rated 260 C. During calibration a thermocouple on one pad, with the hand at the demo's feed pose,
-    must stay under 200 C, or the run is stopped.
+    47 mm over the coupling's mouth at full feed) and wrapped in silicone tape rated 260 C. During calibration the pad
+    thermocouple, with the hand at the demo's feed pose and the flame on its mark for the demo's longest flame-on time (read from the dry run), must
+    stay under 120 C [CHOICE], well under the 150 C trip, or the trials are not run.
 
 How each reading is made:
 
