@@ -18,5 +18,6 @@
   "run_limit": "3,000 steps (150 s at 20 Hz)",
   "reset_notes": "The mug in its cradle and the handle on its pad by seed; the tube in its holder, unsqueezed; no glue anywhere. Nothing else moves.",
   "fidelity": "Approximate. PhysX has no fluids or soft tubes: the tube is two sprung walls; the gel's flow, where it lands and the bead are our model (the bead is drawn pale and 8 to 14 times a real layer's thickness so it shows). The stubs are sprung only to measure the press. The mug collides as a 32-sided prism, its centre of mass 3 mm below its axis for the foam's grip. The glue has no strength. The 150 s run never reaches the open time or the 2 h hold. Handle and stub sizes are estimates.",
-  "scores": "Dream-1 run: 0 (3,000 steps); demo: 1.0 (success at 74.2 s, step 1,484)"
+  "scores": "Dream-1 run: 0 (3,000 steps); demo: 1.0 (success at 74.2 s, step 1,484)",
+  "media": "M-F7XWHZ"
 }
