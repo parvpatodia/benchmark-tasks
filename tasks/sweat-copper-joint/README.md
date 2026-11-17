@@ -77,12 +77,21 @@ Hardware:
 - Protection (for the trial, not part of the task): work to ANSI Z49.1, which the CDA guide cites.
   - A sheet-steel bench top, a fume extractor hood 30 cm over the joint, a fibreglass heat shield behind the vise, a
     fire extinguisher at hand, and an operator on the e-stop.
-  - Shields on both arms: each arm's forearm, wrist and gripper housing is covered with an aluminized fibreglass
-    sleeve over a silicone-coated fibreglass wrap, leaving only the finger pads and the cameras' lenses bare (the
-    wrist cameras look out through cut-outs). The left (torch) hand also carries a sheet-steel guard, 80 by 60 mm
+  - Shields on both complete arms: each arm, from its base to its gripper (base, shoulder, upper arm, elbow, forearm,
+    wrist and gripper housing) and its cables, is covered with an aluminized fibreglass sleeve over a silicone-coated
+    fibreglass wrap, leaving out only the finger pads and the wrist cameras' lenses (they look out through cut-outs).
+    The left (torch) hand's pads are bare on the torch's handle, behind the steel guard; the right (wire) hand's pads
+    are wrapped in silicone tape rated 260 C (below). The left (torch) hand also carries a sheet-steel guard, 80 by 60 mm
     [CHOICE], clipped to its housing between the torch's head and the wrist; the dry run below checks that it clears
-    the rest, the vise and the right arm. The right (wire) hand's pads stay bare, so a thermocouple on one pad is
-    fitted for every trial (below).
+    the rest, the vise and the right arm. A thermocouple under the tape on one of the right
+    hand's pads is fitted for every trial (below).
+  - Exposed rig parts: the gas hose is sleeved in aluminized fibreglass along its whole length from the hanger to the
+    torch; the overhead and side cameras and their stands and the thermocouple leads stand behind the fibreglass
+    heat shield or in their own aluminized sleeves; the vise, the rest with its back plate, the bench top and the heat shield
+    are steel, ceramic board or fibreglass and take the flame by design (the flame heats the fitting in the vise, and a
+    torch on its rest points at its back plate). The cameras, their stands and the leads each have a fixed place in the
+    rig, measured once and entered in the flame-axis check (below); the hose, which moves with the torch, is covered
+    by its sleeve.
   - The torch's rest: the steel block stands on a ceramic fibre board, with a sheet-steel back plate behind the torch's
     head, so a torch put back lit, or dropped near its rest, points its flame at steel and board, not at the bench,
     the hose or an arm's base. A switch under the block reads whether the torch lies on its rest.
@@ -96,9 +105,12 @@ Hardware:
     - the e-stop pressed, or the robot controller's protective stop;
     - no heartbeat from the trial computer for 0.5 s [CHOICE] (a watchdog on the relay);
     - the flame's axis (the line out of the nozzle's end, from the left arm's joint encoders and forward kinematics at
-      the control rate) passing within 40 mm [CHOICE] of any link of the right arm, pads included, within 300 mm of
-      the nozzle; at the demo's feed pose the wire hand's pads are about 60 mm over the axis [ARITH, from the pads 47
-      mm over the coupling's mouth and the flame 12.7 mm under it];
+      the control rate), while the rest's switch reads the torch off its rest, passing within 30 mm [CHOICE] of any link of either arm (all links of the right arm, pads
+      included; all links of the left arm except its gripper's fingers and housing, which hold the torch behind the
+      nozzle and its guard) or of the cameras, their stands or the leads, within 300 mm of the nozzle. In the scripted demo, once the torch is off its rest, the axis passes no
+      nearer than 40.0 mm to the right hand's fingertips (just after the grasp) and 147 mm to the left arm's other links
+      [RUN: offline, from the demo's planned poses], and at the feed pose the wire hand's pads are about 60 mm over it
+      [ARITH, from the pads 47 mm over the coupling's mouth and the flame 12.7 mm under it];
     - the nozzle's end outside its working box: the box holds the nozzle's whole path in a dry run of the scripted
       demo with the flame off, grown by 50 mm on every side [CHOICE], and no more;
     - the torch off its rest (the rest's switch) while the left gripper's finger width differs from the 22 mm handle
@@ -113,7 +125,7 @@ Hardware:
   - At the trial's 150 s limit (3,000 steps at 20 Hz, counted from the policy's first action) the relay also closes
     the valve. That is the normal end, not a trip: the trial scores by the ladder at that moment, as in the sim.
   - The dry run, with the flame off and the scripted demo on each seed in the table above, sets the working box and must not trip the
-    flame-axis, grip, tilt or box checks; its smallest flame-axis distance to the right arm is recorded. If it trips
+    flame-axis, grip, tilt or box checks; its smallest flame-axis distance to each arm and to the rig parts is recorded. If it trips
     one, the trial is not run until the checks are set again.
   - Before each session: each condition is tripped once by hand with the flame lit at the rest (the arm moved past
     the box, the heartbeat stopped, a thermocouple warmed with a heat gun). The grip and tilt checks need the torch off
