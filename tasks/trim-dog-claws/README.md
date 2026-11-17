@@ -8,20 +8,19 @@ pink-grey dot shows in its middle, that claw is done. Cutting on past the dot re
 cuts or a fixed length per claw fails most seeds. All four claws done, the clipper back on its mat and let go of,
 scores 1.0.
 
-Cutting nails or claws is part of a Core task in three occupations (O*NET task lists, with the 2025 employment O*NET
-gives), 628,800 US workers together [ARITH]. Each task names it among other grooming or hygiene duties, and each
-occupation also has members whose work does not include trimming claws (for example aquarists in 39-2021.00 and research
-animal attendants in 31-9096.00); O*NET gives no head count for those, so the total is an upper bound on
-who trims claws, not a count of it:
+Category: Societal relatability. Clipping a dog's nails is familiar pet grooming, and owners do it at home. APPA's
+2026 Dog Report (its press release) puts dog ownership at "71 million U.S. households in 2025" (53% of households) and
+says more than half of owners (51%) "groom their dogs at home". It does not report nail trimming on its own, so how many
+of those households clip nails is not known [UNSOURCED]. Häusler and Söhnel (2026) cite a survey of 35 dog owners in
+which "48% reported trimming their dog’s nails two to five times annually". WSU's guide is written for owners: "it is a
+task you can complete at home". Not every owner does it: AKC notes "Professional groomers will perform the task for
+squeamish owners".
 
-- 39-2021.00 Animal Caretakers, which includes groomers (365,300): "Perform animal grooming duties, such as washing, brushing, clipping, and trimming coats, cutting nails, and cleaning ears."
-- 31-9096.00 Veterinary Assistants and Laboratory Animal Caretakers (132,100): "Perform hygiene-related duties, such as clipping animals' claws or cleaning and polishing teeth."
-- 29-2056.00 Veterinary Technologists and Technicians (131,400): "Bathe animals, clip nails or claws, and brush or cut animals' hair."
-
-In a dark claw the quick cannot be seen through the claw, so it is cut in steps. WSU's guide tells the trimmer to stop
-when "a gray to pink oval starts to appear". A veterinary physiotherapy center "trimmed incrementally using a conventional guillotine-style nail clipper", and "Each
-cut was visually inspected for the appearance of a central black dot, indicating proximity to the vascularized quick"
-(Häusler and Söhnel 2026).
+In a dark claw the quick cannot be seen through the claw, so it is cut in steps until a cue shows on the cut face. WSU:
+stop when "a gray to pink oval starts to appear". Ontario SPCA: "Check the nail after every clip until you can see a
+small shiny dot." AKC: "For dogs with dark nails, watch for a chalky white ring." A veterinary physiotherapy center
+"trimmed incrementally using a conventional guillotine-style nail clipper", and "Each cut was visually inspected for
+the appearance of a central black dot, indicating proximity to the vascularized quick" (Häusler and Söhnel 2026).
 
 What it asks of a robot: seat a claw's end a millimetre or two through a 9 mm ring, square to it, with the ring's head
 passing between neighbouring claws 14 mm apart (1.2 mm from the ring to the claw it cuts at the demo's cuts,
@@ -36,8 +35,13 @@ reach and clearance checks), `sim/` (run scripts).
 
 ## Sources
 
-Saved copies were read in full; every quote here is from them.
+Saved copies were read in full; every quote here is from them. Tags: [SOURCE] read in a saved source, [ARITH]
+arithmetic on tagged numbers, [EST] our estimate, [CHOICE] our choice, [UNSOURCED] no source found.
 
+- American Pet Products Association, "America's Dog Owners Are Becoming Smarter Spenders" (press release on the 2026
+  Dog Report, July 22, 2026): "reaching 71 million U.S. households in 2025 (+4% YoY)", "dog ownership continues to
+  expand, reaching 53% of U.S. households in 2025", and more than half of owners (51%) "groom their dogs at home". The
+  full report was not read; it is sold to members.
 - Häusler K, Söhnel K (2026). Trimming of nails in healthy dogs does not change gait parameters when comparing pre-
   and post-nail trim. Front. Vet. Sci. doi:10.3389/fvets.2026.1728382 (open access, CC BY). Method: "trimmed
   incrementally using a conventional guillotine-style nail clipper", "For dark-colored nails, trimming was performed
@@ -51,20 +55,31 @@ Saved copies were read in full; every quote here is from them.
   starts to appear at the top of the cut surface of the nail. Stop cutting the nail at this point as additional cutting
   will cut into the quick and cause bleeding.", "It’s best to not cut within 2 millimeters of the quick.", "The
   guillotine-type is the easiest to use in dogs."
-- VCA Animal Hospitals, "How to Trim a Dog's Nails": "Through a series of small clips, removing 1–2 mm of nail with each
-  clip", and for dark nails, "trim just the very tip off the nail".
-- O*NET OnLine (US Department of Labor), the three occupations' summary and task pages, saved: each quoted task is
-  marked Core, with importance 72 (39-2021.00), 75 (31-9096.00) and 65 (29-2056.00).
+- American Kennel Club, "How to Trim Your Dog's Nails at Home": "Professional groomers will perform the task for squeamish
+  owners, but dog nail trimming is a simple procedure if done correctly.", "For dogs with dark nails, watch for a
+  chalky white ring."
+- Ontario SPCA, "How to trim your dog's dark nails safely and efficiently": "Keep the clips small.", "Check the nail
+  after every clip until you can see a small shiny dot. That is the quick of the nail."
+- VCA Animal Hospitals, "How to Trim a Dog's Nails": "Through a series of small clips", removing 1 to 2 mm of nail with
+  each clip (VCA's figure, written with a dash there), and for dark nails, "trim just the very tip off the nail".
 - Erler-Zimmer VET4750 "Canine claw trimming paw", user manual and FAQ (maker's PDFs): "Hold the paw securely with one
   hand", "Using the other hand, carefully trim the claws", "model allows for practicing identification and avoiding
   this sensitive area."; the FAQ names "dog owners" among its users.
-- Clipper: an ozfarmer listing of a Resco guillotine clipper, "The guillotine opening diameter is 9mm." No maker sheet
-  was reachable.
+- Clipper: Shoof (a distributor), "Dog Nail Guillotine 9 mm", SKU 202153, a Resco clipper: "9 mm guillotine opening",
+  "The dimension is the guillotine opening diameter." Covetrus lists Resco guillotine clippers as "Supplied By: Tecla".
+  Tecla's patent US5533262 describes the mechanism: "One blade is a movable cutting blade reciprocated in a single
+  cutting stroke by manually squeezing together the handles of the clipper against the force of a biasing spring
+  coupled between the handles.", and "the cutting blade should travel for a substantial distance beyond the retainer
+  blade opening to insure that the object is severed cleanly." Coastal Pet's own page for its Safari guillotine
+  trimmer gives sizes as "Small (5" L x 3" W) Large (5" L x 3" W)".
+- Smooth-On, Dragon Skin series technical bulletin: Dragon Skin 30, Shore 30A, tensile strength 500 psi (table row).
 
 Where the sources differ:
 
 - VCA tells owners with dark nails to take off only the very tip; WSU and the paper cut in steps to the cue. This task
   is the WSU and paper method. VCA's advice is the cautious alternative for an owner who does not trust the cue.
+- The cue's look: WSU "a gray to pink oval", Ontario SPCA "a small shiny dot", AKC "a chalky white ring", the paper "a
+  central black dot". The task draws WSU's: a pink-grey dot in the middle of the black face. AKC's ring is not drawn.
 - WSU puts the oval "at the top of the cut surface"; the paper says "central". The dot here is in the middle.
 - WSU says "Nails should be cut from underneath at a 45-degree angle"; the paper keeps "a slight distal angle". Here
   the claw points straight up and the clipper is held level, so the cut is square to the claw (WSU's "perpendicular").
@@ -73,10 +88,12 @@ Where the sources differ:
 
 Not sourced (estimates, marked in the code): the claw and toe sizes (no measured source found; the claw's end is 3.6
 by 4.4 mm), the leg's length and the trainer's place on the bench, the clipper's length and handle span (chosen to fit
-the gripper; a real guillotine's handles are wider), the dot's colour and size (drawn pink-grey, 3.2 mm across, as
-large as the cut face allows), and the 2 mm dot zone. No source gives how far before the quick the cue appears; WSU's
-"to not cut within 2 millimeters of the quick" is advice on where to stop, not that distance, so 2 mm is an estimate to be
-replaced by the calibration below.
+the gripper; no maker or seller we found publishes a guillotine clipper's handle span, blade travel, lever ratio or
+spring force, see Real trials), the dot's colour and size (drawn pink-grey, 3.2 mm across, as large as the cut face
+allows), and the 2 mm dot zone. No source gives how far before the quick the cue appears in a real claw; WSU's "to not
+cut within 2 millimeters of the quick" is advice on where to stop, not that distance. The real trials therefore use
+claw tips built with the cue at a set, measured depth (Real trials), so the 2 mm is a property of the tips, not a
+claim about dogs.
 
 ## The model
 
@@ -89,7 +106,8 @@ replaced by the calibration below.
 - The claw resists: while a squeeze from open has the blade's edge inside the end of a claw in the ring, each handle
   pushes back 8 N more than its spring (`R_CUT`, an estimate; see Sim against real). The YAM finger's drive (5,000 N/m
   to its target, capped at 50 N) beats the spring plus that by 6.1 N or more at every point of the cut, the claw
-  anywhere in the hole (`test_gripper_can_squeeze_through_a_claw`).
+  anywhere in the hole (`test_gripper_can_squeeze_through_a_claw`), and still by 6.2 N capped at the reviewer's 40 N
+  per finger (`test_squeeze_fits_a_40_n_finger`).
 - The quick: its end lies 4.5 to 8.5 mm below a claw's end at the start, in 0.5 mm steps, drawn for each claw on its
   own from the seed (table below). A cut face within 2 mm of it shows the pink-grey dot. A cut to or past it bleeds: a
   red drop shows on the cut face, and the score is 0.
@@ -134,50 +152,94 @@ it. The pull request includes a zoomed still.
 
 ## Real trials
 
+Round 2 review asked for a trainer cue that is shown, claws prepared repeatably at the hidden lengths, and a named
+clipper the YAM can grasp and squeeze within about 40 N per finger. For the VET4750's own claws, its FAQ says
+"200 ml of artificial blood can be injected into the claws. If clipped incorrectly, the fluid simulates bleeding", and
+its manual that the model "allows for practicing identification" of the quick in dark claws; neither says what a cut
+face shows before the fluid, nor where in the claw the fluid channel ends, and we have not tested one. So the trials
+replace its claws with cast claw tips whose cue and quick sit at a measured depth.
+
 Hardware:
 
-- Trainer: Erler-Zimmer VET4750 with its long black claws (LB), the blood system filled with its fluid as the manual
-  says. Its stand is clamped to the table and the leg is clamped near the paw to a rigid block, so the paw is sole up,
-  the claws point up, and the paw does not move when cut. The maker shows the paw hanging; turning it is our choice, so
-  the cut faces face the overhead and wrist cameras. Whether the blood system works with the paw turned is checked in
-  the calibration below.
-- Seeds: the claws are consumables (25 long black claws per kit). Before a trial, claws are pre-shortened off camera by
-  a hidden amount and refiled to a point, so the quick sits 4.5 to 8.5 mm from each end as in the table above (from
-  the calibration below). A judge who did not prepare them runs the trial. Refiling changes the end's shape; the end's
-  width after refiling is measured and reported.
-- Clipper: a steel guillotine clipper with a 9 mm ring, the blade sharpened or replaced every session.
+- Trainer: the Erler-Zimmer VET4750 leg and stand, clamped as in the sim (stand clamped to the table, the leg clamped
+  near the paw to a rigid block, the paw sole up). Its own claws are not fitted and its blood system is not filled. A
+  printed carrier (PLA, a bar with four sockets 14.0 mm apart on centres) is bolted to the block under the paw so the
+  four tips stand up through the toes, in the sim's row. Fit check before each session: pitch 14.0 +- 0.5 mm and
+  each tip's end 115 +- 1 mm over the table (calipers, height gauge) [CHOICE]; the carrier has not been trial-fitted to
+  a VET4750.
+- Claw tips (the consumable, one per claw per trial): cast Dragon Skin 30 silicone, 26 mm long (18 mm showing, an 8 mm
+  root in the socket). The top 11 mm, deeper than any cut (the deepest quick is 8.5 mm), has the sim's cut face, 3.6
+  by 4.4 mm, the same all the way down; it then flares to 5 by 6 mm at the toe. Three colours, coaxial:
+  - shell: black (Silc Pig black), the whole outside;
+  - cue: a pink-grey plug, 2.4 mm across and 2.0 mm long, on the axis, its top at depth c below the end;
+  - quick: red, 2.4 mm across, from the plug's bottom (depth q = c + 2.0 mm) down to the root.
+  A cut face shallower than c is all black; from c to q it shows a pink-grey dot in the middle of the black face (the
+  cue); at q or deeper it shows red (a bleed, score 0). The walls round the core are 0.6 and 1.0 mm [ARITH].
+- Making a tip [CHOICE]: a printed two-part mould with a 2.4 mm steel pin entering from the root, its end set by a
+  printed stop collar at depth c from the end; pour the black shell, cure, pull the pin, leaving a blind bore from the
+  root. Pink-grey plugs are cut from one cast 2.4 mm rod in a printed slicing jig. Push one plug to the bore's bottom
+  with the pin; fill the rest with red silicone from a syringe; cure.
+- Measuring every tip (digital calipers reading to 0.01 mm; the depth rod touched lightly on the silicone): length L;
+  end section; bore depth from the root face before the plug, H1, and after it, H2. Then c = L - H1 and q = L - H2.
+  Accept a tip only if the end section is 3.60 +- 0.10 by 4.40 +- 0.10 mm, the plug is 2.00 +- 0.10 mm long, and c
+  and q are each within 0.15 mm of their targets [CHOICE: with 0.5 mm between seed lengths, 0.15 mm keeps neighbouring
+  lengths at least 0.2 mm apart, ARITH]. The measured c and q are written on a label on the root, hidden in the
+  socket.
+- Seeds: tips are made in stock for each of the 9 quick lengths (q 4.5 to 8.5 mm, c = q - 2.0 mm). For a trial, the
+  person who did not make or measure them fits the four tips the seed table names, labels hidden. A trial uses four
+  new tips.
+- Clipper: a Resco guillotine clipper with the 9 mm ring (Shoof SKU 202153, Sources), its blade replaced every
+  session. Sourced: the 9 mm ring [SOURCE], matching the sim's; the one-moving-blade, sprung-handle mechanism
+  [SOURCE, US5533262]. Not published by Resco, Tecla, Shoof, Covetrus, VetUK or Tractor Supply, nor by the makers or
+  sellers of the other guillotine clippers we checked (Coastal Safari, Jorgensen J0307N, CHI, Kruuse, Hirota):
+  the handle span open and closed, the blade travel, the lever ratio and the spring force [UNSOURCED]. So the grasp and
+  the squeeze are checked on the clipper itself (C1, C2 below) before any trial; one that fails is not used, and the
+  Coastal Safari Large is tried next (its maker's 3 in overall width, 76.2 mm [ARITH], is under the fingers' 94 mm
+  opening, so its open handles fit between the pads) [SOURCE, ARITH].
 - Protecting the shared rig (for the trial, not part of the task):
-  - Gripper pads: each pad carries a replaceable skin of the same rubber, held by double-sided tape, changed after any
-    trial that leaves the trainer's fluid or claw dust on it and at the end of each session. The fingers touch only the
-    clipper's handles; the blade runs inside the ring's head, away from them.
-  - Work surface: a plastic-backed absorbent liner over the bench under the trainer, the mat and the arms' reach,
-    changed each session; a shallow tray under the paw catches the clippings and any fluid.
+  - Gripper pads: each pad carries a replaceable skin of the same rubber, held by double-sided tape, changed at the
+    end of each session or when silicone crumbs stick to it. The fingers touch only the clipper's handles; the blade
+    runs inside the ring's head, away from them.
+  - Work surface: a liner over the bench under the trainer, the mat and the arms' reach, changed each session; a
+    shallow tray under the paw catches the clippings.
   - The trainer's stand is clamped to the bench and the leg to its block, so neither can fall onto the rig.
-  - Handling: the operator changes the blade and refiles claws in cut-resistant gloves, with the arms in protective
-    stop; clippings are vacuumed from the tray after each trial; the fluid is wiped from the claw and the tray after a
-    bleed. A trial in which fluid reaches an arm beyond the pads stops the session until that arm is cleaned.
+  - Handling: the operator changes the blade and the tips in cut-resistant gloves, with the arms in protective stop;
+    clippings are vacuumed from the tray after each trial. No fluid is used.
 
-Calibration, before any trial, on spare long black claws with the paw turned as in the trials:
+Checks before any trial, with pass/fail numbers:
 
-- Section five claws lengthwise and measure where the blood channel ends from the tip (the uncut quick length).
-- Cut five more in 0.5 mm steps; photograph each cut face under the same light with a macro lens, and note the step at
-  which the channel shows as a dark dot and the step at which fluid comes out. The sim's 2 mm dot zone is replaced by
-  the measured one in a run of the offline tests (`DOT`) before the trial, and the seed table by the pre-shortening
-  that the sectioned claws give.
-- Cutting force: with a push-pull force gauge on the clipper's handle, cut five long black claws at the trial
-  lengths and record the peak handle force beyond the bare spring. `R_CUT` is replaced by it (scaled to the sim's
-  handles) in a run of the offline tests before the trial; the gauge reads at the point where the gripper's
-  pads hold the handles, and if the peak, spring included, is over 45 N (the gripper's 50 N less a 5 N margin
-  [CHOICE], as in the offline margin test), the trials are not run with that clipper.
-- If the channel never shows before fluid comes out, the trainer cannot test the stop cue. The trials are then not run
-  with it; this is the one premise of the real trial no source confirms.
+- C1, grasp (once per clipper): calipers across the handles' outer faces at the points the pads hold (the grip point
+  55 mm behind the ring's centre, as in the sim). Pass: span open 90 mm or less (the fingers' 94 mm less 4 mm
+  [CHOICE]), and the blade fully across the ring before the handles meet.
+- C2, squeeze force (once per clipper, and after each blade change): one handle clamped, a push-pull force gauge
+  reading to 0.1 N pressing the other handle at the pad point, squeeze from open through a tip set at its deepest
+  cut (q 8.5 mm, cut 8 mm down); five tips. By statics the force on the pushed handle is the force each of two
+  squeezing fingers must give [ARITH]. Pass: the peak, spring included, 35 N or less on all five (the reviewer's 40 N
+  per finger less the 5 N margin of `test_squeeze_fits_a_40_n_finger`). Then `R_CUT` is set to the measured peak less
+  the spring force at that travel (scaled to the sim's handles) and the offline tests are re-run; trials go ahead only
+  if they pass.
+- C3, cue (once per material batch): five spare tips (q 4.5, 5.5, 6.5, 7.5, 8.5 mm) cut by hand with the clipper in
+  0.5 mm steps, the removed length measured with calipers after each cut and each face photographed with a macro lens
+  under fixed light, a 0.5 mm grid in view. Faces within 0.15 mm of c or q are not judged. Pass, on all five: every
+  face shallower than c shows no pink-grey or red; every face between c and q shows a pink-grey dot 2.4 +- 0.3 mm
+  across, centred within 0.5 mm; the first face past q shows red.
+- C4, build (one tip in each pour of at most ten): slit lengthwise with a razor blade, photographed on the grid. Pass:
+  c and q within 0.20 mm of that tip's caliper values, and no void through the black wall in the top 11 mm. A fail
+  rejects the pour.
+
+The C2 force is bounded but not shown by published data. Dragon Skin 30's tensile strength, 500 psi = 3.45 MPa
+[SOURCE], times the 3.6 by 4.4 mm face, 15.84 mm2 [ARITH], is 54.6 N at the blade [ARITH], taking the face to shear at
+no more than its tensile strength [EST; a sharp blade parts the face progressively, so the peak is expected lower, but
+that is not proven]. Through the clipper that needs a lever ratio of 54.6 / (35 - spring) or more; with the sim's 23 N
+spring at its stop, 4.6 [ARITH]. The real ratio and spring are not published, which is why C2 is a gate, not a claim.
 
 How each reading is made:
 
-- Claw done: after the run, each cut face is photographed with the same macro set-up and judged against the
-  calibration photos (dot showing, no fluid); the removed length is measured with calipers against the pre-run length.
-- Bled (score 0): a white tissue touched to each claw's end after the run shows fluid, or fluid is seen on the claw in
-  the video at any time.
+- Cut depth: each tip's end height over the carrier's top face, by the calipers' depth rod, before and after the run.
+- Claw done: cut depth from c to q (the tip's label) and the face, photographed with the C3 set-up, shows the
+  pink-grey dot and no red. Within 0.15 mm of c or q the photo decides.
+- Bled (score 0): red on any cut face in the photos after the run or in the video at any time, or a cut depth of q or
+  more.
 - Clipper down: on its mat, still, and no gripper touching it at the end (video).
 - Each run's video is kept with the photos and readings.
 
@@ -209,6 +271,20 @@ Dream-1 ran all 3,000 steps (0.49 s mean inference latency) and scored 0. In the
 about 20 s and its right hand reaches the clipper from about 50 to 75 s; the run does not log the model's state, so
 whether it cut any claw is not known.
 
+## Changes since the runs
+
+The runs above hashed `nail_trim.py`, `mechanism.py` and `task.json` (`files.sha256`). `nail_trim.py` and `mechanism.py`
+are byte-identical to the runs (the same hashes). In `task.json` these fields differ from the file the runs hashed:
+`scores` ("pending" then, now the results) and `media` (added at upload) in round 1, and `category` (Impact on jobs to
+Societal relatability) and `context` (the O*NET text replaced by the pet-grooming sources) in this revision. The
+`instruction`, `setup`, `scoring`, `run_limit`, `reset_notes`, `fidelity`, `title` and `keywords` are byte-identical,
+so the scene, the scorer and the instruction Dream-1 received are unchanged. Also changed: this README,
+`test_nail_trim.py` (one test added) and `tools/gen_taskjson.py` (the two fields).
+
+The films ran with yam_arena's gripper cap of 50 N, so early in a squeeze, before the blade reaches the claw, the
+pads pushed up to 50 N. Capped at 40 N the squeeze still beats the spring plus `R_CUT` by 6.2 N or more at every
+point of the cut (`test_squeeze_fits_a_40_n_finger`, offline); the films were not re-run at 40 N.
+
 ## Sim against real
 
 - The paw is rigid and clamped; a dog's toes and the trainer's silicone flex, and a dog moves. The claws are straight
@@ -216,27 +292,22 @@ whether it cut any claw is not known.
 - PhysX does not cut. A cut claw's tip slides down into the toe by what was cut; its cut face stays flat and its width
   does not grow as it gets shorter.
 - The blade is drawn only and the handles slide instead of pivoting, with 12 mm of squeeze. The claw's resistance is
-  modelled as 8 N on each handle on top of the springs while the blade's edge is inside a claw in the ring; the
-  calibration in Real trials measures it. A squeeze that cannot push through stops in the
+  modelled as 8 N on each handle on top of the springs while the blade's edge is inside a claw in the ring; check C2
+  in Real trials measures it. A squeeze that cannot push through stops in the
   claw and cuts nothing.
 - The quick's lengths are our choice, spread over the 5 to 8 mm the paper's clinic removed on average; the 2 mm dot
   zone is an estimate, not a measurement.
-- The claw's push-back: the sim models it as 8 N a handle (`R_CUT`). Published keratin data bound the real figure:
-  a cutting energy of about 3 kJ/m2 for fingernail cut transversely (Farren et al. 2004, J Exp Biol 207:735, abstract),
-  11 to 22 kJ/m2 for fingernails (Farran et al. 2008, J Exp Biol 211:3677, abstract), and a fracture toughness of
-  22.8 kJ/m2 for horse hoof wall at 75% RH (Bertram and Gosline 1987, J Exp Biol 130:121, abstract). Times the cut's
-  chord, that is 13 to 100 N at the blade across the 4.4 mm claw end and 18 to 137 N across the 6 mm root. The sim's
-  8 N covers the low end through a clipper that multiplies the squeeze by 1.7 or more (13.2 / 8); with the 23 N spring
-  at the stop, the YAM's 50 N leaves 27 N for the cut, which covers the top of the range at a ratio of 3.7 (5.1 at the
-  root). The force-gauge calibration in Real trials reads the real clipper's figure, spring included, and the trials
-  run only if it is at most 45 N.
+- The claw's push-back: the sim models it as 8 N a handle (`R_CUT`), so a handle needs at most 31 N (the 23 N spring
+  at its stop plus 8 N), under the reviewer's 40 N per finger. The real tips are silicone, not keratin; their bound and
+  the C2 gate that replaces `R_CUT` with a measurement are in Real trials. The real cue plug is 2.4 mm across, smaller
+  than the sim's 3.2 mm dot (56% of its area [ARITH]); the sim's cue is the easier one to see.
 
 ## Tests
 
 `python3 test_nail_trim.py` (with yam_arena on PYTHONPATH) runs the offline tests:
 
 - the cut model: a cut takes what stands over the blade; the claw resists only while the blade is through it, and the
-  gripper can squeeze through that anywhere in the hole; no cut without the claw in the ring; no cut with the clipper
+  gripper can squeeze through that anywhere in the hole, also with its drive capped at 40 N; no cut without the claw in the ring; no cut with the clipper
   upside down or tilted 20 degrees (10 degrees still cuts); one cut per squeeze; the dot zone and the bleed; the cut
   judged where the claw is;
 - the scorer: the ladder; the latched 0 on a bleed; a moving clipper is not down, nor one on its edge; a hand still
