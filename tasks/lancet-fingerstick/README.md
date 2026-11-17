@@ -7,7 +7,8 @@ as BD's guide gives it: twist the tab off, hold the hand still with one gripper,
 the ring or middle fingertip with the other, press until it fires, and drop the used lancet into the container.
 
 Both hands are needed by the physics, not by a rule. The hand turns on the finger rest's edge and rests on the wrist
-rest by its own weight, so a press of 3.5 N (at the site's far end) to 4.4 N (near the apex) tips it, fingertips down.
+rest by its own weight, so a press of 3.5 N (3 mm from the apex) to 4.4 N (15 mm back, nearer the pivot) tips it,
+fingertips down.
 The lancet fires at 8 N. Without the other hand holding the forearm stub down, the hand tips before the lancet fires,
 and a press with the wrist risen more than 2 mm scores 0 (`test_no_steadying_hand`).
 
@@ -48,6 +49,15 @@ Saved copies were read; every quote here is from them.
 - O*NET 31-9092.00 Medical Assistants: Core task "Collect blood, tissue, or other laboratory specimens, log the
   specimens, and prepare them for testing."; "Employment (2025)" "833,900 employees". O*NET's own definition of Core:
   relevance of at least 67% of incumbents and mean importance of at least 3.0.
+- O*NET 29-2061.00 Licensed Practical and Licensed Vocational Nurses: Core task "Collect samples, such as blood, urine,
+  or sputum from patients, and perform routine laboratory tests on samples."; "666,900 employees" (2025).
+- O*NET 31-9097.00 Phlebotomists: Core task "Draw blood from capillaries by dermal puncture, such as heel or finger
+  stick methods."; "143,900 employees" (2025).
+- CMA (AAMA) certification exam content outline, Specimen Collection Techniques, Blood: "Capillary/Dermal puncture
+  (finger, heel, ear)".
+- McKesson item 1251387, Wallcur REM-LANCE-KIT-01D (light skin: 1251386, REM-LANCE-KIT-01L), "Blood Glucose Test
+  Trainer Lance Finger": "Simulated finger stick and blood glucose trainer" and "Finger fits over the finger of a
+  standard patient or Mannequin". It gives no size, mass or wall thickness.
 - NCCT, National Certified Medical Assistant detailed test plan (effective January 2024, from a national job analysis):
   "Perform capillary punctures (i.e., fingerstick, heelstick)."
 - benchmark-tasks #1837 (merged): the trainer hand's sizes, "ANSUR II median adult male (hand length 193 mm, breadth 88
@@ -101,24 +111,35 @@ Never on a person. The trial uses the trainer hand only, with nobody in the arms
 Parts and instruments:
 
 - BD Microtainer contact-activated lancets 366577 (21 G x 1.8 mm), one per trial; a BD 305635 sharps collector.
-- An adult right-hand silicone task trainer, life size (193 mm wrist crease to middle fingertip), about 0.3 kg, with a
-  forearm stub, as in #1837. It is strapped to a 3D-printed cradle that holds it rolled 30 deg; the cradle sits on a
-  fixed block under the proximal phalanges (the pivot) and its wrist end rests on a second block. Both blocks are fixed
-  to a 3 kg base plate taped to the table.
+- Wallcur Lance fingerstick trainer fingers (REM-LANCE-KIT-01D, three a pack), one fitted over the trainer hand's ring
+  finger and one over its middle finger; a punctured one is replaced. The puncture lands in the Lance finger, not in
+  the hand.
+- Under them, an adult right-hand silicone hand model, life size (193 mm wrist crease to middle fingertip), about 0.3
+  kg, with a forearm stub, as in #1837. We have not found a product page that gives such a hand's size and mass, so no
+  model is named; the one used is measured (check 3b). It is strapped to a 3D-printed cradle that holds it rolled 30
+  deg; the cradle sits on a fixed block under the proximal phalanges (the pivot) and its wrist end rests on a second
+  block. Both blocks are fixed to a 3 kg base plate taped to the table.
 - A stand with a printed socket keyed to the lancet's tab cap, fixed to the table.
 - A push-pull force gauge (0.1 N readability) with a flat tip; a cap torque gauge (0.1 N-cm readability); digital
   calipers (0.01 mm); a digital angle gauge (0.1 deg); a 0.01 g scale; a protractor; a 10x loupe; washable ink; a side
-  camera with a mm scale beside the wrist rest; an overhead camera and a microphone.
+  camera with a mm scale beside the wrist rest; a second side camera at 90 deg to it; an overhead camera and a
+  microphone.
 
 Checks before any trial, each with its pass criterion (no trial runs until all pass):
 
 1. Fire force: five lancets pressed by hand, shield first, onto the gauge's tip through a 3 mm silicone pad; the peak
-   at the click. Pass: every one at or under 15 N (the top of Unistik's 4 - 15 N). The sim's 8 N is replaced by the
-   mean in a run of the offline tests.
+   at the click. Pass: every one at or under 15 N (the top of Unistik's 4 - 15 N), and the lowest at least 1 N over the
+   largest tipping force on the site (the sim's 4.4 N, 15 mm back from the apex), so a one-handed press tips the hand
+   before the lancet fires. If the lowest is under that, ballast is moved toward the fingertips until it holds and
+   the sim's centre of mass is set from check 4's new reading. The sim's 8 N is replaced by the mean, the placed
+   rung's 5 N is set between the largest tipping force and the lowest fire force, and the offline tests are re-run.
 2. Tab: five tabs twisted off in the socket by the torque gauge. Pass: every peak at or under 4.9 N-cm (Facet's
    limit) and every break at or under 60 deg (protractor), under the demo's 70 deg twist.
 3. Body size: five lancets with calipers. Pass: each side within 1 mm of the sim's 13 x 10 x 37 mm, or the sim is
    updated and its tests re-run.
+3b. Hand: the hand weighed (0.01 g scale) and its ring and middle fingertips' radii with the Lance fingers on
+   (calipers). Pass: mass within 0.05 kg of 0.300 kg and each radius within 1 mm of the sim's, or the sim is updated
+   and its tests re-run.
 4. Tipping force: the force gauge pressed down on the ring's site, 8 mm from the apex, until the wrist lifts off its
    rest. Pass: 3.3 to 4.3 N (the sim's 3.8 N there, plus or minus 0.5 N); ballast on the cradle's wrist end is moved
    until it passes.
@@ -127,6 +148,8 @@ Checks before any trial, each with its pass criterion (no trial runs until all p
    before the press) is seen under the loupe every time.
 7. Grip: with the pad covers on, the lancet held in the gripper at the demo's target and pressed on the gauge to 15 N
    does not slip in the grip (no change in the camera over 2 s).
+8. Covers: five lancets fired by hand, shield on a spare pad cover laid over carbon paper on white card. Pass: no
+   mark on the card under the loupe every time.
 
 Scoring a trial, each threshold with its instrument:
 
@@ -137,8 +160,8 @@ Scoring a trial, each threshold with its instrument:
 - Site: the shield's ink print lies inside a zone drawn on the ring and middle fingertips from a paper template (3 to 15
   mm back from the apex, 15 to 45 deg round from the pad's middle line), checked with the loupe.
 - Slide: the print's longest length is at most the shield's diameter plus 1.0 mm (calipers).
-- Square: from the side camera, the housing's edge within 15 deg of vertical at the click (protractor overlay), the
-  site's normal being vertical by check 5.
+- Square: from two side cameras 90 deg apart (one along the fingers, one across them), the housing's edge within 15
+  deg of vertical in both views at the click (protractor overlay), the site's normal being vertical by check 5.
 - Steadied: from the side camera, the wrist rises no more than 2 mm off its rest (mm scale) while the lancet touches.
 - In the container: the container weighed before and after on the 0.01 g scale gains the lancet's mass (weighed in
   check 3) within 0.1 g; the video shows both grippers open and away; no lancet loose elsewhere for 0.5 s.
@@ -146,8 +169,11 @@ Scoring a trial, each threshold with its instrument:
 
 Rig protection and sharps handling (for the trial, not part of the task):
 
-- Gripper pads: each pad's face is covered with 2 mm EVA foam tape, deeper than the needle's 1.8 mm, replaced after any
-  fire against it (check 7 is run with the covers on).
+- Gripper pads, both arms: the needle reaches at most 1.8 mm past the shield's face, and the face rests on whatever
+  it is pressed on, so a cover the face cannot sink into stops it. Each finger of both grippers is capped over its tip
+  and outer face with a 3 mm polycarbonate shell [CHOICE]; the grip faces carry a 3 mm polycarbonate plate under thin
+  grip tape. Foam is not used: it compresses under the 8 to 15 N press, and the needle would reach the pad. Check 8
+  proves it. Check 7 is run with the covers on.
 - Both arms and every rig part: the lancet fires only under 4 N or more on its shield and points down, so its needle can
   reach only what is under it. The table under the work area is covered with a 3 mm polycarbonate sheet; the trainer's
   cradle and the stand are plastic; no arm link, camera or cable is placed under the lancet's path from the stand to the
@@ -177,6 +203,9 @@ The run limit is 2,400 steps (120 s); the demo takes 28 s of plan.
 - The trainer is rigid on a pivot; a real silicone fingertip yields a little under the press.
 - BD has the patient's hand held downward for blood flow; the trainer lies palm up so its fingertips are in reach of a
   top-down gripper, and the blood flow is out of scope.
+- Out of scope, from BD's guide: warming the site, the alcohol wipe and air dry, wiping the first drop, collecting the
+  specimen and pressing on the site after. The task covers the puncture itself: the tab, the steadied hand, the
+  placed and fired lancet, and its discard.
 
 ## Tests
 
@@ -206,7 +235,10 @@ two TCPs' separation along x.
 ## Closest tasks
 
 - #2259 (open): loading a lancet into a pen lancing device, its tab twisted off. That loads a home device and never
-  punctures; here a clinical contact-activated lancet is fired on a fingertip held still by the other hand.
+  punctures; here a clinical contact-activated lancet is fired on a fingertip held still by the other hand. The tab
+  twist is shared and is only the 0.2 rung here; every higher rung needs the steadied, square press that fires it.
+  #2259's review flag ("Protect the gripper pads or use suitable blunt training lancets") is answered under Rig
+  protection.
 - #1837 (merged): clipping a pulse oximeter on a trainer's finger while steadying the hand. Its hand sizes are used
   here. It has no sharp, no firing force, and no site or squareness rule.
 - #1846 (final): a pulse oximeter clip, a duplicate of #1837.
@@ -219,9 +251,11 @@ two TCPs' separation along x.
 - #2049, #2082, #1861 (merged): putting used needles in sharps. Here the discard is the last step, not the skill.
 - #612 (final, blood tubes in order of draw) and #2242 (open, scanning a wristband): other clinical steps, no sharps.
 
-Category: the step is the O*NET Core task "Collect blood, tissue, or other laboratory specimens" of Medical Assistants
-(833,900), and the national certification test plan lists fingersticks. O*NET's Core means at least 67% of incumbents
-rate the task relevant, not every one; some medical assistants may collect specimens only by venipuncture.
+Category: blood collection is an O*NET Core task of Medical Assistants (833,900), Licensed Practical and Vocational
+Nurses (666,900) and Phlebotomists (143,900; their task names finger sticks), 1.64 million in all. Both national medical
+assistant exams (NCCT, CMA (AAMA)) test capillary puncture by finger. The accepted #1951 rests on one Medical Assistants
+Core task, and #2049 on tasks of three occupations; this follows #2049. O*NET's Core means at least 67% of
+incumbents rate the task relevant, not every one.
 
 ## Third-party code
 

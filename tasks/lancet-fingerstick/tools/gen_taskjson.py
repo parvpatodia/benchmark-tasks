@@ -31,15 +31,17 @@ d = {
     "keywords": ["fingerstick", "capillary puncture", "lancet", "medical assistant", "bimanual", "sharps", "steadying"],
     "instruction": " ".join(M.__doc__.split()),
     "context": (
-        "O*NET 31-9092.00 Medical Assistants (Employment (2025) 833,900) lists as a Core task \"Collect blood, tissue, "
-        "or other laboratory specimens, log the specimens, and prepare them for testing.\" The NCCT Medical Assistant "
-        "test plan, built on a national job analysis, lists \"Perform capillary punctures (i.e., fingerstick, "
-        "heelstick).\" BD's own fingerstick guide for this lancet gives the steps scored: \"Twist off the tab to break "
-        "the seal and discard.\"; \"Select finger: middle or ring finger is preferable. The fifth finger must not be "
-        "punctured\"; \"press safety lancet firmly against the puncture site. Do not remove the device from the site "
-        "until an audible click is heard.\"; \"Discard used safety lancet into a sharps container\". The skill: two "
-        "hands at once, one holding the hand still against the press, the other placing a sharp square on a curved "
-        "fingertip and pressing without sliding."),
+        "O*NET Core tasks (relevant to at least 67% of incumbents): "
+        "Medical Assistants 31-9092.00 (Employment (2025) 833,900), \"Collect blood, tissue, or other laboratory "
+        "specimens, log the specimens, and prepare them for testing.\"; Licensed Practical and Licensed Vocational "
+        "Nurses 29-2061.00 (666,900), \"Collect samples, such as blood, urine, or sputum from patients\"; "
+        "Phlebotomists 31-9097.00 (143,900), \"Draw blood from capillaries by dermal puncture, such as heel or finger "
+        "stick methods.\" The NCCT medical assistant test plan lists \"Perform capillary punctures (i.e., fingerstick, "
+        "heelstick).\" BD's guide for "
+        "this lancet gives the steps scored: \"Twist off the tab to break the seal and discard.\"; \"The fifth finger "
+        "must not be punctured\"; \"press safety lancet firmly against the puncture site.\"; \"Discard used safety "
+        "lancet into a sharps container\". The skill: one hand keeps the hand still while the other presses a sharp "
+        "square on a curved fingertip without sliding."),
     "setup": (
         f"Coordinates: x forward from the arm bases (at y +-0.305), y left, z up from the table top. Fixed: a stand "
         f"({mm(2 * M.STAND_HALF)} mm square, {mm(M.STAND_H)} mm high) at ({M.STAND[0]}, {M.STAND[1]}) with a socket on "
@@ -50,7 +52,7 @@ d = {
         f"contact-activated lancet 366577 (21 G x 1.8 mm, pink), modelled as a {mm(M.L_W)} x {mm(M.L_T)} x "
         f"{mm(M.L_LEN)} mm polypropylene housing ({g(1000 * sum(M.LANCET_KG))} g) and a {mm(2 * M.SHIELD_R)} mm contact "
         f"shield standing {mm(M.SHIELD_OUT)} mm proud on a spring ({g(M.K_SHIELD / 1000)} N/mm, {g(M.F_PRE)} N "
-        f"preload); it fires at {g(M.F_FIRE)} N on the shield ({mm(q_fire)} mm of travel). It stands tip down in the "
+        f"preload); it fires at {g(M.F_FIRE)} N on the shield ({1000 * q_fire:.2f} mm of travel). It stands tip down in the "
         f"socket. A trainer hand (right hand, silicone, {M.HAND_KG:.3f} kg, life size: ring finger tip radius "
         f"{mm(M.FINGERS['ring'][3])} mm, middle {mm(M.FINGERS['middle'][3])} mm, little {mm(M.FINGERS['little'][3])} "
         f"mm) lies palm up on a weighted base ({g(M.BASE_KG)} kg) with two foam rests, rolled "

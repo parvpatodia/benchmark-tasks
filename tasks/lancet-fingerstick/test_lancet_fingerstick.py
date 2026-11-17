@@ -2,6 +2,7 @@
 routes, and both arms' demo replayed through the model on each film seed by a kinematic stand-in for the sim (a gripped
 lancet follows the TCP; the press is the arm's compliance in series with the shield's spring; an unheld hand tips
 past its tipping force). Run with yam_arena on PYTHONPATH."""
+import json
 import math
 import pathlib
 import types
@@ -595,6 +596,23 @@ class ReadmeNumbers(unittest.TestCase):
                   f"{W * (M.COM_X - M.PIVOT_X) / (M.PIVOT_X - M.SITE_S[0]):.1f} N",
                   f"{1000 * M.BASE_MOVED:.0f} mm", f"{M.RUN_LIMIT_STEPS:,} steps"):
             self.assertIn(s, t)
+
+
+    def test_tipping_force_sits_with_its_place(self):
+        """The README pairs each tipping force with where on the site it acts (smallest near the apex)."""
+        near = W * (M.COM_X - M.PIVOT_X) / (M.PIVOT_X - M.SITE_S[0])
+        far = W * (M.COM_X - M.PIVOT_X) / (M.PIVOT_X - M.SITE_S[1])
+        self.assertLess(near, far)
+        self.assertIn(f"{near:.1f} N ({1000 * M.SITE_S[0]:.0f} mm from the apex) to {far:.1f} N "
+                      f"({1000 * M.SITE_S[1]:.0f} mm back", self.TXT)
+
+    def test_instruction_is_outcomes_not_choreography(self):
+        """Under 1000 characters, and no gripper assignment or grasp (the #826 rejection)."""
+        ins = " ".join(M.__doc__.split())
+        self.assertLess(len(ins), 1000)
+        for w in ("other hand", "left", "right gripper", "your hand", "grip "):
+            self.assertNotIn(w, ins.lower())
+        self.assertEqual(json.loads((HERE / "task.json").read_text())["instruction"], ins)
 
 
 if __name__ == "__main__":

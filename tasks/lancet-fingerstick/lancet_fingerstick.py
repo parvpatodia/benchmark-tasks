@@ -1,10 +1,11 @@
 """A right-hand fingerstick trainer lies palm up, rolled so the sides of its fingertips face up, on two foam rests: one
-under the base of its fingers and one under its wrist, so a press on a fingertip tips the hand unless the wrist is held
-down. A BD Microtainer contact-activated lancet (21 G x 1.8 mm) stands tip down in a stand whose socket holds its
-protective tab, and a BD sharps container stands beside. Do a fingerstick as BD directs: twist the lancet's tab off in
-the stand before lifting the lancet out; hold the trainer's wrist down with your other hand; place the lancet's tip
-square on the side of the ring or middle fingertip's pad (never the little finger) and press it firmly, without sliding,
-until it fires; then drop the used lancet into the sharps container through its lid opening and let go of it.
+under the base of its fingers and one under its wrist, so a firm press on a fingertip tips the hand and lifts its wrist
+off the rest. A BD Microtainer contact-activated lancet (21 G x 1.8 mm) stands tip down in a stand whose socket holds
+its protective tab, and a BD sharps container stands beside. Do a fingerstick as BD directs: twist the lancet's tab off
+in the stand before lifting the lancet out; keep the trainer's wrist down on its rest throughout the press; place the
+lancet's tip square on the side of the ring or middle fingertip's pad (never the little finger) and press it firmly,
+without sliding, until it fires; then drop the used lancet into the sharps container through its lid opening and let go
+of it.
 """
 import math
 import pathlib
