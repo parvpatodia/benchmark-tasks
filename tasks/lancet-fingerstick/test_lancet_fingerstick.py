@@ -18,9 +18,13 @@ from yam_arena.task_file import load  # noqa: E402
 
 M = load(HERE / "lancet_fingerstick.py").module
 CLI = (0, 2, 4)
+N_SEEDS = 20                     # inspect-robots --seed 0..19 for the many-seed replay
+N_PAIRS = 20                     # seed pairs (a, a + 20) for the open-loop replay
+SIM_SEEDS = (26385, 84277, 5410, 55059, 126748, 5673, 58369, 100825)   # --seed nearest each layout corner (README)
 DT = 0.05
 K_ARM = 500.0                    # N/m at the TCP in z [EST, as the task's PRESS_DZ comment]
 W = M.HAND_KG * 9.81
+GRIP_READ = -(M.L_T / 2 - 0.0003)   # the finger's reading closed on the 10 mm side: 0.3 mm in [RUN, sim trace]
 
 
 def trial_seed(cli):
@@ -148,7 +152,8 @@ class Kin:
             else:
                 self.l = np.array([self.l[0], self.l[1], M.TOP])
         hp, hq = hand_link(self.seed, self.theta)
-        right = (self.r[0].copy(), self.r[1])
+        # a finger closed on the housing stops at it: report what the sim reads, not the command
+        right = (self.r[0].copy(), min(self.r[1], GRIP_READ) if self.held else self.r[1])
         left = (self.lf[0].copy(), self.lf[1])
         M.advance(M._M, DT, self.l.copy(), self._lancet_quat(), self.q, self.tab, self.theta, hp, hq, right, left)
         M._CLOCK["dt"] = DT
@@ -198,10 +203,10 @@ def replay(seed, plan_seed=None, edit=None):
     return k.run(right, left), k
 
 
-def site_point(name, s, phi):
-    """A point on a finger's distal pad (mechanism frame): s back from its apex, phi from the pad's middle line."""
+def site_point(name, s, ang):
+    """A point on a finger's distal pad (mechanism frame): s back from its apex, ang round from the pad's middle line."""
     v, u0, _, rd, _ = M.FINGERS[name]
-    return M.hand_to_mech((u0 + s, v + rd * math.sin(phi), rd * math.cos(phi)))
+    return M.hand_to_mech((u0 + s, v + rd * math.sin(ang), rd * math.cos(ang)))
 
 
 def fresh():
@@ -218,7 +223,7 @@ def press_at(m, p_mech, f, theta=0.0, l_quat=(0.0, 0.0, 0.0, 1.0), seed=0, right
     l_pos = face - M._rot3(l_quat) @ np.array([0.0, 0.0, q])
     tcp = M.grip_point(l_pos, l_quat)
     M.advance(m, DT, l_pos, l_quat, q, M.TAB_BREAK + 0.1, theta, hp, hq,
-              right if right is not None else (tcp, M.GRIP_L), None)
+              right if right is not None else (tcp, GRIP_READ), None)
 
 
 GOOD = site_point("ring", M.SITE_AIM, -math.radians(30))
@@ -245,8 +250,8 @@ class Model(unittest.TestCase):
                  (("index", 0.008, -0.5), "not the side of a middle or ring"),
                  (("middle", 0.008, -0.5), None),
                  (("ring", 0.008, 0.5), None)]   # the other side of the pad is a site too (BD shades both)
-        for (name, s, phi), why in cases:
-            ok, msg = M.site_ok(M.site_of(site_point(name, s, phi)))
+        for (name, s, ang), why in cases:
+            ok, msg = M.site_ok(M.site_of(site_point(name, s, ang)))
             if why is None:
                 self.assertTrue(ok, msg)
             else:
@@ -260,7 +265,7 @@ class Model(unittest.TestCase):
         lp = np.array(M.L_START) + [0, 0, M.LIFT_OUT + 0.002]
         hp, hq = hand_link(0)
         M.advance(M._M, DT, lp, (0, 0, 0, 1), 0.0, math.radians(30), 0.0, hp, hq, (M.grip_point(lp, (0, 0, 0, 1)),
-                                                                                  M.GRIP_L))
+                                                                                  GRIP_READ))
         self.assertIn("tab still on", M._M["fault"])
 
     def test_twisted_then_lifted_is_fine(self):
@@ -268,9 +273,9 @@ class Model(unittest.TestCase):
         hp, hq = hand_link(0)
         lp = np.array(M.L_START)
         M.advance(M._M, DT, lp, (0, 0, 0, 1), 0.0, M.TAB_BREAK + 0.01, 0.0, hp, hq, (M.grip_point(lp, (0, 0, 0, 1)),
-                                                                                    M.GRIP_L))
+                                                                                    GRIP_READ))
         lp = lp + [0, 0, M.LIFT_OUT + 0.002]
-        M.advance(M._M, DT, lp, (0, 0, 0, 1), 0.0, 0.0, 0.0, hp, hq, (M.grip_point(lp, (0, 0, 0, 1)), M.GRIP_L))
+        M.advance(M._M, DT, lp, (0, 0, 0, 1), 0.0, 0.0, 0.0, hp, hq, (M.grip_point(lp, (0, 0, 0, 1)), GRIP_READ))
         self.assertIsNone(M._M["fault"])
         self.assertTrue(M._M["tab_off"] and M._M["out"])
 
@@ -354,6 +359,40 @@ class Model(unittest.TestCase):
             M.advance(m, DT, inside, (0, 0, 0, 1), 0.0, 1.0, 0.0, hp, hq, (np.array([0.2, -0.2, 1.0]), M.OPEN_F))
         self.assertIsNone(m["fault"])
 
+    def test_grasp_across_the_width_is_held(self):
+        """A gripper closed across the housing's 13 mm width holds it as one across its 10 mm thickness does: carried
+        in the air for 2 s, neither is a drop. Open past the width, or closed on nothing, it is not held."""
+        lp = np.array([0.20, -0.10, M.TOP + 0.10])
+        hp, hq = hand_link(0)
+        for gap in (M.L_T / 2 - 0.0003, M.L_W / 2 - 0.0003, M.L_W / 2 + 0.0004):
+            m = fresh()
+            for _ in range(int(2.0 / DT)):
+                M.advance(m, DT, lp, (0, 0, 0, 1), 0.0, 1.0, 0.0, hp, hq, (M.grip_point(lp, (0, 0, 0, 1)), -gap))
+            self.assertIsNone(m["fault"], f"half-gap {1000 * gap:.1f} mm")
+        g = M.grip_point(lp, (0, 0, 0, 1))
+        for gap in (M.L_W / 2 + 0.001, 0.001):   # open past the width; closed on nothing (the demo's 1 mm command)
+            self.assertFalse(M.held_by((g, -gap), lp, (0, 0, 0, 1)), f"half-gap {1000 * gap:.1f} mm")
+
+    def test_out_of_the_stand_bounds(self):
+        """Out of the stand: more than 4 mm across or 10 mm up from where it stood."""
+        p0 = np.array(M.L_START)
+        self.assertTrue(M.in_socket(p0 + [M.OUT_XY - 0.0005, 0, M.LIFT_OUT - 0.0005]))
+        self.assertFalse(M.in_socket(p0 + [M.OUT_XY + 0.0005, 0, 0]))
+        self.assertFalse(M.in_socket(p0 + [0, 0, M.LIFT_OUT + 0.0005]))
+
+    def test_put_back_in_the_stand_and_let_go_is_a_drop(self):
+        """Once out, the lancet stays out: put back in the stand and let go, it is a drop (task.json scoring)."""
+        m = fresh()
+        m["out"] = False
+        hp, hq = hand_link(0)
+        lp = np.array(M.L_START)
+        M.advance(m, DT, lp + [0, 0, M.LIFT_OUT + 0.002], (0, 0, 0, 1), 0.0, 1.0, 0.0, hp, hq,
+                  (M.grip_point(lp + [0, 0, M.LIFT_OUT + 0.002], (0, 0, 0, 1)), GRIP_READ))
+        self.assertTrue(m["out"])
+        for _ in range(int(M.DROP_S / DT) + 2):
+            M.advance(m, DT, lp, (0, 0, 0, 1), 0.0, 1.0, 0.0, hp, hq, (np.array([0.2, -0.2, 1.0]), M.OPEN_F))
+        self.assertIn("dropped", m["fault"])
+
     def test_press_needs_the_wrist_held(self):
         """Over the whole site the hand tips under less than the fire force: a press that fires needs the other hand."""
         for s in M.SITE_S:
@@ -404,16 +443,61 @@ class Demo(unittest.TestCase):
             self.assertTrue(M._M["fired"])
             self.assertLess(M._M["fire"]["slide"], M.SLIDE_MAX)
 
-    def test_film_seeds_differ(self):
-        self.assertEqual(sorted(M.layout_index(trial_seed(c)) for c in CLI), [0, 1, 2])
+    def test_demo_succeeds_at_every_layout_corner(self):
+        for c in M.corners():
+            sc, _ = replay(c)
+            self.assertEqual(sc, 1.0, f"corner {c}: {M._MEM['fail']} stage {M._MEM['now']['stage']}")
+
+    def test_demo_succeeds_on_many_seeds(self):
+        for cli in list(range(N_SEEDS)) + list(SIM_SEEDS):
+            sc, _ = replay(trial_seed(cli))
+            self.assertEqual(sc, 1.0, f"--seed {cli}: {M._MEM['fail']} stage {M._MEM['now']['stage']}")
+
+    def test_layout_is_continuous_and_fills_its_box(self):
+        """Each seed draws its own layout: inside the bounds, all distinct, every octant of the box reached, each axis
+        spread to within 5% of its bounds, and the same seed always gives the same layout."""
+        lays = [M.shift_turn(trial_seed(c)) for c in range(2000)]
+        lim = (M.SHIFT_MAX, M.SHIFT_MAX, M.TURN_MAX)
+        for lay in lays:
+            for v, b in zip(lay, lim):
+                self.assertLessEqual(abs(v), b)
+        self.assertEqual(len(set(lays)), len(lays))
+        self.assertEqual(len({tuple(v > 0 for v in lay) for lay in lays}), 8)
+        for i, b in enumerate(lim):
+            self.assertGreater(max(lay[i] for lay in lays), 0.95 * b)
+            self.assertLess(min(lay[i] for lay in lays), -0.95 * b)
+        self.assertEqual(M.shift_turn(trial_seed(7)), M.shift_turn(trial_seed(7)))
+        self.assertEqual(M.shift_turn(None), (0.0, 0.0, 0.0))
+
+    def test_turn_is_about_the_palm(self):
+        """The turn leaves the point TURN_C behind the apex where the shift alone puts it."""
+        for c in M.corners():
+            hx, hy, _, yaw = M.layout(c)["hand"]
+            p = np.array([hx, hy]) + rz(yaw)[:2, :2] @ np.array([M.TURN_C, 0.0])
+            np.testing.assert_allclose(p, np.array(M.HAND0) + np.array(c[:2]) + [M.TURN_C, 0.0], atol=1e-12)
 
     def test_open_loop_plan_fails_other_layouts(self):
-        for cli in CLI:
-            for other in CLI:
-                if other == cli:
-                    continue
-                sc, _ = replay(trial_seed(cli), plan_seed=trial_seed(other))
-                self.assertLess(sc, 1.0, f"plan of --seed {other} replayed on --seed {cli}")
+        """A plan made for one seed's layout, replayed on another seed's, never reaches 1.0 (README Seeds)."""
+        for a in range(N_PAIRS):
+            b = a + N_PAIRS
+            sc, _ = replay(trial_seed(a), plan_seed=trial_seed(b))
+            self.assertLess(sc, 1.0, f"plan of --seed {b} replayed on --seed {a}")
+        for c in M.corners():
+            sc, _ = replay(c, plan_seed=(0.0, 0.0, 0.0))   # WHY a tuple: plan_seed=None means "the trial's own seed"
+            self.assertLess(sc, 1.0, f"the unshifted plan replayed on corner {c}")
+
+    def test_hand_clear_of_the_stand_and_the_container(self):
+        """At every corner the trainer's base plate keeps 20 mm from the stand and the sharps container."""
+        x0, x1 = M.PIVOT_X - 0.030, M.STUB_X + 0.040
+        for c in M.corners():
+            hx, hy, _, yaw = M.layout(c)["hand"]
+            pts = [np.array([hx, hy]) + rz(yaw)[:2, :2] @ np.array([x, y]) for x in (x0, x1) for y in (-0.030, 0.030)]
+            for (cx, cy), (hxx, hyy) in ((M.STAND, (M.STAND_HALF, M.STAND_HALF)),
+                                         (M.SHARPS, (M.SH_L / 2, M.SH_W / 2))):
+                # the plate's corners all lie beyond one of the fixture's faces (x or y), by 20 mm
+                gaps = [(cx - hxx) - max(p[0] for p in pts), min(p[0] for p in pts) - (cx + hxx),
+                        (cy - hyy) - max(p[1] for p in pts), min(p[1] for p in pts) - (cy + hyy)]
+                self.assertGreater(max(gaps), 0.020, f"corner {c}")
 
     def test_demo_fits_the_run(self):
         r, lf = M.plan(0.05, 0)
@@ -527,6 +611,22 @@ class LazyRoutes(unittest.TestCase):
         self.assertEqual(sc, 0.6)
         self.assertIsNone(why)
 
+    def test_one_arm_sim_stems(self):
+        """sim/one_arm.py, appended by sim/mk.sh for the next sim batch, keeps the left arm parked: in the replay both
+        its press (o00) and its jab (j00) score 0, the hand not steadied."""
+        src = (HERE / "sim" / "one_arm.py").read_text()
+        for jab in (False, True):
+            ns = dict(vars(M))
+            exec(compile(src.replace("_JAB = False", f"_JAB = {jab}"), "one_arm.py", "exec"), ns)
+            d = ns["demo"]()
+            self.assertTrue(all(w.pos == M.PARK_L for w in d["left"]))
+            press = [w for w in d["right"] if w.label == "press until it fires"][0]
+            self.assertEqual(press.duration, ns["_JAB_S"] if jab else 1.5)
+            M.reset_memory(None)
+            k = Kin(None)
+            self.assertEqual(k.run(d["right"], d["left"]), 0.0)
+            self.assertIn("not steadied", M._MEM["fail"])
+
     def test_do_nothing(self):
         M.reset_memory(self.S)
         k = Kin(self.S)
@@ -578,10 +678,17 @@ class ReadmeNumbers(unittest.TestCase):
     TXT = " ".join((HERE / "README.md").read_text().split())
 
     def test_seed_table(self):
+        """Every row of the README's seed table is the layout the code draws for that --seed."""
+        rows = [ln for ln in (HERE / "README.md").read_text().splitlines() if ln.startswith("| ") and ln.count("|") == 5
+                and ln.split("|")[1].strip().isdigit()]
+        self.assertGreaterEqual(len(rows), len(CLI) + 8)
+        for ln in rows:
+            cli = int(ln.split("|")[1])
+            dx, dy, yaw = M.shift_turn(trial_seed(cli))
+            self.assertEqual(ln.split("|")[2:4], [f" {1000 * dx:.1f}, {1000 * dy:.1f} ", f" {math.degrees(yaw):.2f} "],
+                             ln)
         for cli in CLI:
-            i = M.layout_index(trial_seed(cli))
-            dx, dy, yaw = M.LAYOUTS[i]
-            self.assertIn(f"| {cli} | {i} | {1000 * dx:.0f}, {1000 * dy:.0f} | {math.degrees(yaw):.0f} |", self.TXT)
+            self.assertTrue(any(ln.startswith(f"| {cli} |") for ln in rows))
 
     def test_model_numbers(self):
         t = self.TXT
@@ -589,14 +696,37 @@ class ReadmeNumbers(unittest.TestCase):
         for s in (f"fires at {M.F_FIRE:g} N", f"{1000 * q_fire:.2f} mm of travel",
                   f"breaks at {math.degrees(M.TAB_BREAK):.0f} deg", f"{100 * M.T_TAB:g} N-cm",
                   f"{1000 * M.SITE_S[0]:.0f} to {1000 * M.SITE_S[1]:.0f} mm back from the apex",
-                  f"{math.degrees(M.SITE_PHI[0]):.0f} to {math.degrees(M.SITE_PHI[1]):.0f} deg",
+                  f"{math.degrees(M.SITE_ANG[0]):.0f} to {math.degrees(M.SITE_ANG[1]):.0f} deg",
                   f"within {math.degrees(M.TILT_MAX):.0f} deg", f"more than {1000 * M.SLIDE_MAX:.1f} mm",
                   f"wrist rises more than {1000 * M.WRIST_LIFT_MAX:.0f} mm", f"loose for {M.DROP_S:g} s",
                   f"{abs(math.degrees(M.ROLL)):.0f} deg", f"{M.HAND_KG:.3f} kg",
                   f"{W * (M.COM_X - M.PIVOT_X) / (M.PIVOT_X - M.SITE_S[1]):.1f} N",
                   f"{W * (M.COM_X - M.PIVOT_X) / (M.PIVOT_X - M.SITE_S[0]):.1f} N",
-                  f"{1000 * M.BASE_MOVED:.0f} mm", f"{M.RUN_LIMIT_STEPS:,} steps"):
+                  f"{1000 * M.BASE_MOVED:.0f} mm", f"{M.RUN_LIMIT_STEPS:,} steps",
+                  f"more than {1000 * M.OUT_XY:.0f} mm across or {1000 * M.LIFT_OUT:.0f} mm up",
+                  f"half-gap {1000 * M.HELD_GAP[0]:.1f} to {1000 * M.HELD_GAP[1]:.1f} mm",
+                  f"{1000 * M.L_T:.0f} mm) to 0.5 mm outside its wider side ({1000 * M.L_W:.0f} mm)",
+                  f"each uniform within +-{1000 * M.SHIFT_MAX:.0f} mm",
+                  f"turned uniform within +-{math.degrees(M.TURN_MAX):.0f} deg about a point {1000 * M.TURN_C:.0f} mm",
+                  f"({M.HAND0[0]:g}, {M.HAND0[1]:g})"):
             self.assertIn(s, t)
+
+    def test_cradle_numbers(self):
+        """The cradle and block sizes under Real trials are the model's (3 mm cradle floor [CHOICE])."""
+        t, f = self.TXT, 0.003
+        top_f, top_w = M.HZ + M.REST_F_Z, M.HZ + M.REST_W_Z
+        for s in (f"ring finger's axis {1000 * M.HZ:.0f} mm over the", f"{1000 * M.PIVOT_X:.0f} mm behind the ring's apex",
+                  f"{1000 * (M.STUB_X - M.PIVOT_X):.0f} mm behind the ridge",
+                  f"its top {1000 * top_f:.1f} mm over the table, from {1000 * (M.PIVOT_X - 0.020):.0f} to "
+                  f"{1000 * M.PIVOT_X:.0f}",
+                  f"its top {1000 * top_w:.1f} mm over the table, centred {1000 * M.STUB_X:.0f} mm behind the apex",
+                  f"{1000 * M.STUB_YZ[0]:.0f} mm to the thumb side", f"{1000 * (top_f - f):.1f} mm and {1000 * (top_w - f):.1f} mm",
+                  f"{1000 * (M.STUB_X + 0.040 - M.PIVOT_X + 0.030):.0f} by 60 by 5 mm base plate ({1000 * (M.PIVOT_X - 0.030):.0f} "
+                  f"to", f"{1000 * (M.STUB_X + 0.040):.0f} mm behind the apex), ballasted to {M.BASE_KG:g} kg",
+                  f"centre of mass {1000 * (M.COM_X - M.PIVOT_X):.0f} mm behind the pivot, a moment of "
+                  f"{W * (M.COM_X - M.PIVOT_X):.3f} N m"):
+            self.assertIn(s, t)
+        self.assertGreater(M.STUB_YZ[0], 0.0)   # +y in the rolled frame is the thumb side
 
 
     def test_tipping_force_sits_with_its_place(self):

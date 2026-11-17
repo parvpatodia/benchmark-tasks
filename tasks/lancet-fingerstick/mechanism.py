@@ -4,17 +4,14 @@
 # (``Mechanism.self_collide``); the state reports each link's pose and velocity (``MechanismState.links``); a shape may
 # be a convex hull of given points (``Shape.points``, kind "hull"); and a joint may have a dynamic friction
 # (``Joint.dynamic_friction``); a revolute joint with infinite ``lower`` and ``upper`` turns freely (no limits authored).
-# Changes for the flare-tool task: a shape may be drawn only (``Shape.collide``); the reset's seed and environment are
-# kept for the task (``run_seed``, ``run_env``).
-# Changes for the nail-trim task: a mechanism may be a loose, articulated tool (``Mechanism.free``: no joint to the
+# Further changes here: a shape may be drawn only (``Shape.collide``); the reset's seed and environment are kept for the
+# task (``run_seed``, ``run_env``); a mechanism may be a loose, articulated tool (``Mechanism.free``: no joint to the
 # world, the articulation root on the base body, the root put back where it spawned at every reset), and a link may pin
-# its centre of mass (``Link.com``).
-# Changes for the tool-changer task: a loose rigid body of many shapes (``Body``, its mass spread by ``Shape.mass``,
+# its centre of mass (``Link.com``); a loose rigid body of many shapes (``Body``, its mass spread by ``Shape.mass``,
 # reported as a ``BodyState``), functions run after every control step before scoring (``on_step``), and a shape's
-# size check that also refuses a hull with fewer than 4 points per ring.
-# Changes for the mug-handle task: functions that place loose objects for the trial run after the mechanisms are put
-# back at rest and before the reset's settling steps (``on_place``), so a seeded start pose settles like any other.
-# The lancet-fingerstick task uses this file unchanged from the mug-handle task.
+# size check that also refuses a hull with fewer than 4 points per ring; and functions that place loose objects for
+# the trial run after the mechanisms are put back at rest and before the reset's settling steps (``on_place``), so a
+# seeded start pose settles like any other.
 # The original licence:
 #
 #   MIT License

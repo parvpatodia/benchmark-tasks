@@ -1,5 +1,5 @@
 """clearance.py: the closest approach of each arm's links and fingertips (YAM collision meshes, URDF FK) to the sharps
-container's box over both demo plans and all three layouts. Fingers set closed on what they hold. No sim.
+container's box over both demo plans, at the eight corners of the layout box and on --seed 0, 2, 4. Fingers set closed on what they hold. No sim.
 WHY: the first layout put the container 43 mm from the stand's axis; the fingers reach 52 mm from the TCP axis, so the
 tab twist swung a finger into the container's wall, pushed the arm 20 mm and tipped the lancet out of the socket."""
 import glob
@@ -8,6 +8,7 @@ import re
 import struct
 import sys
 import warnings
+import zlib
 
 warnings.simplefilter("ignore")
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
@@ -42,7 +43,7 @@ MESH = {k: (np.vstack([_stl(pathlib.Path(p)) for p in glob.glob(str(Y / "collisi
 cx, cy = F.SHARPS
 BOX = np.array([[cx - F.SH_L / 2, cy - F.SH_W / 2, F.TOP], [cx + F.SH_L / 2, cy + F.SH_W / 2, F.TOP + F.SH_H]])
 worst = (np.inf, None)
-for seed in (0, 2, 4):
+for seed in F.corners() + [zlib.crc32(f"{c}:None:0".encode()) for c in (0, 2, 4)]:
     for side, ws in zip(("right", "left"), F.plan(0.0, seed)):
         p, finger = ArmPlan(ws, station.BASES[side]), {w.label: w.finger for w in ws}
         t = 0.0
@@ -55,7 +56,7 @@ for seed in (0, 2, 4):
                 w = v @ pose[k][:3, :3].T + pose[k][:3, 3]
                 d = float(np.linalg.norm(np.maximum(np.maximum(BOX[0] - w, w - BOX[1]), 0.0), axis=1).min())
                 if d < worst[0]:
-                    worst = (d, f"seed {seed} {side} t {t:.2f} s '{label}' {k}")
+                    worst = (d, f"layout {F.shift_turn(seed)} {side} t {t:.2f} s '{label}' {k}")
             t += 0.05
 print(f"closest to the sharps container: {1000 * worst[0]:.1f} mm ({worst[1]}); floor {MIN_MM:.0f} mm")
 print("CLEARANCE", "OK" if 1000 * worst[0] >= MIN_MM else "BAD")

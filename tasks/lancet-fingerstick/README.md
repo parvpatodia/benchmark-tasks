@@ -6,17 +6,22 @@ stand whose socket holds its protective tab. A BD 305635 sharps container stands
 as BD's guide gives it: twist the tab off, hold the hand still with one gripper, place the lancet square on the side of
 the ring or middle fingertip with the other, press until it fires, and drop the used lancet into the container.
 
-Both hands are needed by the physics, not by a rule. The hand turns on the finger rest's edge and rests on the wrist
-rest by its own weight, so a press of 3.5 N (3 mm from the apex) to 4.4 N (15 mm back, nearer the pivot) tips it,
-fingertips down.
-The lancet fires at 8 N. Without the other hand holding the forearm stub down, the hand tips before the lancet fires,
-and a press with the wrist risen more than 2 mm scores 0 (`test_no_steadying_hand`).
+The steadying hand is set by the model's physics, not by a rule. The hand turns on the finger rest's edge and rests on
+the wrist rest by its own weight, so a press of 3.5 N (3 mm from the apex) to 4.4 N (15 mm back, nearer the pivot) tips
+it, fingertips down. The lancet fires at 8 N. What is shown so far is offline only: in a quasi-static replay with no
+hand on the forearm stub, the hand tips before the lancet fires, and a press with the wrist risen more than 2 mm scores
+0 (`test_no_steadying_hand`). The simulator has not yet run a one-arm press, where the hand's inertia might let a fast
+press fire before the wrist rises. Two such runs are queued for the next sim batch (`sim/one_arm.py`, left arm parked:
+the demo's press, and a 0.15 s jab).
 
-The hand's place and turn change by seed, so a replayed path misses the site (`test_open_loop_plan_fails_other_layouts`).
+The hand's place and turn are drawn from the seed (Seeds), so a replayed path misses the site: a plan made for one
+seed's layout, replayed on another's, failed in all 20 seed pairs tried, and the unshifted plan failed at all 8 corners
+of the layout box (`test_open_loop_plan_fails_other_layouts`). Two seeds whose layouts lie within a few mm of each other
+may share a plan; the test does not claim otherwise.
 
-Files: `lancet_fingerstick.py` (the task), `mechanism.py` (articulated objects, adapted from benchmark-tasks #223, MIT,
-unchanged from our earlier mug-handle task), `test_lancet_fingerstick.py` (offline tests), `task.json`, `tools/`
-(task.json generator, reach check), `sim/` (run scripts).
+Files: `lancet_fingerstick.py` (the task), `mechanism.py` (articulated objects, adapted from benchmark-tasks #223,
+MIT), `test_lancet_fingerstick.py` (offline tests), `task.json`, `tools/` (task.json generator, reach and clearance
+checks), `sim/` (run scripts).
 
 ## Sources
 
@@ -40,7 +45,9 @@ Saved copies were read; every quote here is from them.
 - FDA GUDID / openFDA: 366577 "LANCET CONT-ACT PINK 21G X 1.8MM US", "In Commercial Distribution", K223243. The older
   366593 is "Not in Commercial Distribution", so the task names 366577.
 - BD patent US 9,005,233 ("Contact activated lancet device"): the shield pushed against the skin trips the drive
-  spring; the tab is broken by "a singular twisting or pulling motion"; opposed sides carry "finger grip indentations".
+  spring; opposed sides carry "finger grip indentations". The patent allows the tab to break by twist or by pull; the
+  task scores the twist BD's guide gives ("Twist off the tab"), and a pull that breaks the tab is not modelled (in the
+  sim the tab stays on under a straight pull).
 - Owen Mumford, FDA 510(k) K222111 (Unistik Touch contact-activated safety lancets), bench test: "The force to activate
   the safety feature: 4 - 15N".
 - Facet Technologies, FDA 510(k) K221433 (Facet 28G Universal Lancet): "Cap Twist-off torque" "< 4.9 N-cm".
@@ -55,8 +62,8 @@ Saved copies were read; every quote here is from them.
   stick methods."; "143,900 employees" (2025).
 - CMA (AAMA) certification exam content outline, Specimen Collection Techniques, Blood: "Capillary/Dermal puncture
   (finger, heel, ear)".
-- McKesson item 1251387, Wallcur REM-LANCE-KIT-01D (light skin: 1251386, REM-LANCE-KIT-01L), "Blood Glucose Test
-  Trainer Lance Finger": "Simulated finger stick and blood glucose trainer" and "Finger fits over the finger of a
+- McKesson item 1251387, Wallcur REM-LANCE-KIT-01D, "Blood Glucose Test Trainer Lance Finger": "Simulated finger stick
+  and blood glucose trainer" and "Finger fits over the finger of a
   standard patient or Mannequin". It gives no size, mass or wall thickness.
 - NCCT, National Certified Medical Assistant detailed test plan (effective January 2024, from a national job analysis):
   "Perform capillary punctures (i.e., fingerstick, heelstick)."
@@ -66,8 +73,8 @@ Saved copies were read; every quote here is from them.
 Not sourced, and set in the code with [EST] or [CHOICE]: the lancet's body size (13 x 10 x 37 mm) and mass (4 g); the
 fire force, 8 N, chosen inside Unistik's 4 to 15 N because BD publishes none; the tab's break torque, 3 N-cm, under
 Facet's 4.9 N-cm limit, and its break angle, 45 deg; the site's bounds, read from BD's shaded figure; the square, slide
-and steadied limits; the hand's centre of mass and the rests. Each one the real trial depends on is measured before
-the trials (Real trials).
+and steadied limits; the hand's centre of mass and the rests. None has been measured yet; each one the real trial
+depends on is to be measured before the trials (Real trials, checks 1 to 4).
 
 ## The model
 
@@ -89,19 +96,37 @@ the trials (Real trials).
   rigid, 0.300 kg, its centre of mass 70 mm behind the pivot, which is 62 mm behind the ring's apex; the forearm stub is
   223 mm behind it. The demo's left hand grips the stub and aims 10 mm under it, about 5 N down [EST: the arm's 0.5
   N/mm]; a 10 N press needs about 2.1 N there.
-- Dropped: the lancet out of the stand, not held by either hand and not in the container, loose for 0.5 s. Its fall
-  into the container from the release height takes about 0.2 s.
+- Out of the stand: the lancet's frame more than 4 mm across or 10 mm up from where it stood. This latches: a lancet
+  put back in the stand still counts as out.
+- Held: a gripper's TCP within 20 mm of the grip point and its finger half-gap 3.0 to 7.0 mm, from 2 mm inside the
+  housing's narrower side (10 mm) to 0.5 mm outside its wider side (13 mm). A grasp across either side counts; a
+  gripper closed on nothing does not.
+- Dropped: the lancet out of the stand, held by neither gripper and not in the container: loose for 0.5 s. Letting go
+  of it back in the stand is a drop. Its fall into the container from the release height takes about 0.2 s.
 - The hand's base may move 5 mm; more is a fault (dragged).
 
 ## Seeds
 
-The hand's base (shift from layout 0, turn about the ring's apex):
+Each trial draws the hand's layout from `random.Random(seed)`, the seed inspect-robots passes to the reset (the CRC-32 of
+"<--seed>:None:0", its eval seed, scene seed and epoch): the base shifted in x and in y, each uniform within +-12 mm,
+and turned uniform within +-6 deg about a point 130 mm behind the ring's apex (the palm's middle). Before its shift the
+ring's apex is at (0.11, -0.01). The bounds are where both arms' reach (`tools/ikcheck.py`) and the sharps clearance
+(`tools/clearance.py`) pass at all 8 corners of the box; the demo replay scores 1.0 at all 8 corners, on `--seed` 0 to
+19 and on every seed below (tests). Some seeds:
 
-| `--seed` | layout | shift, mm | turn, deg |
+| `--seed` | shift x, y, mm | turn, deg | |
 |---|---|---|---|
-| 0 | 1 | 12, -10 | 6 |
-| 2 | 0 | 0, 0 | 0 |
-| 4 | 2 | -10, 12 | -6 |
+| 0 | -7.0, 0.1 | -2.71 | README run; replayed offline |
+| 2 | -9.7, -5.5 | -4.11 | replayed offline |
+| 4 | -0.2, -2.2 | 2.67 | replayed offline |
+| 26385 | -11.9, -11.7 | -5.98 | corner -x, -y, -turn |
+| 84277 | -11.6, -11.9 | 5.93 | corner -x, -y, +turn |
+| 5410 | -12.0, 11.9 | -5.90 | corner -x, +y, -turn |
+| 55059 | -11.6, 11.6 | 5.85 | corner -x, +y, +turn |
+| 126748 | 11.8, -11.8 | -5.96 | corner +x, -y, -turn |
+| 5673 | 11.7, -11.7 | 5.83 | corner +x, -y, +turn |
+| 58369 | 11.7, 11.7 | -5.81 | corner +x, +y, -turn |
+| 100825 | 11.5, 11.7 | 5.98 | corner +x, +y, +turn |
 
 The scripted demo reads the seed's layout and plans from it, as a privileged script may. It shows the task can be done.
 
@@ -112,14 +137,24 @@ Never on a person. The trial uses the trainer hand only, with nobody in the arms
 Parts and instruments:
 
 - BD Microtainer contact-activated lancets 366577 (21 G x 1.8 mm), one per trial; a BD 305635 sharps collector.
-- Wallcur Lance fingerstick trainer fingers (REM-LANCE-KIT-01D, three a pack), one fitted over the trainer hand's ring
+- Wallcur Lance fingerstick trainer fingers (REM-LANCE-KIT-01D, "3/PK"), one fitted over the trainer hand's ring
   finger and one over its middle finger; a punctured one is replaced. The puncture lands in the Lance finger, not in
   the hand.
 - Under them, an adult right-hand silicone hand model, life size (193 mm wrist crease to middle fingertip), about 0.3
-  kg, with a forearm stub, as in #1837. We have not found a product page that gives such a hand's size and mass, so no
-  model is named; the one used is measured (check 3b). It is strapped to a 3D-printed cradle that holds it rolled 30
-  deg; the cradle sits on a fixed block under the proximal phalanges (the pivot) and its wrist end rests on a second
-  block. Both blocks are fixed to a 3 kg base plate taped to the table.
+  kg, with a forearm stub, as in #1837. No saved product page gives such a hand's size and mass, so no model is named;
+  the one used is measured (check 3b). It is strapped to a 3D-printed cradle, built to the model's numbers below.
+- The cradle holds the hand at the model's pose: rolled 30 deg about its fingers, the ring finger's axis 70 mm over the
+  table. Its pivot ridge, a cross edge under the proximal phalanges 62 mm behind the ring's apex, sits on the back edge
+  of the finger block; its wrist end, 161 mm behind the ridge, rests on the wrist block. In the model the hand rests on
+  the blocks directly: the finger block is 20 mm along the hand by 56 mm, its top 17.1 mm over the table, from 42 to 62
+  mm behind the apex; the wrist block is 50 by 40 mm, its top 40.5 mm over the table, centred 223 mm behind the apex
+  and 13 mm to the thumb side of the ring's axis in plan. With the cradle's 3 mm floor [CHOICE] under each contact, the
+  printed blocks' tops are 3 mm lower: 14.1 mm and 37.5 mm. Both blocks stand on a 231 by 60 by 5 mm base plate (32 to
+  263 mm behind the apex), ballasted to 3 kg and taped to the table.
+- Ballast: the model's hand is 0.300 kg with its centre of mass 70 mm behind the pivot, a moment of 0.206 N m about it,
+  which sets the 3.5 to 4.4 N tipping force. The cradle has two ballast pockets [CHOICE]: one over the wrist block,
+  161 mm behind the pivot, and one 30 mm in front of it, under the middle phalanges. Lead shot is added to the wrist
+  pocket until check 4 passes; if check 1 finds the fire force low, shot goes in the front pocket instead.
 - A stand with a printed socket keyed to the lancet's tab cap, fixed to the table.
 - A push-pull force gauge (0.1 N readability) with a flat tip; a cap torque gauge (0.1 N-cm readability); digital
   calipers (0.01 mm); a digital angle gauge (0.1 deg); a 0.01 g scale; a protractor; a 10x loupe; washable ink; a side
@@ -195,10 +230,15 @@ inspect-robots run --embodiment yam_arena --policy yam_scripted -E task=lancet_f
 
 The run limit is 2,400 steps (120 s); the demo takes 28 s of plan.
 
+## Sim results
+
+yam_arena, `--seed 0` (the first row under Seeds), `object_jitter=0`, 20 Hz, 2,400-step limit. FILM_PENDING
+DREAM_PENDING Both runs hashed
+`lancet_fingerstick.py`, `mechanism.py` and `task.json` before starting; the hashes match the files here (`task.json`
+as it was before its `scores` line was filled in).
+
 ## Sim against real
 
-- Not yet run in the simulator. The demo is checked offline only: reach (`tools/ikcheck.py`) and a kinematic replay
-  through the scorer (the tests). Scores are pending.
 - The needle, the skin's puncture and the blood are not simulated; the shield's spring stands in for the drive and
   fires at a set force. The real lancet's click and its spent state are read from audio and a re-press.
 - The trainer is rigid on a pivot; a real silicone fingertip yields a little under the press.
@@ -215,9 +255,12 @@ The run limit is 2,400 steps (120 s); the demo takes 28 s of plan.
 good press, no fire under 8 N, a firm press for the placed rung, a slide, a small creep and a fresh placement, a tilted
 lancet, an unsteadied wrist, fires on the little finger and off the hand, a drop and the container, the tipping force
 over the whole site, the scorer (a model that stops, the base dragged, the ladder in order along the demo), both arms'
-demo replayed on every film seed, a plan replayed on another layout failing, the lazy routes below, the geometry, and
-these numbers against the code. `tools/ikcheck.py seed=N` checks both arms' reach, joint6 against its limit and the
-two TCPs' separation along x.
+demo replayed at the 8 corners of the layout box, on `--seed` 0 to 19 and on every seed in the table, the layout's
+draw (inside its bounds, filling them, repeatable), a plan replayed on another seed's layout failing, the base plate
+clear of the stand and the container, the lazy routes below (and the one-arm sim stems), the geometry, and these
+numbers against the code. `tools/ikcheck.py` (no argument: the 8 corners and `--seed` 0, 2, 4; or `cli=N`, `seed=N`,
+`corners`) checks both arms' reach, joint6 against its limit and the two TCPs' separation along x;
+`tools/clearance.py` checks every arm link and fingertip against the sharps container at the same layouts.
 
 ### Lazy routes
 
@@ -252,11 +295,13 @@ two TCPs' separation along x.
 - #2049, #2082, #1861 (merged): putting used needles in sharps. Here the discard is the last step, not the skill.
 - #612 (final, blood tubes in order of draw) and #2242 (open, scanning a wristband): other clinical steps, no sharps.
 
-Category: blood collection is an O*NET Core task of Medical Assistants (833,900), Licensed Practical and Vocational
-Nurses (666,900) and Phlebotomists (143,900; their task names finger sticks), 1.64 million in all. Both national medical
-assistant exams (NCCT, CMA (AAMA)) test capillary puncture by finger. The accepted #1951 rests on one Medical Assistants
-Core task, and #2049 on tasks of three occupations; this follows #2049. O*NET's Core means at least 67% of
-incumbents rate the task relevant, not every one.
+Category: blood collection is an O*NET Core task of Medical Assistants (833,900): "Collect blood, tissue, or other
+laboratory specimens, log the specimens, and prepare them for testing."; and of Phlebotomists (143,900): "Draw blood
+from capillaries by dermal puncture, such as heel or finger stick methods." Licensed Practical and Licensed Vocational
+Nurses (666,900) have the Core task "Collect samples, such as blood, urine, or sputum from patients, and perform routine
+laboratory tests on samples." Two national exams for medical assistants (NCCT's National Certified Medical Assistant
+and the CMA (AAMA)) test capillary puncture by finger. The accepted #1951 rests on one Medical Assistants Core task, and #2049 on tasks of three occupations; this
+follows #2049.
 
 ## Third-party code
 
