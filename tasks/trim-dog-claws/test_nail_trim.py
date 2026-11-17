@@ -17,7 +17,7 @@ from yam_arena.task_file import load  # noqa: E402
 
 M = load(HERE / "nail_trim.py").module
 CLI = (0, 2, 4)
-FINGER_N = 40.0                           # N per YAM finger, the round 2 reviewer's figure (not yam_arena's 50 N cap)
+FINGER_N = M.GRIP_N                       # N per YAM finger, the round 2 reviewer's 40 N, set in the task file
 IDENT = (0.0, 0.0, 0.0, 1.0)
 PAW_AT_REST = (M.T_POS[0], M.T_POS[1], M.TOP)
 PAW_Q = M.T_QUAT                          # the paw link's orientation at rest (the trainer's)
@@ -132,6 +132,12 @@ class Model(unittest.TestCase):
             drive = min(GRIPPER["effort"], GRIPPER["stiffness"] * (face + M.SQUEEZE_F))
             need = M.SPRING_PRE + M.SPRING_K * x + M.R_CUT
             self.assertGreater(drive, need + 5.0, (q, drive, need))
+
+    def test_task_caps_the_fingers_at_40_n(self):
+        """The task file sets yam_arena's per-finger effort to 40 N, so the sim run itself is held to it."""
+        from yam_arena.constants import GRIPPER
+        self.assertEqual(M.GRIP_N, 40.0)
+        self.assertEqual(GRIPPER["effort"], 40.0)
 
     def test_squeeze_fits_a_40_n_finger(self):
         """Round 2 review: budget about 40 N per YAM finger, not yam_arena's 50 N cap. With the drive capped at 40 N
@@ -400,14 +406,14 @@ class Geometry(unittest.TestCase):
 
     def test_clipper_holds_without_cutting(self):
         """The pads 3 mm into each handle push 15 N, under the spring's 20 N preload, so the blade stays open; the
-        demo's squeeze beats the spring at its stop, within the fingers' 50 N."""
+        demo's squeeze beats the spring at its stop, within the fingers' GRIP_N (40 N)."""
         press = 5000.0 * (M.HANDLE_Y + M.HANDLE_W / 2 - abs(M.HOLD_F))
         self.assertLess(press, M.SPRING_PRE - 3.0)
-        self.assertGreater(50.0, M.SPRING_PRE + M.SPRING_K * M.SQUEEZE_EACH)
+        self.assertGreater(FINGER_N, M.SPRING_PRE + M.SPRING_K * M.SQUEEZE_EACH)
         face = M.HANDLE_Y + M.HANDLE_W / 2 - M.SQUEEZE_EACH          # a handle's outer face at its stop
         push = 5000.0 * (face - abs(M.SQUEEZE_F))                      # the demo's squeeze, each pad, at the stop
         self.assertGreater(push, M.SPRING_PRE + M.SPRING_K * M.SQUEEZE_EACH + 5.0)
-        self.assertLessEqual(push, 50.0)
+        self.assertLessEqual(push, FINGER_N)
         self.assertGreater(press, 10.0)
 
 

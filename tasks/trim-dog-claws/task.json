@@ -18,6 +18,6 @@
   "run_limit": "3,000 steps (150 s at 20 Hz)",
   "reset_notes": "The clipper on its mat, open; every claw at its full length, no dot or blood showing; the leg clamped to its stand; the quick's lengths by seed. Nothing else moves.",
   "fidelity": "Approximate. PhysX does not cut: the claws, quick, dot and bleeding are our model; a cut claw's tip slides into the toe, its face flat. The blade is drawn only; the handles slide, not pivot; the claw's resistance is an estimate (8 N per handle while the blade is in it). The leg and paw are rigid (clamped). Sizes and the 2 mm dot zone are estimates; the quick lengths are our choice. The cue is drawn pink-grey (WSU's oval; the paper's dot is black). The paw is sole up so the cut faces face up.",
-  "scores": "Dream-1 run: 0 (3,000 steps); demo: 1.0 (success at 91.7 s, step 1,834)",
+  "scores": "Dream-1 run: pending (re-run at 40 N per finger); demo: pending",
   "media": "M-JELQ7U"
 }

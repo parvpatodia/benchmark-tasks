@@ -18,6 +18,13 @@ from mechanism import Joint, Link, Shape, hull, mechanism, on_reset, on_step, ru
 from yam_arena import station  # noqa: E402,F401
 from yam_arena.demo import Waypoint  # noqa: E402
 from yam_arena.task_file import TABLE_TOP  # noqa: E402
+from yam_arena.constants import GRIPPER  # noqa: E402
+
+# WHY: the round 2 review budgets "the approximate 40 N available per YAM finger"; yam_arena caps each finger at
+# i2rt's 50 N and has no per-task setting. robot.yam_arm_cfg() reads GRIPPER["effort"] when the env is built, which is
+# after the task file is imported, so the run's fingers push at most GRIP_N.
+GRIP_N = 40.0
+GRIPPER["effort"] = GRIP_N
 
 SCENE = "station"
 RUN_LIMIT_STEPS = 3000           # 150 s at 20 Hz

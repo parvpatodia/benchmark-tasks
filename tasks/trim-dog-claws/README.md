@@ -105,9 +105,9 @@ claim about dogs.
   the blade.
 - The claw resists: while a squeeze from open has the blade's edge inside the end of a claw in the ring, each handle
   pushes back 8 N more than its spring (`R_CUT`, an estimate; see Sim against real). The YAM finger's drive (5,000 N/m
-  to its target, capped at 50 N) beats the spring plus that by 6.1 N or more at every point of the cut, the claw
-  anywhere in the hole (`test_gripper_can_squeeze_through_a_claw`), and still by 6.2 N capped at the reviewer's 40 N
-  per finger (`test_squeeze_fits_a_40_n_finger`).
+  to its target, capped at 40 N, the round 2 reviewer's figure: `GRIP_N` sets yam_arena's per-finger effort, whose
+  own default is 50 N) beats the spring plus that by 6.2 N or more at every point of the cut, the claw anywhere in the
+  hole (`test_gripper_can_squeeze_through_a_claw`, `test_squeeze_fits_a_40_n_finger`).
 - The quick: its end lies 4.5 to 8.5 mm below a claw's end at the start, in 0.5 mm steps, drawn for each claw on its
   own from the seed (table below). A cut face within 2 mm of it shows the pink-grey dot. A cut to or past it bleeds: a
   red drop shows on the cut face, and the score is 0.
@@ -253,8 +253,14 @@ inspect-robots run --embodiment yam_arena --policy yam_scripted -E task=nail_tri
 
 ## Sim results
 
-inspect-robots 1.0.0, `yam_arena`, 20 Hz, `object_jitter=0`, one launch on the final files (their hashes are in each
-run's `files.sha256`) [RUN]:
+With each finger capped at 40 N (`GRIP_N` in `nail_trim.py`), inspect-robots, `yam_arena`, 20 Hz, `object_jitter=0`,
+one launch each on this revision's committed files (their hashes are in each run's `files.sha256`) [RUN]:
+
+- Filmed demo (`sim/film.sh`, `yam_scripted`, `--seed` 0): FILM_PENDING
+- Dream-1 (`sim/dream.sh`, `dream`, `--seed` 0, 3,000 steps, the one guarded run): DREAM_PENDING
+
+Earlier runs, on the round 1 files with yam_arena's default 50 N finger cap (superseded by the two runs above, kept
+for the record):
 
 | Run | Policy | `--seed` | Score | Steps |
 |---|---|---|---|---|
@@ -273,17 +279,13 @@ whether it cut any claw is not known.
 
 ## Changes since the runs
 
-The runs above hashed `nail_trim.py`, `mechanism.py` and `task.json` (`files.sha256`). `nail_trim.py` and `mechanism.py`
-are byte-identical to the runs (the same hashes). In `task.json` these fields differ from the file the runs hashed:
-`scores` ("pending" then, now the results) and `media` (added at upload) in round 1, and `category` (Impact on jobs to
-Societal relatability) and `context` (the O*NET text replaced by the pet-grooming sources) in this revision. The
-`instruction`, `setup`, `scoring`, `run_limit`, `reset_notes`, `fidelity`, `title` and `keywords` are byte-identical,
-so the scene, the scorer and the instruction Dream-1 received are unchanged. Also changed: this README,
-`test_nail_trim.py` (one test added) and `tools/gen_taskjson.py` (the two fields).
-
-The films ran with yam_arena's gripper cap of 50 N, so early in a squeeze, before the blade reaches the claw, the
-pads pushed up to 50 N. Capped at 40 N the squeeze still beats the spring plus `R_CUT` by 6.2 N or more at every
-point of the cut (`test_squeeze_fits_a_40_n_finger`, offline); the films were not re-run at 40 N.
+The two runs above hash `nail_trim.py`, `mechanism.py` and `task.json` as committed for this revision. After them,
+only `task.json`'s `scores` (filled from the runs) and `media` (the new upload) change. Since the earlier 50 N runs:
+`nail_trim.py` caps each finger at 40 N (`GRIP_N`, its only change; `mechanism.py` is unchanged), and `task.json`'s
+`category` (Impact on jobs to Societal relatability), `context` (the O*NET text replaced by the pet-grooming sources)
+and `scores` changed. Its `instruction`, `setup`, `scoring`, `run_limit`, `reset_notes`, `fidelity`, `title` and
+`keywords` are byte-identical to the earlier runs', so Dream-1 receives the same instruction and the scene is the
+same apart from the finger cap.
 
 ## Sim against real
 
@@ -309,7 +311,7 @@ point of the cut (`test_squeeze_fits_a_40_n_finger`, offline); the films were no
 `python3 test_nail_trim.py` (with yam_arena on PYTHONPATH) runs the offline tests:
 
 - the cut model: a cut takes what stands over the blade; the claw resists only while the blade is through it, and the
-  gripper can squeeze through that anywhere in the hole, also with its drive capped at 40 N; no cut without the claw in the ring; no cut with the clipper
+  gripper can squeeze through that anywhere in the hole with its drive capped at 40 N, and the task file sets that cap; no cut without the claw in the ring; no cut with the clipper
   upside down or tilted 20 degrees (10 degrees still cuts); one cut per squeeze; the dot zone and the bleed; the cut
   judged where the claw is;
 - the scorer: the ladder; the latched 0 on a bleed; a moving clipper is not down, nor one on its edge; a hand still
