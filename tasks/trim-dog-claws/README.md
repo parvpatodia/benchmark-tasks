@@ -283,7 +283,7 @@ The two runs above hash `nail_trim.py`, `mechanism.py` and `task.json` as commit
 only `task.json`'s `scores` (filled from the runs) and `media` (the new upload) change. Since the earlier 50 N runs:
 `nail_trim.py` caps each finger at 40 N (`GRIP_N`, its only change; `mechanism.py` is unchanged), and `task.json`'s
 `category` (Impact on jobs to Societal relatability), `context` (the O*NET text replaced by the pet-grooming sources)
-and `scores` changed. Its `instruction`, `setup`, `scoring`, `run_limit`, `reset_notes`, `fidelity`, `title` and
+and `scores` changed, and `media` was added at the round 1 upload. Its `instruction`, `setup`, `scoring`, `run_limit`, `reset_notes`, `fidelity`, `title` and
 `keywords` are byte-identical to the earlier runs', so Dream-1 receives the same instruction and the scene is the
 same apart from the finger cap.
 
