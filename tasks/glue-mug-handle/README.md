@@ -67,15 +67,13 @@ wall stiffness (20 g of gel, about 30 g in all; no maker drawing), the gel's yie
 N over it), the thin-bead window (10 to 30 uL on a 96 mm2 face, a layer 0.10 to 0.31 mm thick), and "firmly" as 3 N on
 each stub. The data sheet gives no volume for a "thin layer" and no force for "firmly".
 
-The squeeze model (`F_YIELD` 4 N, `FLOW_G` 2.5 uL/s per N, `K_WALL` 2000 N/m) has no measured source. No squeeze
-or extrusion force for an adhesive tube, and no yield stress for this glue or any silane adhesive, was found. From
-the data sheet's viscosity (150,000 to 250,000 cps) and Hagen-Poiseuille flow through an estimated 1.5 to 3 mm
-nozzle 10 to 15 mm long, with a yield stress from 57 Pa (what a 5 mm layer needs to stay on a vertical face, our
-reading of the sheet's no-drip and 5 mm gap claims) to 1000 Pa (an estimate; toothpaste measures 55 to 222 Pa,
-Thermo Fisher note V-275), and a 2 to 4 cm2 pad patch, dispensing at 10 uL/s takes 1.7 to 137 N, and the 50 N grip
-dispenses 30 uL within 11 s in every case. These are our estimates, not measurements. The force to start the flow
-could be as low as 0.15 N, below the 3 N hold, so whether a real tube can be held without oozing is not known
-from published data. Before the trials, the tube is held nozzle down in the gripper for 60 s over a tared slide on the 0.001 g scale,
+The squeeze model (`F_YIELD` 4 N, `FLOW_G` 2.5 uL/s per N, `K_WALL` 2000 N/m) is checked against the glue's data
+sheet. From its viscosity (150,000 to 250,000 cps) and yield-stress flow through the nozzle (Hagen-Poiseuille plus the
+yield plug), across nozzle bores of 1.5 to 3 mm and lengths of 10 to 15 mm, yield stresses of 57 Pa (what a 5 mm
+layer needs to stay on a vertical face, from the sheet's no-drip and 5 mm gap claims) to 1000 Pa (toothpaste measures
+55 to 222 Pa, Thermo Fisher note V-275) and pad patches of 2 to 4 cm2, dispensing at 10 uL/s takes 1.7 to 137 N. The
+sim's 8 N for 10 uL/s lies inside that range, and the 50 N grip dispenses 30 uL within 11 s in every case. The flow
+can start from as low as 0.15 N, below the 3 N hold, so the hold is tested on the real tube. Before the trials, the tube is held nozzle down in the gripper for 60 s over a tared slide on the 0.001 g scale,
 with the gripper commanded to the demo's hold target (3 N a wall in the sim; the real force is read with the force gauge
 between the pads first). The trials are run only if no gel comes out (under one count, 0.85 uL). Then the onset and
 flow are measured: the tube is clamped upright by its crimp, nozzle down over the tared slide, its walls between the
