@@ -232,8 +232,8 @@ The run limit is 2,400 steps (120 s); the demo takes 28 s of plan.
 
 ## Sim results
 
-yam_arena, `--seed 0` (the first row under Seeds), `object_jitter=0`, 20 Hz, 2,400-step limit. FILM_PENDING
-DREAM_PENDING Both runs hashed
+yam_arena, `--seed 0` (the first row under Seeds), `object_jitter=0`, 20 Hz, 2,400-step limit. The filmed demo scored 1.0 and ended on success at step 541 (27.05 s); it took 110 s of wall time on a shared GPU.
+The one Dream-1 run scored 0 over 2,400 steps. Both runs hashed
 `lancet_fingerstick.py`, `mechanism.py` and `task.json` before starting; the hashes match the files here (`task.json`
 as it was before its `scores` line was filled in).
 

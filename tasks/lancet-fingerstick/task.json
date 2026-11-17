@@ -17,5 +17,5 @@
   "run_limit": "2,400 steps (120 s at 20 Hz)",
   "reset_notes": "A new lancet in the socket each trial (a used one is spent, and its tab stays in the socket and is removed); the hand on its rests by seed; the container emptied of the trial's lancet.",
   "fidelity": "Approximate. The lancet's drive is a sprung shield that fires at a set force; needle, puncture and blood are not simulated. The tab is a sprung turn of its socket that breaks at 45 deg of twist, as BD's guide directs; a straight pull-off is not modelled. The trainer hand is rigid on a pivot; skin does not deform. The lancet's body size, its fire force (inside another maker's published range) and the tab torque (under another maker's limit) are estimates, to be measured before real trials.",
-  "scores": "pending"
+  "scores": "Dream-1 run: 0 (2,400 steps); demo: 1.0 (success at 27.05 s, step 541)"
 }
