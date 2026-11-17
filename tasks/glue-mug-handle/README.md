@@ -67,6 +67,21 @@ wall stiffness (20 g of gel, about 30 g in all; no maker drawing), the gel's yie
 N over it), the thin-bead window (10 to 30 uL on a 96 mm2 face, a layer 0.10 to 0.31 mm thick), and "firmly" as 3 N on
 each stub. The data sheet gives no volume for a "thin layer" and no force for "firmly".
 
+The squeeze model (`F_YIELD` 4 N, `FLOW_G` 2.5 uL/s per N, `K_WALL` 2000 N/m) has no measured source. No squeeze
+or extrusion force for an adhesive tube, and no yield stress for this glue or any silane adhesive, was found. From
+the data sheet's viscosity (150,000 to 250,000 cps) and Hagen-Poiseuille flow through an estimated 1.5 to 3 mm
+nozzle 10 to 15 mm long, with a yield stress from 57 Pa (what a 5 mm layer needs to stay on a vertical face, our
+reading of the sheet's no-drip and 5 mm gap claims) to 1000 Pa (an estimate; toothpaste measures 55 to 222 Pa,
+Thermo Fisher note V-275), and a 2 to 4 cm2 pad patch, dispensing at 10 uL/s takes 1.7 to 137 N, and the 50 N grip
+dispenses 30 uL within 11 s in every case. These are our estimates, not measurements. The force to start the flow
+could be as low as 0.15 N, below the 3 N hold, so whether a real tube can be held without oozing is not known
+from published data. Before the trials, the tube is held nozzle down in the gripper for 60 s over a tared slide on the 0.001 g scale,
+with the gripper commanded to the demo's hold target (3 N a wall in the sim; the real force is read with the force gauge
+between the pads first). The trials are run only if no gel comes out (under one count, 0.85 uL). Then the onset and
+flow are measured: the tube is clamped upright by its crimp, nozzle down over the tared slide, its walls between the
+fixed pad and the force gauge's pad; the gauge presses in 0.5 N steps, each held 30 s; the onset is the first load that gives gel, and the flow is the gain over 10 s at two
+loads above it. The squeeze model is replaced by these in a run of the offline tests before the trials.
+
 ## The model
 
 - The tube is one loose articulated body: the tube and its nozzle, and two walls 22 mm apart that slide in up to 6 mm
@@ -120,7 +135,8 @@ readability, 2 kg or more capacity, for the mug, the cradle and the press) with 
 the balance fixed to the table, a felt pad and a tube holder on blocks so their tops stand at the heights the sim's
 have over the cradle, a 0.001 g scale, at each joint a side camera with a backlight opposite it and a 0.6 mm shim fixed in view beside
 the joint as a reference, an overhead camera over the mug, a raking light, a PTFE sheet, polyethylene film for the cradle and the pad, polyethylene film of at most 0.1 mm for the
-gripper-pad covers, mineral spirits, nitrile and cut-resistant gloves, safety glasses and a sharps bin.
+gripper-pad covers, mineral spirits, a push-pull force gauge (0.1 N
+readability) with a flat pad on its tip, a clamp and a fixed flat pad for the squeeze test, nitrile and cut-resistant gloves, safety glasses and a sharps bin.
 The mug lies with its axis along y and both broken faces up, so each side camera sits level with its stub's face and
 looks across the mug along x at that stub alone. The cameras stand on the far side of the mug from the arms (x over
 0.3 m); each backlight stands on the arms' side, its top at least 10 mm above the broken faces [CHOICE] so the bead, the
@@ -141,8 +157,9 @@ runs until one passes.
 - Protecting the shared rig (for the trial, not part of the task):
   - Gripper pads: each pad's face is covered with polyethylene film no more than 0.1 mm thick, wrapped round it and
     taped at its sides away from the contact face, and replaced before every trial. In the sim the holding grip
-    presses each wall in 1.0 mm, 1 N + 2000 N/m x 1.0 mm = 3 N against the gel's 4 N yield, so 0.1 mm more film adds
-    about 0.2 N and leaves the hold under the yield. After each trial the covers are looked at under the raking light
+    presses each wall in 1.0 mm, 1 N + 2000 N/m x 1.0 mm = 3 N against the sim's estimated 4 N yield, so 0.1 mm more film
+    adds about 0.2 N and leaves the hold under the sim's yield; whether the real gel holds at 3 N is decided by the
+    hold test under Not sourced. After each trial the covers are looked at under the raking light
     before they go. The gel is a silane moisture-curing polymer with a 3 to 5 minute open time (maker's data sheet),
     so uncured glue that reaches a pad through a torn cover is wiped off at once with mineral spirits. If a finger
     touches wet glue on the mug or the handle, the arm is put in protective stop, the gripper is opened from the
