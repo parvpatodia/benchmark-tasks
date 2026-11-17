@@ -38,8 +38,8 @@ d = {
         "blood from capillaries by dermal puncture, such as heel or finger stick methods.\"; Licensed Practical and "
         "Licensed Vocational Nurses 29-2061.00 (666,900), \"Collect samples, such as blood, urine, or sputum from "
         "patients, and perform routine laboratory tests on samples.\" The NCCT medical assistant test plan lists \"Perform capillary punctures (i.e., fingerstick, "
-        "heelstick).\" BD's guide for "
-        "this lancet gives the steps scored: \"Twist off the tab to break the seal and discard.\"; \"The fifth finger "
+        "heelstick).\" BD's guide "
+        "gives the steps scored: \"Twist off the tab to break the seal and discard.\"; \"The fifth finger "
         "must not be punctured\"; \"press safety lancet firmly against the puncture site.\"; \"Discard used safety "
         "lancet into a sharps container\". The skill: one hand keeps the hand still while the other presses a sharp "
         "square on a curved fingertip without sliding."),

@@ -89,8 +89,8 @@ APEX = (FINGERS["ring"][1], FINGERS["ring"][0])             # (u, v) of the ring
 HZ = 0.070                       # the ring's axis over the table
 HAND0 = (0.110, -0.010)          # the ring's apex over the table (world x, y) before the seed's shift and turn. WHY here:
 #                                  the left arm's top-down reach over the forearm stub (x about 0.33) holds at every
-#                                  corner of the layout box (tools/ikcheck.py); 25 mm farther +x or 20 mm farther -y it
-#                                  misses by up to 12 mm
+#                                  corner of the layout box (tools/ikcheck.py); at the earlier (0.135, -0.030) its
+#                                  approach over the stub missed by up to 5.7 mm at the corners [RUN, offline IK]
 
 # -- the site (BD VS7688-1: "Identify the desired puncture site (shaded area)"; "middle or ring finger is preferable";
 # "The fifth finger must not be punctured") -----------------------------------------------------------------------------

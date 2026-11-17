@@ -1,5 +1,5 @@
 #!/bin/bash
-# film.sh <lock: a|b|c>: the filmed demo on the task file itself (not a logging copy), frames stored, 2,400 steps (the run limit); the top camera rendered after.
+# film.sh <lock: a|b|c>: the filmed demo on the task file itself (not a logging copy), --seed 0 (README Seeds), frames stored, 2,400 steps (the run limit); the top camera rendered after.
 set -eu
 cd "$(dirname "$0")"
 source /data/IsaacLab-Arena/yam.env >/dev/null 2>&1 || true
@@ -13,7 +13,7 @@ while [ "$(nvidia-smi --query-compute-apps=pid --format=csv,noheader | wc -l)" -
 inspect-robots --version > "$O/version.txt" 2>&1 || true
 flock "$L" inspect-robots run --embodiment yam_arena --policy yam_scripted \
   -E task=$TASK/lancet_fingerstick.py -E object_jitter=0 -E control_hz=20 -E cam_width=320 -E cam_height=176 \
-  --instruction "$I" --scorer task_score --max-steps 2400 --store-frames --log-dir "$O" > "$O/run.log" 2>&1 || true
+  --instruction "$I" --scorer task_score --seed 0 --max-steps 2400 --store-frames --log-dir "$O" > "$O/run.log" 2>&1 || true
 for log in "$O"/*.json; do case $log in *.live.json) ;; *) inspect-robots video "$log" --out "$O/cams" >> "$O/run.log" 2>&1 || true;; esac; done
 echo "film $(grep -h task_score "$O/run.log" | tail -1) steps $(python3 -c "import json,glob;f=[x for x in sorted(glob.glob('$O/*.json')) if not x.endswith('.live.json')];print(json.load(open(f[-1]))['stats']['total_steps'])" 2>&1 | tail -1)"
 echo RUNDONE film
