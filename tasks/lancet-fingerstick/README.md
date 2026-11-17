@@ -74,7 +74,8 @@ the trials (Real trials).
 - The lancet is a loose tool of two links: the housing and its contact shield, which stands 3 mm proud on a spring
   (4 N/mm, 1 N preload). It fires at 8 N on the shield, 1.75 mm of travel, and only once its tab is off and it is out
   of the stand. Firing is read from the shield, so it fires against anything pressed hard enough (skin, table, a
-  gripper pad), as the real one does. After firing it is spent.
+  gripper pad), as the real one does. After firing it is spent. The 4 g is split 2 g housing, 2 g shield [CHOICE: a
+  0.5 g shield sank into the fingertip's collider in the sim instead of compressing].
 - The tab: the stand's socket is keyed to the lancet's front and turns on a spring; the tab breaks at 45 deg of turn,
   where the spring's torque is 3 N-cm. The real socket is fixed and the tab's plastic post gives the torque. Lifted out
   more than 10 mm before the break, the lancet still has its tab on: a fault.

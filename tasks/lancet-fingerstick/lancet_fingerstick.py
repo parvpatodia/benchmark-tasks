@@ -39,7 +39,8 @@ F_FIRE_MAX_REAL = 15.0           # N: the real BD lancet is used only if it fire
 F_TOUCH = 2.0                    # N on the shield: the lancet is on the skin
 F_FIRM = 5.0                     # N: "press firmly" for the placed rung, over the hand's 3.5 to 4.4 N tipping force, so
 #                                  only a steadied hand reaches it [CHOICE]
-LANCET_KG = (0.0035, 0.0005)     # housing, shield [EST: 4 g in all]
+LANCET_KG = (0.0020, 0.0020)     # housing, shield [EST: 4 g in all]. WHY 2 g on the shield: at 0.5 g (600x lighter than
+#                                  the hand) PhysX let it sink 2.9 mm into the fingertip at 3.8 N, so it never fired [RUN]
 
 # -- the stand (its socket holds the tab; the tab's frangible post is a sprung turn) -----------------------------------
 STAND = (0.270, -0.160)          # the stand's centre (world x, y)
@@ -58,7 +59,8 @@ LIFT_OUT = 0.010                 # m: the lancet risen this far is out of the so
 L_START = (STAND[0], STAND[1], TOP + STAND_H + TAB_H + 0.0005)
 
 # -- the sharps container (BD 305635, 1 qt phlebotomy collector with needle ports) -------------------------------------
-SHARPS = (0.165, -0.215)         # its centre (world x, y)
+SHARPS = (0.140, -0.225)         # its centre (world x, y). WHY: the YAM fingers reach 52 mm from the TCP axis; the twist
+#                                  at the stand swept them into the container at (0.165, -0.215) [RUN, 2026-11-17]
 SH_L, SH_W, SH_H = 0.1245, 0.1092, 0.1651   # [SOURCE: BD sharps catalog, 305635 "4.9 x 4.3 x 6.5" in, L x W x H]
 SH_OPEN = (0.0635, 0.0305)       # the lid's opening [SOURCE: same catalog, "2.5 × 1.2 open (305635)" in]
 SH_WALL = 0.003                  # [EST]
@@ -636,7 +638,8 @@ def score(objects):
 TIP = 0.013                      # PAD_TIP_PAST_TCP: the pad tips sit 13 mm under the TCP
 PAD_TIP_L = 0.018                # the pad tips this far up the lancet from its frame (the socket's rim is at 10 mm)
 OPEN_F = -0.040
-GRIP_L = -(L_T / 2 - 0.0025)     # 2.5 mm into the housing's 10 mm: 12.5 N a finger at 5000 N/m
+GRIP_L = -(L_T / 2 - 0.004)      # 4 mm into the housing's 10 mm: 20 N a finger at 5000 N/m. WHY: at 2.5 mm the housing
+#                                  slid up the pads at 7.9 N, under the 8 N fire (friction about 0.34) [RUN]
 TWIST = math.radians(70)         # the demo turns the lancet this far in the socket (the tab breaks at 45 deg)
 PRESS_DZ = 0.020                 # the press aims this far under contact. WHY: the arm is about 0.5 N/mm at the TCP
 #                                  [EST: mug-handle task, from yam_arena's joint stiffnesses], so 20 mm is about 10 N,
@@ -712,7 +715,8 @@ def plan(delay=0.0, seed=None):
     R.add(2.0, over, GRIP_L, "over the sharps container", 0.0)
     R.add(STEADY, over, GRIP_L, "steady over the opening", 0.0)
     R.add(0.6, over, OPEN_F, "let go", 0.0)
-    R.add(1.5, (SHARPS[0], SHARPS[1] + 0.02, RELEASE_Z + 0.01), OPEN_F, "up clear", 0.0)
+    # WHY +x: straight up over the container's new centre is past the arm's reach (IK 2.5 mm off)
+    R.add(1.5, (SHARPS[0] + 0.03, SHARPS[1] + 0.02, RELEASE_Z + 0.01), OPEN_F, "up clear", 0.0)
     # the left hand: wait at READY while the right takes the lancet, hold the wrist down through the press, then back
     sg, syaw = stub_world(seed)
     g = sg + [0, 0, STUB_TCP]
