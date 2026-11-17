@@ -17,6 +17,7 @@ from yam_arena.task_file import load  # noqa: E402
 
 M = load(HERE / "nail_trim.py").module
 CLI = (0, 2, 4)
+FINGER_N = 40.0                           # N per YAM finger, the round 2 reviewer's figure (not yam_arena's 50 N cap)
 IDENT = (0.0, 0.0, 0.0, 1.0)
 PAW_AT_REST = (M.T_POS[0], M.T_POS[1], M.TOP)
 PAW_Q = M.T_QUAT                          # the paw link's orientation at rest (the trainer's)
@@ -131,6 +132,19 @@ class Model(unittest.TestCase):
             drive = min(GRIPPER["effort"], GRIPPER["stiffness"] * (face + M.SQUEEZE_F))
             need = M.SPRING_PRE + M.SPRING_K * x + M.R_CUT
             self.assertGreater(drive, need + 5.0, (q, drive, need))
+
+    def test_squeeze_fits_a_40_n_finger(self):
+        """Round 2 review: budget about 40 N per YAM finger, not yam_arena's 50 N cap. With the drive capped at 40 N
+        the squeeze still beats the spring plus R_CUT by 5 N or more at every point of the cut, and the most any
+        handle needs (spring at its stop plus R_CUT) is 40 N less that margin or under."""
+        lo, hi = -M.BLADE_EDGE0 - M.CLAW_HALF - M.IN_RING_R, -M.BLADE_EDGE0 + M.CLAW_HALF + M.IN_RING_R
+        from yam_arena.constants import GRIPPER
+        for q in np.arange(max(lo, 0.0), hi, 0.0001):
+            x = q / 2
+            face = M.HANDLE_Y + M.HANDLE_W / 2 - x
+            drive = min(FINGER_N, GRIPPER["stiffness"] * (face + M.SQUEEZE_F))
+            self.assertGreater(drive, M.SPRING_PRE + M.SPRING_K * x + M.R_CUT + 5.0, (q, drive))
+        self.assertLessEqual(M.SPRING_PRE + M.SPRING_K * M.SQUEEZE_EACH + M.R_CUT, FINGER_N - 5.0)
 
     def test_dot_zone_and_bleed(self):
         q = M._M["quick"][2]

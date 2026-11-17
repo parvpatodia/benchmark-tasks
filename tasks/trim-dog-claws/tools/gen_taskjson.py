@@ -24,19 +24,19 @@ LENGTH = M.RING_X + M.RING_OUT - M.HANDLE_X[0]
 
 d = {
     "title": "Trim a dog's black claws with a guillotine clipper, a cut at a time, stopping each when the dot before its quick shows",
-    "category": "Impact on jobs",
+    "category": "Societal relatability",
     "keywords": ["dog", "nail trim", "claw", "guillotine clipper", "quick", "pet care", "grooming", "tool use"],
     "instruction": " ".join(M.__doc__.split()),
     "context": (
-        "Cutting nails is in a Core O*NET task of three occupations. 39-2021.00 Animal Caretakers (365,300 US workers): "
-        "\"Perform animal grooming duties, such as washing, brushing, clipping, and trimming coats, cutting nails, and "
-        "cleaning ears.\" 31-9096.00 Veterinary Assistants and Laboratory Animal Caretakers (132,100): \"Perform hygiene-related duties, such as "
-        "clipping animals' claws or cleaning and polishing teeth.\" 29-2056.00 Veterinary Technologists and Technicians (131,400): "
-        "\"Bathe animals, clip nails or claws, and brush or cut animals' hair.\" A black claw hides its quick, so it is "
-        "cut in steps: a clinic \"trimmed incrementally using a conventional guillotine-style nail clipper\" and "
-        "\"Each cut was visually inspected for the appearance of a central black dot\" (H\u00e4usler and S\u00f6hnel "
-        "2026); WSU: stop when \"a gray to pink oval starts to appear\". The robot seats each claw's end in a 9 mm ring "
-        "between claws 14 mm apart, keeps the clipper square, squeezes through the claw, judges each cut face."),
+        "Familiar as pet grooming done at home. APPA's 2026 Dog Report (press release): "
+        "dog ownership reached \"71 million U.S. households in 2025\" (53%), and more than half of owners (51%) "
+        "\"groom their dogs at home\". Of 35 surveyed dog owners, \"48% reported trimming their dog\u2019s nails two to "
+        "five times annually\" (cited by H\u00e4usler and S\u00f6hnel 2026). WSU's guide for owners: \"it is a task you can complete at home\". A black "
+        "claw hides its quick, so it is cut in steps: WSU, stop when \"a gray to pink oval starts to appear\"; "
+        "Ontario SPCA, \"Check the nail after every clip until you can see a small shiny dot.\"; a clinic "
+        "\"trimmed incrementally using a conventional guillotine-style nail clipper\" (H\u00e4usler and "
+        "S\u00f6hnel 2026). The robot seats each claw's end in a 9 mm ring between claws 14 mm apart, keeps the "
+        "clipper square, squeezes through the claw, judges each cut face."),
     "setup": (
         f"Coordinates: x forward from the arm bases (at y +-0.305), y left, z up from the table top. Fixed: a paw "
         f"trainer (as the Erler-Zimmer VET4750: a silicone foreleg on a plexiglass stand) on the left arm's side, its "
@@ -79,6 +79,8 @@ d = {
         "black). The paw is sole up so the cut faces face up."),
     "scores": old.get("scores", "pending"),
 }
+if "media" in old:
+    d["media"] = old["media"]   # WHY: the media id is set at upload, not from the code
 p.write_text(json.dumps(d, indent=2, ensure_ascii=False) + "\n")
 for k in ("title", "instruction", "context", "fidelity", "scores"):
     print(k, len(d[k]))
