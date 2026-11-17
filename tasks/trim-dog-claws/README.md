@@ -166,8 +166,9 @@ Calibration, before any trial, on spare long black claws with the paw turned as 
   that the sectioned claws give.
 - Cutting force: with a push-pull force gauge on the clipper's handle, cut five long black claws at the trial
   lengths and record the peak handle force beyond the bare spring. `R_CUT` is replaced by it (scaled to the sim's
-  handles) in a run of the offline tests before the trial; if the YAM gripper cannot reach that force at the handles,
-  the trials are not run with that clipper.
+  handles) in a run of the offline tests before the trial; the gauge reads at the point where the gripper's
+  pads hold the handles, and if the peak, spring included, is over 45 N (the gripper's 50 N less a 5 N margin
+  [CHOICE], as in the offline margin test), the trials are not run with that clipper.
 - If the channel never shows before fluid comes out, the trainer cannot test the stop cue. The trials are then not run
   with it; this is the one premise of the real trial no source confirms.
 
@@ -216,10 +217,21 @@ whether it cut any claw is not known.
   does not grow as it gets shorter.
 - The blade is drawn only and the handles slide instead of pivoting, with 12 mm of squeeze. The claw's resistance is
   modelled as 8 N on each handle on top of the springs while the blade's edge is inside a claw in the ring [EST: no
-  measured figure was found]; the calibration below measures it. A squeeze that cannot push through stops in the
+  measured figure was found]; the calibration in Real trials measures it. A squeeze that cannot push through stops in the
   claw and cuts nothing.
 - The quick's lengths are our choice, spread over the 5 to 8 mm the paper's clinic removed on average; the 2 mm dot
   zone is an estimate, not a measurement.
+- The claw's push-back (`R_CUT`, 8 N a handle) has no measured source for dog claws. Published cutting energies and fracture
+  toughness for keratin run from about 3 kJ/m2 (human fingernail cut transversely, Farren et al. 2004, J Exp Biol 207:735,
+  abstract) to 22.8 kJ/m2 (fracture toughness of horse hoof wall at 75% RH, Bertram and Gosline 1987, J Exp Biol 130:121,
+  abstract);
+  Farran et al. 2008 (J Exp Biol 211:3677, abstract) give 11 to 22 kJ/m2 for fingernails. Across a 4.4 mm claw end, the blade
+  force is then 13 to 100 N (R x chord, our estimate, not a measurement), and 18 to 137 N across the 6 mm root. The sim's 8 N a handle is below that low end unless the
+  clipper's blade force is at least about 1.7 times the squeeze (13.2 / 8). With the sim's estimated 23 N spring at the
+  stop, the YAM's 50 N leaves 27 N for the cut, so the top of that range needs a ratio of at least 3.7 (5.1 at the
+  root). No source gives a guillotine clipper's lever
+  ratio, a dog claw's size, or the trainer claws' material; the calibration in Real trials measures the real figure, spring
+  included, and a trial runs only if it is at most 45 N.
 
 ## Tests
 
