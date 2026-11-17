@@ -107,27 +107,51 @@ Hardware:
     - the flame's axis (the line out of the nozzle's end, 300 mm long), while the rest's switch reads the torch off its
       rest, passing within 30 mm [CHOICE] of any link of either arm, every link included: all links of the left (torch)
       arm, its gripper's housing and both its fingers among them, and all links of the right arm, pads included; or of
-      the cameras, their stands or the leads. The axis is placed from the torch's own measured pose, not from the arm's
-      alone: its direction from the orientation sensor on the torch's body (the slip check below), its nozzle's end from
-      the left arm's joint encoders and forward kinematics through the grip, which the handle's collars (below) keep
-      within 1 mm along the handle. So a torch that turns in the grip turns the checked axis with it, toward the hand
-      that holds it as well as anything else. In the scripted demo, once the torch is off its rest, the axis passes no
-      nearer than 115.8 mm to the left gripper's housing and fingers, 151.5 mm to the left arm's other links, 40.6 mm to the
-      right hand's gripper and fingers and 158.2 mm to the right arm's other links [RUN: offline, `tools/flame_axis.py`,
-      exact distances from the demo's planned poses at the control rate, seeds 0, 2 and 4], and at the feed pose the
+      the cameras, their stands or the leads. Two axes are checked at the control rate and either one trips: one along
+      the torch's direction as the orientation sensor on its body reads it (the slip check below), one along the
+      direction the left arm's joint encoders and forward kinematics give the torch held rigid in the grip. Both start
+      from the nozzle's end placed by the encoders and forward kinematics through the grip. The collars (below) let the
+      handle slide up to 15 mm [CHOICE] each way along its length, so each checked segment starts 15 mm behind the
+      nozzle's end and ends 15 mm past the 300 mm, covering every place the slide can put the flame. So a torch that
+      turns in the grip turns the sensor's axis with it, toward the hand that holds it as well as anything else. In
+      the scripted demo, once the torch is off its rest, the lengthened segment passes no nearer than 109.1 mm to the
+      left gripper's housing and fingers, 154.0 mm to the left arm's other links, 41.2 mm to the right hand's gripper
+      and fingers and 160.0 mm to the right arm's other links [RUN: offline, `tools/flame_axis.py`, the torch placed by
+      forward kinematics from the demo's joint solution at every control step, seeds 0, 2 and 4; each is a lower bound,
+      to within 1 mm, against the link's convex hull]. Over the whole band the segment can sweep while the handle
+      slides between the pads without a trip (6 mm down to 10 mm up, below), the nearest approaches are 103.0, 141.7,
+      35.1 and 147.6 mm in the same order [RUN: `tools/flame_axis.py band=1`, seed 0; copies of the segment 4 mm
+      apart across the band, each minimum less 2.5 mm, so a lower bound for the band], and at the feed pose the
       wire hand's pads are about 60 mm over it [ARITH, from the pads 47 mm over the coupling's mouth and the flame
       12.7 mm under it];
-    - the torch displaced in the grip, in any direction:
-      - turned: an orientation sensor (a 9-axis IMU in a sheet-steel case [CHOICE], its orientation fused from the
-        gyroscope and accelerometer only, since the steel bench and vise would bias a magnetometer) is screwed to the
-        handle's back end, 90 mm behind the grip and over 230 mm behind the nozzle, its lead run inside the hose's sleeve.
-        At the control rate its orientation is compared with the one the left arm's forward kinematics gives the held
-        torch; a difference over 5 degrees [CHOICE] trips, and so does a gap in its data stream over 0.1 s [CHOICE].
-        A roll about the handle's own axis does not move the flame, which runs along that axis.
-      - slid along the handle: two clamp collars on the handle, one each side of the finger pads with 1 mm of play
-        [CHOICE], stop it; a slide past a collar needs the fingers to open, which the finger-width check (next) trips.
-      - pushed sideways or dropped: the closed fingers hold it across the handle; opening or slipping out trips the
-        finger-width check.
+    - the torch turned or slid in the grip (a slip check, active only while the rest's switch reads the torch off its
+      rest):
+      - turned: an orientation sensor (a Bosch BNO055 on a breakout board in a sheet-steel case, run in its IMU mode,
+        which per its datasheet gives a relative orientation from the accelerometer and gyroscope only, at 100 Hz, and
+        is rated -40 to +85 C; the steel bench and vise would bias a magnetometer, so none is used) is screwed to the
+        handle's back end, 90 mm behind the grip and over 230 mm behind the nozzle, its lead run inside the hose's
+        sleeve. Its heading has no absolute reference and drifts, so it is re-zeroed with the torch on its rest before
+        each trial. When the rest's switch opens at the lift, the difference between the sensor's orientation and the
+        one the left arm's forward kinematics gives the held torch is recorded; this zeroes out however the policy
+        grasped the handle. From then on, a change in that difference of over 5 degrees [CHOICE] trips, and so does a
+        gap in the sensor's data over 0.1 s [CHOICE]. A roll about the handle's own axis does not move the flame, which
+        runs along that axis.
+      - slid along the handle: two clamp collars on the handle, standing over 3 mm proud of it [CHOICE], one each side
+        of the finger pads with about 15 mm of play each way [CHOICE], so the grasp need not land within a millimetre
+        of a mark. A slide within the play keeps the flame on its line and is covered by the lengthened checked
+        segment (above); a slide past a collar needs the fingers to open, which the finger-width check (next) trips.
+      - slid up or down between the pads: a pure translation along the gripper's approach axis, which neither the
+        orientation sensor nor the finger width sees. Down, it can go at most 6 mm before the handle's axis passes the
+        pad tips and the handle drops out, which trips the finger-width check [ARITH: the pad tips sit 13 mm past the
+        TCP and the handle's axis 7 mm past it in the demo's grasp]. Up, toward the gripper's housing, the flat pad faces
+        would let it go about 51 mm [ARITH: the pads' faces reach 44 mm above the TCP in the sim's finger mesh], so it is
+        measured: a time-of-flight distance sensor (an ST VL6180X on a breakout board, rated by its datasheet for
+        ranging from 0 to 100 mm and for -20 to 70 C) is fixed to the underside of the left gripper's housing and
+        aimed down through the gap between the fingers at the handle's top, about 66 mm away in the demo's grasp
+        [ARITH, from the same mesh]. Its reading when the rest's switch opens is recorded; a change of more than 10 mm
+        [CHOICE] either way trips, and so does a gap in its data over 0.1 s [CHOICE]. That bounds the slide to 6 mm
+        down and 10 mm up, and the flame-axis clearances above are computed over that whole band.
+      - dropped or pushed out: opening or slipping out trips the finger-width check.
     - the nozzle's end outside its working box: the box holds the nozzle's whole path in a dry run of the scripted
       demo with the flame off, grown by 50 mm on every side [CHOICE], and no more;
     - the torch off its rest (the rest's switch) while the left gripper's finger width differs from the 22 mm handle
@@ -147,7 +171,7 @@ Hardware:
   - Before each session: each condition is tripped once by hand with the flame lit at the rest (the arm moved past
     the box, the heartbeat stopped, a thermocouple warmed with a heat gun). The grip, tilt and slip checks need the torch
     off its rest: they are tripped with the torch lying lit on its rest and the rest's switch held open by hand at its
-    actuator, then the gripper opened, and the torch's tilt switch tipped by hand. The slip check is tripped the same way, with the left arm's wrist turned 10 degrees by jog while the torch lies on its rest and the sensor stays still. Before the first trial the dry run also records the largest difference between the sensor's and the kinematics' orientation along the demo; over 2 degrees [CHOICE], the sensor is recalibrated and the dry run repeated. The time from each trip to the flame going out (the gas left in the hose burns off) is read from the
+    actuator, then the gripper opened, and the torch's tilt switch tipped by hand. The slip check is tripped with the torch lying lit on its rest, the switch held open as above, and the left fingers closed to 22 mm in the air beside the torch, so the grip check does not trip; the left wrist is then turned 10 degrees by jog while the sensor stays still. The relay logs which input opened it, and the test passes only if it was the slip input. The data-gap condition is tripped by unplugging the sensor's lead. The distance sensor is tripped with a 22 mm steel rod in the closed left fingers in place of the torch, the switch held open, the rod pushed 15 mm toward the gripper's housing by hand; the relay must log the distance input, and its lead is unplugged once to trip its data-gap condition. Before the first trial the dry run also records the largest change in the sensor-to-kinematics difference along the demo (from its value at the lift); over 2 degrees [CHOICE], the sensor is recalibrated and the dry run repeated. The sensor's drift is measured once per session: re-zeroed, then the torch left lit on its rest for 150 s, the trial's length; a heading or tilt change over 1 degree [CHOICE] means the sensor is recalibrated or replaced before any trial. The time from each trip to the flame going out (the gas left in the hose burns off) is read from the
     flame thermocouple's log and must be under 3 s [CHOICE]; a session with any condition that fails to trip or to put
     the flame out in time is not run.
   - A soapy-water leak check of the hose and fittings before each session.
