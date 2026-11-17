@@ -299,7 +299,7 @@ class Demo(unittest.TestCase):
             self.assertEqual([M.dot_shows(m, k) for k in range(4)], [True] * 4, (cli, m["removed"], m["quick"]))
             self.assertFalse(any(m["bled"]))
             for k, c in m["log"]:
-                self.assertLessEqual(c, 2.01, (cli, k, c))   # every cut 2 mm or less (VCA: "1–2 mm"; not scored)
+                self.assertLessEqual(c, 2.01, (cli, k, c))   # every cut 2 mm or less (VCA: 1 to 2 mm; not scored)
 
     def test_demo_fits_the_run(self):
         for cli in CLI:

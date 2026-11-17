@@ -291,7 +291,9 @@ point of the cut (`test_squeeze_fits_a_40_n_finger`, offline); the films were no
   and stand up; real claws curve, and the cut face is oval.
 - PhysX does not cut. A cut claw's tip slides down into the toe by what was cut; its cut face stays flat and its width
   does not grow as it gets shorter.
-- The blade is drawn only and the handles slide instead of pivoting, with 12 mm of squeeze. The claw's resistance is
+- The blade is drawn only and the handles slide instead of pivoting, with 12 mm of squeeze [CHOICE]; a real
+  guillotine's handle travel and lever ratio are not published, so the sim's clipper is not a model of a named product's
+  geometry, and checks C1 and C2 in Real trials measure the real one. The claw's resistance is
   modelled as 8 N on each handle on top of the springs while the blade's edge is inside a claw in the ring; check C2
   in Real trials measures it. A squeeze that cannot push through stops in the
   claw and cuts nothing.
