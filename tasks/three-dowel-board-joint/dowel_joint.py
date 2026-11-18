@@ -409,8 +409,13 @@ K_Y = 180.0                      # N/m: each arm's TCP stiffness along y at its 
 #                                  J K^-1 J^T from the joints' drive stiffnesses]
 PRESS = F_PRESS / K_Y            # 8.3 mm past the seat each way [ARITH]
 STEADY = 0.8
-MOUTH_GAP = 0.022                # the seam gap of the last line-up: dowel tips 2 mm short of the hole mouths [CHOICE]
-LINE_UP = ("settle, dowel tips 10 mm short", "line up", "line up at the hole mouths")  # a line-up pass at each end
+MOUTH_GAP = 0.022                # the seam gap of the last line-ups: dowel tips 2 mm short of the hole mouths [CHOICE]
+SHUFFLE_GAPS = (0.026, 0.024, MOUTH_GAP, MOUTH_GAP)  # each line-up after the first: back off SHUFFLE, come in to this
+SHUFFLE = 0.004                  # [CHOICE] WHY: the 2026-11-18 probe 2 showed a correction made with the boards at rest
+#                                  is only 10 to 60 % carried out (the bench friction holds the board inside the arm's
+#                                  compliance) and the rest lands at the next slide, so the next pass overshoots; a short
+#                                  slide after every pass lets each correction land before the next is measured
+LINE_UP = ("settle, dowel tips 10 mm short",) + tuple(f"line up {k + 1}" for k in range(len(SHUFFLE_GAPS)))
 LINE_UP_MAX = (0.006, math.radians(4.0))  # the most one pass moves a hand (m, rad) [CHOICE: past the 4 mm, 0.7 deg
 #                                  seen in the 2026-11-18 probe, far under a stem's deliberate offset]
 SERVO_VARIANTS = ("demo", "half", "offset", "off", "skew", "relay")
@@ -446,20 +451,25 @@ def hand_plan(name, start, approach, gap_end, b_dx=0.0, b_yaw=0.0, letgo=True, d
     if name == "hole_board" and about_end:
         seat = (seat[0] - BOARD_L / 2 * math.sin(b_yaw), seat[1])
     pre = (seat[0], seat[1] + s * approach / 2)
-    mouth = (seat[0], seat[1] + s * min(approach, MOUTH_GAP) / 2)
     end = (seat[0], seat[1] + s * gap_end / 2)
-    gpre = grip_point(name, pre[0], pre[1], b_yaw if name == "hole_board" else 0.0)
-    gmouth = grip_point(name, mouth[0], mouth[1], b_yaw if name == "hole_board" else 0.0)
-    gend = grip_point(name, end[0], end[1], b_yaw if name == "hole_board" else 0.0)
+    by = b_yaw if name == "hole_board" else 0.0
+    gpre = grip_point(name, pre[0], pre[1], by)
+    gend = grip_point(name, end[0], end[1], by)
+    cycles = []
+    for k, g in enumerate(SHUFFLE_GAPS):
+        g = min(approach, g)
+        back = grip_point(name, seat[0], seat[1] + s * (g + SHUFFLE) / 2, by)
+        come = grip_point(name, seat[0], seat[1] + s * g / 2, by)
+        cycles += [_w(0.6, (back[0], back[1], Z_GRIP), GRIP, f"back off {k + 1}", yaw1),
+                   _w(0.6, (come[0], come[1], Z_GRIP), GRIP, f"come in {k + 1}", yaw1),
+                   _w(0.4, (come[0], come[1], Z_GRIP), GRIP, LINE_UP[k + 1], yaw1)]
     W = [_w(2.5 + delay, (gx, gy, Z_HOVER), OPEN, "over its board", yaw0),
          _w(STEADY, (gx, gy, Z_HOVER), OPEN, "steady", yaw0),
          _w(1.5, (gx, gy, Z_GRIP), OPEN, "down round the board", yaw0),
          _w(0.6, (gx, gy, Z_GRIP), GRIP, "grip across its width", yaw0),
          _w(5.0, (gpre[0], gpre[1], Z_GRIP), GRIP, "slide it toward the seam", yaw1),
          _w(1.0, (gpre[0], gpre[1], Z_GRIP), GRIP, LINE_UP[0], yaw1),
-         _w(1.0, (gpre[0], gpre[1], Z_GRIP), GRIP, LINE_UP[1], yaw1),
-         _w(1.5, (gmouth[0], gmouth[1], Z_GRIP), GRIP, "bring the tips to the holes", yaw1),
-         _w(1.0, (gmouth[0], gmouth[1], Z_GRIP), GRIP, LINE_UP[2], yaw1),
+         *cycles,
          _w(4.0, (gend[0], gend[1], Z_GRIP), GRIP, "push the joint closed slowly", yaw1),
          _w(1.5, (gend[0], gend[1], Z_GRIP), GRIP, "hold the push", yaw1)]
     if letgo:
@@ -575,14 +585,16 @@ def label_ends(waypoints, labels):
     return out
 
 
-def line_up(a_pos, a_quat, b_pos, b_quat, tcp_a, tcp_b, b_dx=0.0, b_yaw=0.0, a_held=True):
+def line_up(a_pos, a_quat, b_pos, b_quat, tcp_a, tcp_b, b_dx=0.0, b_yaw=0.0, turn_a=True):
     """One line-up pass: what to add to each hand's later waypoints, {arm: (x shift m, yaw rad)}. The right hand turns
-    the dowel board square to the bench's y (if it still holds it); the left hand turns the hole board to b_yaw and
-    shifts it so its end's centre lands b_dx (along x) from the dowel board's end's centre, once both turns are made.
+    the dowel board square to the bench's y (if turn_a); the left hand turns the hole board to b_yaw from the dowel
+    board's yaw after that turn, and shifts it so its end's centre lands b_dx (along x) from the dowel board's end's
+    centre, once both turns are made. turn_a is off once the right hand has let go, and for the last pass, so that pass
+    never leaves a turn of the dowel board still to land as the push starts.
     A turn of the hand turns its board about the TCP (the pads hold the board there)."""
     ya, yb = _yaw_of(a_quat), _yaw_of(b_quat)
-    da = -ya if a_held else 0.0
-    db = (b_yaw + (0.0 if a_held else ya)) - yb
+    da = -ya if turn_a else 0.0
+    db = (b_yaw + (0.0 if turn_a else ya)) - yb
     end_a = np.asarray(a_pos, float) + _rot3(a_quat) @ np.array([0.0, BOARD_L / 2, 0.0])
     end_b = np.asarray(b_pos, float) + _rot3(b_quat) @ np.array([0.0, -BOARD_L / 2, 0.0])
     na = _turn_about(end_a, tcp_a, da)
@@ -590,7 +602,7 @@ def line_up(a_pos, a_quat, b_pos, b_quat, tcp_a, tcp_b, b_dx=0.0, b_yaw=0.0, a_h
     dx = na[0] + b_dx - nb[0]
     clip = lambda v, m: float(max(-m, min(m, v)))  # noqa: E731
     out = {"left": (clip(dx, LINE_UP_MAX[0]), clip(db, LINE_UP_MAX[1]))}
-    if a_held:
+    if turn_a:
         out["right"] = (0.0, clip(da, LINE_UP_MAX[1]))
     return out
 
@@ -628,7 +640,9 @@ def servo(plans, t):
         _SERVO["done"].add(k)
         pa, qa, pb, qb = _M["boards"]
         held = "right" in plans and _holding(plans["right"].waypoints, t)
-        d = line_up(pa, qa, pb, qb, _M["tcps"]["right"], _M["tcps"]["left"], _SERVO["b_dx"], _SERVO["b_yaw"], held)
+        last = k == len(_SERVO["times"]) - 1
+        d = line_up(pa, qa, pb, qb, _M["tcps"]["right"], _M["tcps"]["left"], _SERVO["b_dx"], _SERVO["b_yaw"],
+                    held and not last)
         for arm, (dx, dyaw) in d.items():
             if arm in plans:
                 plans[arm].waypoints = shift_after(plans[arm].waypoints, t, dx, dyaw)

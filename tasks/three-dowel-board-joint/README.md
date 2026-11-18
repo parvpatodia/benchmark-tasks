@@ -99,9 +99,11 @@ a 1 mm grid for stillness. All of these resolve their thresholds (each tool's st
 
 The seed picks one of three start layouts for the dark board (x shift 0, +12, -12 mm; turn 0, +3, -3 deg). The demo
 reads the seed (a privileged script). It also lines the boards up from their true poses, as a worker sights along the
-edges: at the end of the 1 s settle, after a further 1 s, and again with the tips 2 mm short of the holes, it turns
-each hand so its board is square to the bench and shifts the pale board's hand so the two end centres meet (a pass
-moves a hand at most 6 mm and 4 deg). Only the scripted demo reads those poses; the score never uses them. Runtime: about 5 min wall per run on one L40S including start-up [EST].
+edges: five passes, at the end of the 1 s settle and then after each of four short slides (back 4 mm and in again, the
+last two ending with the tips 2 mm short of the holes). Each pass turns each hand so its board is square to the bench
+and shifts the pale board's hand so the two end centres meet; the last pass turns only the pale board, to the dark
+board's yaw. A pass moves a hand at most 6 mm and 4 deg. The slides are there because a correction made with a board at
+rest is only partly carried out (bench friction against the arm's compliance) and the rest lands at the next slide. Only the scripted demo reads those poses; the score never uses them. Runtime: about 5 min wall per run on one L40S including start-up [EST].
 
 Stems: `bash sim/mk.sh` writes traced copies to `sim/arm/`; `bash sim/run.sh <stem> <steps> <lock> <seed>` runs one.
 
@@ -119,12 +121,16 @@ Stems: `bash sim/mk.sh` writes traced copies to `sim/arm/`; `bash sim/run.sh <st
 
 ## Sim results
 
-First probe (open loop, before the line-up): `p_fit`, `p_off`, `p_tight`, `p_loose` and `t00` all scored 0. Both hands
-gripped and slid their boards as planned, but each board sat 0.35 to 1.3 deg off square in its grip, all the same
-way; turned about grips 100 to 115 mm from the seam, that put the end centres 2.5 to 4.0 mm apart sideways (5.5 mm in
-`p_off`, held off on purpose), past the 1.2 mm capture, and every dowel tip stopped on the pale board's end face with
-the seam 20 mm open. The demo now lines the boards up
-(above). Not rerun yet.
+Probe 1 (open loop): `p_fit`, `p_off`, `p_tight`, `p_loose` and `t00` all scored 0. Both hands gripped and slid their
+boards as planned, but each board sat 0.35 to 1.3 deg off square in its grip, all the same way; turned about grips 100
+to 115 mm from the seam, that put the end centres 2.5 to 4.0 mm apart sideways (5.5 mm in `p_off`, held off on
+purpose), past the 1.2 mm capture, and every dowel tip stopped on the pale board's end face with the seam 20 mm open.
+
+Probe 2 (three line-up passes, the boards at rest between them): `p_fit` 1.0 in 473 steps (seated: gaps 0.0 and
+0.09 mm, flush 0.23 mm). `p_loose` (0.35 mm a side) 0.5: seated (gaps 0.01 and 0.13 mm) but 0.37 mm off flush, which
+the looser holes allow. `p_tight` (0.10 mm) 0: the dowels entered 0.2 to 1.0 mm and bound with the boards 0.5 to 1.0
+deg apart in yaw. `p_off` 0: the same bind at 1.6 to 2.0 deg. `t00` 0: the passes made at rest landed late and the
+last overshot, so the ends met the mouths 1.69 mm apart. The demo now slides between passes (above). Not rerun yet.
 
 ## Reset
 

@@ -307,7 +307,7 @@ class LineUp(unittest.TestCase):
     def test_relay_follows_the_loose_board(self):
         """The right hand has let go: only the left moves, and turns its board to the dowel board's yaw."""
         st = self.seat(gap=0.0, ya=self.BIAS, yb=0.0)
-        d = M.line_up(*st, a_held=False)
+        d = M.line_up(*st, turn_a=False)
         self.assertNotIn("right", d)
         st2 = self.apply(st, d)
         m = M.measure(*st2[:4])
@@ -352,10 +352,9 @@ class LineUp(unittest.TestCase):
             M.plan(0, v)
             W = M.plan(0, v)["left"]
             times = M._SERVO["times"]
-            self.assertEqual(len(times), 3, v)
-            push_start = M.label_ends(W, ("bring the tips to the holes",))[0] - 1.5
-            self.assertLess(times[1], push_start)
-            self.assertLess(times[2], M.label_ends(W, ("push the joint closed slowly",))[0] - 4.0)
+            self.assertEqual(len(times), 1 + len(M.SHUFFLE_GAPS), v)
+            self.assertLess(times[-1], M.label_ends(W, ("push the joint closed slowly",))[0] - 4.0)
+            self.assertEqual(times, sorted(times))
             self.assertTrue(M._SERVO["on"])
         for v in ("nothing", "left_only", "stack"):
             M.plan(0, v)
@@ -379,6 +378,39 @@ class LineUp(unittest.TestCase):
             self.assertEqual([w.yaw for w in plans["left"].waypoints], once)
             self.assertEqual(M._SERVO["done"], {0})
             self.assertAlmostEqual(once[-1] - p["left"][-1].yaw, -self.BIAS, places=9)
+        finally:
+            M.reset_memory()
+
+    def test_every_later_pass_follows_a_slide(self):
+        """Between one pass and the next both hands back off SHUFFLE along y and come in again, so the correction
+        lands while the board slides; the last come-ins stop the tips 2 mm short of the mouths."""
+        p = M.plan(0)
+        for arm, W in p.items():
+            labels = [w.label for w in W]
+            for k in range(1, len(M.LINE_UP)):
+                i = labels.index(M.LINE_UP[k])
+                back, come = W[i - 2], W[i - 1]
+                self.assertAlmostEqual(abs(back.pos[1] - come.pos[1]), M.SHUFFLE / 2, places=9)
+                self.assertEqual(come.pos, W[i].pos)
+            last = W[labels.index(M.LINE_UP[-1])]
+            seat_g = M.grip_point(("hole_board" if arm == "left" else "dowel_board"),
+                                  *M.seat_centres()["hole_board" if arm == "left" else "dowel_board"], 0.0)
+            self.assertAlmostEqual(abs(last.pos[1] - seat_g[1]), M.MOUTH_GAP / 2, places=9)
+        self.assertGreaterEqual(M.MOUTH_GAP - M.DOWEL_OUT, 0.002 - 1e-12)
+
+    def test_last_pass_leaves_the_dowel_board(self):
+        class P:
+            def __init__(self, w):
+                self.waypoints = w
+        p = M.plan(0)
+        plans = {a: P(list(w)) for a, w in p.items()}
+        st = self.seat(gap=M.MOUTH_GAP, ya=self.BIAS, yb=self.BIAS)
+        M._M["boards"], M._M["tcps"] = tuple(st[:4]), {"right": st[4], "left": st[5]}
+        try:
+            M.servo(plans, M._SERVO["times"][-1] + 0.01)    # every pass due at once: all run, the last one relative
+            self.assertEqual(len(M._SERVO["done"]), len(M.LINE_UP))
+            self.assertNotIn("right", M._SERVO["log"][-1]["cmd"])
+            self.assertIn("right", M._SERVO["log"][0]["cmd"])
         finally:
             M.reset_memory()
 
