@@ -239,6 +239,54 @@ class Stems(unittest.TestCase):
         self.assertLess(margin, abs(M.LAYOUTS[1][0]))
 
 
+class Placement(unittest.TestCase):
+    """The seeded layout is placed: mechanism's reset runs on_place for a task of loose Bodies only (2026-11-18: it ran
+    only beside a Mechanism, so every trial started in layout 0 while the demo planned for the seed's layout)."""
+
+    def test_reset_places_a_body_only_task(self):
+        import types
+        mech = sys.modules["mechanism"]
+        calls = []
+
+        class Base:
+            step_dt = 0.05
+            sim = types.SimpleNamespace(render=lambda: None)
+
+        class Emb:
+            def __init__(self):
+                self.task = types.SimpleNamespace(objects=M.OBJECTS)
+                self._env = types.SimpleNamespace(step=lambda a: calls.append("step"))
+                self._base, self._ready = Base(), None
+
+            def reset(self, scene, *, seed=None):
+                return "first"
+
+            def step(self, action):
+                return None
+
+            def close(self):
+                return None
+
+            def _task_step(self, *a, **k):
+                return None
+
+            def _observation(self):
+                return "placed"
+
+        fake = types.SimpleNamespace(YamArenaEmbodiment=Emb, SETTLE_S=0.1, RESET_RENDERS=1)
+        mech._patch_embodiment(fake)
+        place = mech._PLACE[:]
+        mech._PLACE[:] = [lambda env: calls.append(("place", mech.run_seed()))]
+        try:
+            obs = Emb().reset(None, seed=2566101560)
+        finally:
+            mech._PLACE[:] = place
+        self.assertEqual(obs, "placed")
+        self.assertIn(("place", 2566101560), calls)
+        self.assertEqual(M.layout_index(2566101560), 2)
+        self.assertIn(M.place_layout, place)
+
+
 class LineUp(unittest.TestCase):
     """The demo's line-up passes, on a kinematic stand-in: each board turns and shifts with its hand about the TCP."""
     BIAS = math.radians(0.7)   # [RUN: the 2026-11-18 p_fit trace, both boards about 0.7 deg off after the grip]

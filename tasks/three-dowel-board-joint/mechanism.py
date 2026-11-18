@@ -14,6 +14,8 @@
 # size check that also refuses a hull with fewer than 4 points per ring.
 # Changes for the mug-handle task: functions that place loose objects for the trial run after the mechanisms are put
 # back at rest and before the reset's settling steps (``on_place``), so a seeded start pose settles like any other.
+# Changes for the three-dowel task: those place and reset functions also run when the task's loose objects are Bodies
+# only, with no Mechanism (before, they ran only alongside a Mechanism, so a Body-only task never got its seeded pose).
 # The original licence:
 #
 #   MIT License
@@ -832,8 +834,10 @@ def _patch_embodiment(module) -> None:
         _ENV[0] = self._env
         observation = reset(self, scene, seed=seed)
         _ENV[0] = self._env  # WHY again: the first reset builds the sim, so self._env was None above
-        specs = [o for o in (self.task.objects if self.task is not None else ()) if isinstance(o, Mechanism)]
-        if specs:
+        objs = self.task.objects if self.task is not None else ()
+        specs = [o for o in objs if isinstance(o, Mechanism)]
+        bodies = [o for o in objs if isinstance(o, Body) and not isinstance(o, Mechanism)]
+        if specs or (bodies and (_PLACE or _RESET)):
             for spec in specs:
                 _rest(self._env, _SPECS.get(spec.name, spec))
             for fn in _PLACE:

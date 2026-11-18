@@ -117,7 +117,9 @@ a 1 mm grid for stillness. All of these resolve their thresholds (each tool's st
         -E control_hz=20 -E cam_width=320 -E cam_height=176 --scorer task_score --max-steps 1200 --seed 0 \
         --instruction "$(python3 -c 'import json;print(json.load(open("task.json"))["instruction"])')"
 
-The seed picks one of three start layouts for the dark board (x shift 0, +12, -12 mm; turn 0, +3, -3 deg). The demo
+The seed picks one of three start layouts for the dark board (x shift 0, +12, -12 mm; turn 0, +3, -3 deg): the
+layout is the seed inspect-robots passes to the reset, mod 3. CLI seeds 0, 1 and 2 reach the reset as 1415158438,
+2566101560 and 377265627 [RUN], so layouts 1, 2 and 0. The demo
 reads the seed (a privileged script). It also lines the boards up from their true poses, as a worker sights along the
 edges: five passes, at the end of the 1 s settle and then after each of four short slides (back 4 mm and in again, the
 last two ending with the tips 2 mm short of the holes). Each pass turns each hand so its board is square to the bench
@@ -151,6 +153,13 @@ Probe 2 (three line-up passes, the boards at rest between them): `p_fit` 1.0 in 
 the looser holes allow. `p_tight` (0.10 mm) 0: the dowels entered 0.2 to 1.0 mm and bound with the boards 0.5 to 1.0
 deg apart in yaw. `p_off` 0: the same bind at 1.6 to 2.0 deg. `t00` 0: the passes made at rest landed late and the
 last overshot, so the ends met the mouths 1.69 mm apart. The demo now slides between passes (above).
+
+Batch 3 (before the placement fix): until then `mechanism.py` ran `on_place` only beside a Mechanism, so in this
+Body-only task the seeded layout was never placed and every run started in layout 0's poses, while the demo planned
+for the seed's layout. Layout 1's plan still caught the board (its 12 mm shift is just past the 11.5 mm open margin,
+so the hand dragged the board over); layout 2's put a finger on the board, the hand stopped 15 mm high and turned the
+board 12.5 deg, and the trial scored 0. `mechanism.py` now places Body-only tasks too (test), and all earlier results
+above ran in layout 0.
 
 Demo on three seeds: SEEDS_PENDING
 
