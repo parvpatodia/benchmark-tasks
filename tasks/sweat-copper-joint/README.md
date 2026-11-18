@@ -74,111 +74,7 @@ Hardware:
   - for each block, the cooling from the peak down to 200 F after the flame comes off, to fit the time constant (the
     sim keeps one time constant for all seeds);
   - that a wire held in the flame's wash 10 mm over a cold joint does not melt.
-- Protection (for the trial, not part of the task): work to ANSI Z49.1, which the CDA guide cites.
-  - A sheet-steel bench top, a fume extractor hood 30 cm over the joint, a fibreglass heat shield behind the vise, a
-    fire extinguisher at hand, and an operator on the e-stop.
-  - Shields on both complete arms: each arm, from its base to its gripper (base, shoulder, upper arm, elbow, forearm,
-    wrist and gripper housing) and its cables, is covered with an aluminized fibreglass sleeve over a silicone-coated
-    fibreglass wrap, leaving out only the finger pads and the wrist cameras' lenses (they look out through cut-outs).
-    The left (torch) hand's pads are bare on the torch's handle, behind the steel guard; the right (wire) hand's pads
-    are wrapped in silicone tape rated 260 C (below). The left (torch) hand also carries a sheet-steel guard, 80 by 60 mm
-    [CHOICE], clipped to its housing between the torch's head and the wrist; the dry run below checks that it clears
-    the rest, the vise and the right arm. A thermocouple under the tape on one of the right
-    hand's pads is fitted for every trial (below).
-  - Exposed rig parts: the gas hose is sleeved in aluminized fibreglass along its whole length from the hanger to the
-    torch; the overhead and side cameras and their stands and the thermocouple leads stand behind the fibreglass
-    heat shield or in their own aluminized sleeves; the vise, the rest with its back plate, the bench top and the heat shield
-    are steel, ceramic board or fibreglass and take the flame by design (the flame heats the fitting in the vise, and a
-    torch on its rest points at its back plate). The cameras, their stands and the leads each have a fixed place in the
-    rig, measured once and entered in the flame-axis check (below); the hose, which moves with the torch, is covered
-    by its sleeve.
-  - The torch's rest: the steel block stands on a ceramic fibre board, with a sheet-steel back plate behind the torch's
-    head, so a torch put back lit, or dropped near its rest, points its flame at steel and board, not at the bench,
-    the hose or an arm's base. A switch under the block reads whether the torch lies on its rest.
-  - Automatic fuel shutoff: a normally closed, propane-rated solenoid valve, powered through a latching safety relay,
-    sits in the hose at the overhead hanger, so about 1 m of hose is left between it and the torch [CHOICE]. Any
-    condition below opens the relay and the valve closes; loss of power also closes it. The robot is put in
-    protective stop at the same time, the torch staying in the hand. The relay stays open until the operator resets
-    it by hand after finding the cause. A trial stopped by a safety trip (the flame-axis, slip, box, grip, tilt
-    and temperature checks) ends there and scores 0; one stopped by the e-stop for an outside reason, a heartbeat loss or a
-    power fault is not the policy's doing and is voided and rerun.
-    - the e-stop pressed, or the robot controller's protective stop;
-    - no heartbeat from the trial computer for 0.5 s [CHOICE] (a watchdog on the relay);
-    - the flame's axis (the line out of the nozzle's end, 300 mm long), while the rest's switch reads the torch off its
-      rest, passing within 30 mm [CHOICE] of any link of either arm, every link included: all links of the left (torch)
-      arm, its gripper's housing and both its fingers among them, and all links of the right arm, pads included; or of
-      the cameras, their stands or the leads. Two axes are checked at the control rate and either one trips: one along
-      the torch's direction as the orientation sensor on its body reads it (the slip check below), one along the
-      direction the left arm's joint encoders and forward kinematics give the torch held rigid in the grip. Both start
-      from the nozzle's end placed by the encoders and forward kinematics through the grip. The collars (below) let the
-      handle slide up to 15 mm [CHOICE] each way along its length, so each checked segment starts 15 mm behind the
-      nozzle's end and ends 15 mm past the 300 mm, covering every place the slide can put the flame. So a torch that
-      turns in the grip turns the sensor's axis with it, toward the hand that holds it as well as anything else. In
-      the scripted demo, once the torch is off its rest, the lengthened segment passes no nearer than 109.1 mm to the
-      left gripper's housing and fingers, 154.0 mm to the left arm's other links, 41.2 mm to the right hand's gripper
-      and fingers and 160.0 mm to the right arm's other links [RUN: offline, `tools/flame_axis.py`, the torch placed by
-      forward kinematics from the demo's joint solution at every control step, seeds 0, 2 and 4; each is a lower bound,
-      to within 1 mm, against the link's convex hull]. Over the whole band the segment can sweep while the handle
-      slides between the pads without a trip (6 mm down to 10 mm up, below), the nearest approaches are 103.0, 141.7,
-      35.1 and 147.6 mm in the same order [RUN: `tools/flame_axis.py band=1`, seed 0; copies of the segment 4 mm
-      apart across the band, each minimum less 2.5 mm, so a lower bound for the band], and at the feed pose the
-      wire hand's pads are about 60 mm over it [ARITH, from the pads 47 mm over the coupling's mouth and the flame
-      12.7 mm under it];
-    - the torch turned or slid in the grip (a slip check, active only while the rest's switch reads the torch off its
-      rest):
-      - turned: an orientation sensor (a Bosch BNO055 on a breakout board in a sheet-steel case, run in its IMU mode,
-        which per its datasheet gives a relative orientation from the accelerometer and gyroscope only, at 100 Hz, and
-        is rated -40 to +85 C; the steel bench and vise would bias a magnetometer, so none is used) is screwed to the
-        handle's back end, 90 mm behind the grip and over 230 mm behind the nozzle, its lead run inside the hose's
-        sleeve. Its heading has no absolute reference and drifts, so it is re-zeroed with the torch on its rest before
-        each trial. When the rest's switch opens at the lift, the difference between the sensor's orientation and the
-        one the left arm's forward kinematics gives the held torch is recorded; this zeroes out however the policy
-        grasped the handle. From then on, a change in that difference of over 5 degrees [CHOICE] trips, and so does a
-        gap in the sensor's data over 0.1 s [CHOICE]. A roll about the handle's own axis does not move the flame, which
-        runs along that axis.
-      - slid along the handle: two clamp collars on the handle, standing over 3 mm proud of it [CHOICE], one each side
-        of the finger pads with about 15 mm of play each way [CHOICE], so the grasp need not land within a millimetre
-        of a mark. A slide within the play keeps the flame on its line and is covered by the lengthened checked
-        segment (above); a slide past a collar needs the fingers to open, which the finger-width check (next) trips.
-      - slid up or down between the pads: a pure translation along the gripper's approach axis, which neither the
-        orientation sensor nor the finger width sees. Down, it can go at most 6 mm before the handle's axis passes the
-        pad tips and the handle drops out, which trips the finger-width check [ARITH: the pad tips sit 13 mm past the
-        TCP and the handle's axis 7 mm past it in the demo's grasp]. Up, toward the gripper's housing, the flat pad faces
-        would let it go about 51 mm [ARITH: the pads' faces reach 44 mm above the TCP in the sim's finger mesh], so it is
-        measured: a time-of-flight distance sensor (an ST VL6180X on a breakout board, rated by its datasheet for
-        ranging from 0 to 100 mm and for -20 to 70 C) is fixed to the underside of the left gripper's housing and
-        aimed down through the gap between the fingers at the handle's top, about 66 mm away in the demo's grasp
-        [ARITH, from the same mesh]. Its reading when the rest's switch opens is recorded; a change of more than 10 mm
-        [CHOICE] either way trips, and so does a gap in its data over 0.1 s [CHOICE]. That bounds the slide to 6 mm
-        down and 10 mm up, and the flame-axis clearances above are computed over that whole band.
-      - dropped or pushed out: opening or slipping out trips the finger-width check.
-    - the nozzle's end outside its working box: the box holds the nozzle's whole path in a dry run of the scripted
-      demo with the flame off, grown by 50 mm on every side [CHOICE], and no more;
-    - the torch off its rest (the rest's switch) while the left gripper's finger width differs from the 22 mm handle
-      by more than 3 mm [CHOICE] (open off it, or closed past it as the torch slips out), or a tilt switch on the
-      torch's body past 45 degrees from level [CHOICE] (the demo's flame runs level): a torch slipping or dropped;
-    - a type K thermocouple under each arm's sleeve at the wrist over 80 C [CHOICE: no rating for the arm's wrist
-      motors was found, so this is set low], or the wire hand's pad thermocouple over 150 C [CHOICE];
-    - the cup thermocouple over 650 F [CHOICE] (the trial has already failed: burnt flux);
-    - the flame out with the valve open (a thermocouple in the torch's flame, as a flame-failure check), except while
-      the operator lights the torch: a hold-to-light button on the relay box bypasses only this check, for at most
-      5 s [CHOICE], with the torch on its rest;
-  - At the trial's 150 s limit (3,000 steps at 20 Hz, counted from the policy's first action) the relay also closes
-    the valve. That is the normal end, not a trip: the trial scores by the ladder at that moment, as in the sim.
-  - The dry run, with the flame off and the scripted demo on each seed in the table above, sets the working box and must not trip the
-    flame-axis, slip, grip, tilt or box checks; its smallest flame-axis distance to each arm and to the rig parts is recorded. If it trips
-    one, the trial is not run until the checks are set again.
-  - Before each session: each condition is tripped once by hand with the flame lit at the rest (the arm moved past
-    the box, the heartbeat stopped, a thermocouple warmed with a heat gun). The grip, tilt and slip checks need the torch
-    off its rest: they are tripped with the torch lying lit on its rest and the rest's switch held open by hand at its
-    actuator, then the gripper opened, and the torch's tilt switch tipped by hand. The slip check is tripped with the torch lying lit on its rest, the switch held open as above, and the left fingers closed to 22 mm in the air beside the torch, so the grip check does not trip; the left wrist is then turned 10 degrees by jog while the sensor stays still. The relay logs which input opened it, and the test passes only if it was the slip input. The data-gap condition is tripped by unplugging the sensor's lead. The distance sensor is tripped with a 22 mm steel rod in the closed left fingers in place of the torch, the switch held open, the rod pushed 15 mm toward the gripper's housing by hand; the relay must log the distance input, and its lead is unplugged once to trip its data-gap condition. Before the first trial the dry run also records the largest change in the sensor-to-kinematics difference along the demo (from its value at the lift); over 2 degrees [CHOICE], the sensor is recalibrated and the dry run repeated. The sensor's drift is measured once per session: re-zeroed, then the torch left lit on its rest for 150 s, the trial's length; a heading or tilt change over 1 degree [CHOICE] means the sensor is recalibrated or replaced before any trial. The time from each trip to the flame going out (the gas left in the hose burns off) is read from the
-    flame thermocouple's log and must be under 3 s [CHOICE]; a session with any condition that fails to trip or to put
-    the flame out in time is not run.
-  - A soapy-water leak check of the hose and fittings before each session.
-  - The flame heads across the joint, under the wire hand. The wire hand's pads are 58 mm above the wire's tip (about
-    47 mm over the coupling's mouth at full feed) and wrapped in silicone tape rated 260 C. During calibration the pad
-    thermocouple, with the hand at the demo's feed pose and the flame on its mark for the demo's longest flame-on time (read from the dry run), must
-    stay under 120 C [CHOICE], well under the 150 C trip, or the trials are not run.
+- Protection: below.
 
 How each reading is made:
 
@@ -209,6 +105,150 @@ Score with the same ladder: 1.0 success; 0.8 full, set and away but not held 1 s
 - let the vise cool to room temperature and fit the trial's heat-sink block;
 - stand a new marked coil in the holder;
 - light the torch on its rest.
+
+### Protection (for the trial, not part of the task)
+
+Work to ANSI Z49.1, which the CDA guide cites.
+
+Rig:
+
+- A sheet-steel bench top that covers the working box below with 100 mm to spare [CHOICE], a fume extractor hood
+  30 cm over the joint, a fibreglass heat shield behind the vise, a fire extinguisher at hand, and an operator on the
+  e-stop.
+- Both complete arms, base to gripper, and their cables are covered with an aluminized fibreglass sleeve over a
+  silicone-coated fibreglass wrap. The only openings are the finger pads, the wrist cameras' lenses and a window
+  under the left gripper's distance sensor (below), each a cut-out in the sleeve. The left (torch) hand's pads are
+  bare on the torch's grip section; the right (wire) hand's pads are wrapped in silicone tape rated 260 C, with a
+  thermocouple under the tape. A sheet-steel guard, 80 by 60 mm [CHOICE], is clipped to the left gripper's housing
+  between the torch's head and the wrist; the dry run checks that it clears the rest, the vise and the right arm.
+- The gas hose is sleeved in aluminized fibreglass from the overhead hanger to the torch. The overhead and side
+  cameras, their stands and the thermocouple leads stand behind the heat shield or in their own sleeves, each at a
+  fixed place, measured once and entered in the flame-axis check. The vise, the rest, the bench top and the heat
+  shield are steel, ceramic board or fibreglass and take the flame by design.
+- The torch's rest: the steel block stands on ceramic fibre board, with a sheet-steel back plate behind the torch's
+  head, so a torch put back lit, or dropped near it, points at steel and board. A switch under the block reads whether
+  the torch lies on it. Before each trial the operator lays the torch on it against a pinned jig, which sets its
+  heading to within 0.5 degrees [CHOICE], then takes the jig away, so the trial starts from the sim's plain block.
+- The torch's grip section: clamp sleeves cover the handle on both sides of a bare section 30 mm longer than the pads
+  [CHOICE: 15 mm of play either way from the demo's grasp], standing 4 mm or more proud of the handle [CHOICE]. Closed
+  on a sleeve, the burner tube or the nozzle, the fingers stop outside the 22 ± 3 mm grip window (checked each
+  session), so the grip section is the only place the torch can be held off its rest without a trip.
+
+Sensors on the torch and its hand:
+
+- Orientation: a Bosch BNO055 in a sheet-steel case on the handle's back end, its lead inside the hose's sleeve, in
+  its IMU mode, where "the relative orientation of the BNO055 in space is calculated from the accelerometer and
+  gyroscope data" (data sheet BST-BNO055-DS000-12; 100 Hz in that mode; "Operating temperature: -40°C ... +85°C"). No
+  magnetometer: the steel bench and vise would bias it. Its heading is zeroed with the torch on the jig before each
+  trial, so from then on it reads the torch's orientation in the rig's frame, whatever the policy does to the torch.
+- Depth in the grip: an ST VL6180X time-of-flight sensor under the left gripper's housing, aimed down between the
+  fingers at the handle's top, about 70 mm away in the demo's grasp [ARITH: the housing's underside 70.5 mm above
+  the TCP in the sim's gripper hull, the handle's top 0.6 mm above the TCP]. Its data sheet (DocID026171 Rev 6) gives
+  ranging over "0 to 100 mm", an operating temperature of "-20 to 70°C" (functional range) and "-10 to 60°C"
+  (optimum range), and in Table 19 a temperature dependent drift of 9 mm typical and 15 mm maximum, "Tested over
+  optimum operating temperature range". It gives a field of view only for the ambient light sensor, not for ranging,
+  so the beam's clearance past the fingers is tested each session, not assumed. Because that drift can exceed the
+  slide limit, the sensor has its own thermocouple, which trips at 45 C [CHOICE], and is calibrated in place each
+  session. The reading is absolute: the 22 mm steel rod held at the demo's grasp depth sets its zero, so it says where
+  the handle sits between the pads, not only how far it has moved.
+- Finger width from the gripper's encoder. The two fingers move together (joint7 = joint8 in the arm model), so a
+  closed grip centres the handle between them.
+
+Where the live check puts the flame (at the control rate, while the rest's switch reads the torch off its rest;
+`live_axes` in `tools/flame_axis.py` is the same calculation):
+
+1. When the switch opens (the lift), the grip is measured: the torch's rotation in the gripper's frame (the
+   orientation sensor against the left arm's forward kinematics) and the handle's depth between the pads (the
+   distance sensor). No part of the grip is taken from the demo.
+2. The grip point is the TCP from the encoders and forward kinematics, moved along the gripper's approach axis to
+   that depth, then on by the distance sensor's change since the lift.
+3. Two flame directions leave that point, and either can trip: the orientation sensor's, which turns with the torch,
+   and the arm's, the lift's grip carried rigid by the wrist.
+4. Each checked segment runs from 15 mm behind the nozzle's end to 15 mm past 300 mm out along the flame, which covers
+   every place the handle can sit along the grip section.
+
+Error budget of the sensor's axis [ARITH]: its angle error is held to 1.5 degrees (0.5 from the jig, 1 for drift and
+motion, both gated each session, below). The segment's points lie 125 to 455 mm from the grip point, so that error
+moves them 3.3 to 11.9 mm. The depth reading adds at most 2 mm (gated). So, at the worst, the true axis can come
+within 16 mm of a link at the segment's far end, and 25 mm at the nozzle, before the 30 mm check trips. The arm's own
+kinematic error is not in this budget; it is not measured here.
+
+In the scripted demo, from the lift on, the segment passes no nearer than 108.6 mm to the left gripper's housing
+and fingers, 153.5 mm to the left arm's other links (its base included), 40.7 mm to the right hand's gripper
+and fingers and 159.5 mm to the right arm's other links [RUN: `tools/flame_axis.py` with `cli=0`, `cli=2` and
+`cli=4` (`--seed` 0, 2 and 4, Seeds above), the torch placed by forward kinematics from the demo's joint solution at every
+control step; lower bounds against each link's convex hull]. With the handle slid anywhere within 10 mm either way
+between the pads, the nearest approaches are 102.5, 141.2, 34.6 and 147.1 mm in the same order [RUN: `band=1`,
+`cli=0` only; every band minimum falls at t 4.00 to 4.05 s, the lift, and both arms' joint targets are the same on all three seeds until t 16.15 s [RUN], when the seed starts to set the timing; the line minima are the same on all three seeds].
+
+Automatic fuel shutoff: a normally closed, propane-rated solenoid valve, powered through a latching safety relay,
+sits in the hose at the overhead hanger, about 1 m of hose from the torch [CHOICE]. Any condition below opens the
+relay and the valve closes; loss of power also closes it. The robot goes into protective stop at the same time, the
+torch staying in the hand. The relay logs which input opened it and stays open until the operator resets it by hand
+after finding the cause.
+
+| Condition ("off rest": checked only while the rest's switch reads the torch off its rest) | Trips at | Trial |
+|---|---|---|
+| E-stop pressed | operator | 0 if pressed for the policy's motion; void if for an outside reason |
+| Robot controller's protective stop | controller | 0 |
+| No heartbeat from the trial computer | 0.5 s [CHOICE] | void |
+| Off rest: either checked flame axis near any link of either arm (the bases, the left gripper's housing and fingers, and the right pads included), or the cameras, stands or leads | 30 mm [CHOICE] | 0 |
+| Off rest: torch turned in the grip, as the angle between the two flame directions (a roll about the handle's own axis leaves the flame where it is and is not counted) | 5 degrees [CHOICE] | 0 |
+| Off rest: torch slid between the pads since the lift (distance sensor) | 8 mm either way [CHOICE: with the 2 mm gated error the true slide stays within 10 mm] | 0 |
+| Distance reading outside the handle's span between the pads, or a gap in either sensor's data | 0.1 s gap [CHOICE] | void (equipment) |
+| Off rest: the nozzle's end outside the working box (below) | box edge | 0 |
+| Off rest: finger width off the 22 mm grip (opened, or closed past it as the torch slips out) | 3 mm [CHOICE] | 0 |
+| Tilt switch on the torch's body (the demo's flame runs level) | 45 degrees from level [CHOICE] | 0 |
+| Thermocouple under each arm's sleeve at the wrist / on the right pad / on the distance sensor | 80 C [CHOICE: no rating for the wrist motors was found, so this is set low] / 150 C [CHOICE] / 45 C [CHOICE] | 0 |
+| Cup thermocouple | 650 F [CHOICE] | 0 (the flux has already burnt) |
+| Flame out with the valve open (a thermocouple in the flame); a hold-to-light button bypasses only this, for at most 5 s [CHOICE], with the torch on its rest | flame thermocouple | 0, or void if the torch, relit on its rest, goes out again within 150 s (a supply fault) |
+
+After a sensor trip that scores 0, the operator repeats that input's session test (below); if the sensor fails it,
+the trip was the equipment's and the trial is voided instead. A voided trial is rerun on the same seed; a trial voided
+twice stops the session until the cause is found. At the trial's 150 s limit (3,000 steps at 20 Hz, from the policy's
+first action) the relay also closes the valve. That is the normal end, not a trip: the trial scores by the ladder at
+that moment, as in the sim.
+
+The working box is set from the rig, not from the demo's path: the nozzle's end must stay within x -0.10 to 0.60 m
+and y -0.50 to 0.50 m and under 250 mm over the bench (the hood is about 365 mm over it) [CHOICE]. The demo's nozzle
+stays within x 0.161 to 0.228 m, y 0.026 to 0.109 m and 49 to 100 mm over the bench [RUN: offline, the same
+placement, all three seeds]. The box is checked only off rest: on the rest the arm need not be holding the torch, so
+a nozzle placed through the grip would mean nothing.
+
+The dry run, with the flame off and the scripted demo on `--seed` 0, 2 and 4, must not trip the flame-axis,
+turn, slide, box, grip or tilt checks. It records the smallest flame-axis distance to each arm and rig part, and the
+largest angle between the two flame directions; over 1 degree [CHOICE], the orientation sensor is recalibrated and the
+dry run repeated. If a check trips, the trial is not run until the checks are set again.
+
+Before each session, with the flame lit at the rest (for the off-rest checks the rest's switch is held open by hand
+at its actuator):
+
+- each condition is tripped once by hand: the e-stop; the heartbeat stopped; each thermocouple warmed with a heat gun;
+  the left arm jogged until the computed nozzle leaves the box; the gripper opened; the tilt switch tipped; the
+  cylinder's valve shut to put the flame out;
+- turn: the left fingers closed to 22 mm in the air beside the torch, then joint6 jogged 10 degrees, which turns the
+  arm's flame direction 10.0 degrees at the lift's pose while the sensor stays still [RUN: offline; joint5 would only
+  roll the handle, 0.12 degrees]. The relay must log the turn input;
+- slide: the 22 mm rod in the closed left fingers at the demo's grasp depth, pushed 10 mm toward the housing, then
+  10 mm toward the tips; the relay must log the slide input each time. Over that travel, in 2 mm steps set with a
+  depth gauge, the reading must stay within 2 mm of the rod's true depth [CHOICE], also with the sensor warmed by
+  heat gun to its 45 C trip. With the fingers closed to 22 mm on nothing, the reading must lie beyond the handle's
+  span (the beam clears the fingers);
+- data gaps: each sensor's lead unplugged once; the relay must log the data-gap input;
+- grip window: the fingers closed on each sleeve, on the burner tube and on the nozzle must stop outside 22 ± 3 mm;
+- orientation: re-zeroed on the jig, the sensor's tilt must read the jig's within 0.5 degrees [CHOICE]; then, with
+  the torch left lit on its rest for 150 s, the trial's length, its heading and tilt must change by under 1 degree
+  [CHOICE], or it is recalibrated or replaced;
+- the time from each trip to the flame going out (the gas left in the hose burns off), read from the flame
+  thermocouple's log, must be under 3 s [CHOICE].
+
+A session with any condition that fails to trip, or to put the flame out in time, is not run. A soapy-water leak
+check of the hose and fittings is made before each session.
+
+During calibration, with the right hand at the demo's feed pose (its pads 58 mm above the wire's tip, about 47 mm over
+the coupling's mouth at full feed, with the flame heading across the joint under them) and the flame on its mark for
+the demo's longest flame-on time (from the dry run), the pad thermocouple must stay under 120 C [CHOICE], well under
+its 150 C trip, and the distance sensor's under 35 C [CHOICE], under its 45 C trip, or the trials are not run.
 
 ## Run
 
@@ -243,6 +283,11 @@ yam_arena, scripted demo, `object_jitter=0`, 20 Hz, 3,000-step limit. The filmed
 - Melting needs the wire's end on the face, but the sim does not check which body pushes the face down. A finger or
   the nozzle pressing it while the wire's end hovers within 0.5 mm would also feed. The demo's pads stay 58 mm above
   the wire's tip and its nozzle 25 mm behind the inner cone.
+- The real trial has safety trips the sim does not (the Protection table). A policy that scores 1.0 in the sim can
+  score 0 in a real trial if its path trips one: the flame within 30 mm of an arm or rig part, the nozzle over 250 mm
+  up or past the bench's margin, the torch held off its grip section (the sim's handle has no sleeves), turned or slid
+  in the grip, or tilted past 45 degrees, or a hand or the distance sensor over its temperature trip. Offline, the
+  scripted demo stays clear of the flame-axis and box checks; the others are checked in the dry run and calibration.
 
 ## Tests
 
@@ -271,8 +316,9 @@ Offline probes, no sim:
 
 - `tools/ikcheck.py`: the demo's IK, worst 0.1 mm.
 - `tools/arms.py`: every link of one arm against every link of the other along the plan, worst gap 29 mm.
-- `tools/flame_axis.py`: the real trial's flame-axis check along the demo: the nearest approach of the flame's axis
-  (300 mm from the nozzle's end) to every link of both arms, the torch hand's housing and fingers included.
+- `tools/flame_axis.py`: the real trial's flame-axis check along the demo, through `live_axes`, the live check's
+  calculation: the nearest approach of the checked segment to every link of both arms, bases and the torch hand's
+  housing and fingers included; `band=1` adds every slide the distance check allows.
 - `tools/clearance.py`: the grippers, the carried torch and the carried wire against the bench. The wire's end is
   aimed 0.3 mm into the top tube plus the measured 1.1 mm drift, so it rests against the tube.
 - `tools/probe_reach.py`: candidate layouts.
