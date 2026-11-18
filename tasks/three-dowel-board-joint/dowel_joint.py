@@ -433,6 +433,12 @@ RETRY_GAP = 0.026                # a retry backs the boards off to this gap (com
 LINE_UP_MAX = (0.006, math.radians(4.0))  # the most one pass moves a hand (m, rad) [CHOICE: past the 4 mm, 0.7 deg
 #                                  seen in the 2026-11-18 probe, far under a stem's deliberate offset]
 SERVO_VARIANTS = ("demo", "half", "offset", "off", "skew", "relay")
+SQUARE = ("square the boards", "square at the seat")  # relative line-up passes once the dowels are in: after the
+#                                  tries, and early in the hold at the seat. WHY: batch 5 layout 2 (2026-11-18) entered
+#                                  at check 1 with the boards 0.37 deg apart (0.05 at the last pass, turned 0.3 by the
+#                                  chamfers), every later pass was skipped, and it closed one corner and left the other
+#                                  0.32 mm open, past SEAT_GAP: rung 2. A tip 5 mm in leaves 4.6 deg of turn in its
+#                                  0.2 mm bore [ARITH: 2 CLR / 5 mm], and the seated joint 1.1 deg (BIND_TILT)
 VARIANT = "demo"                 # sim/mk.sh sets this in stage copies: see stem_plan()
 
 
@@ -488,7 +494,8 @@ def hand_plan(name, start, approach, gap_end, b_dx=0.0, b_yaw=0.0, letgo=True, d
          *([] if park else cycles),
          *([] if park else tries(name, seat, approach, by, yaw1, retries)),
          _w(3.0, (gend[0], gend[1], Z_GRIP), GRIP, "push the joint closed slowly", yaw1),
-         _w(1.5, (gend[0], gend[1], Z_GRIP), GRIP, "hold the push", yaw1)]
+         *([] if park else [_w(0.4, (gend[0], gend[1], Z_GRIP), GRIP, SQUARE[1], yaw1)]),
+         _w(1.1 if not park else 1.5, (gend[0], gend[1], Z_GRIP), GRIP, "hold the push", yaw1)]
     if letgo:
         # WHY ease first: at the full press each arm is bent 8 mm off its aim, and opening there lets the hand spring
         # along the board while the pads still touch it; eased to a quarter of the press it still pushes the seam shut
@@ -519,7 +526,7 @@ def tries(name, seat, approach, by, yaw1, retries=RETRIES):
               _w(0.4, (mouth[0], mouth[1], Z_GRIP), GRIP, f"retry {r} line up at the mouths", yaw1),
               _w(2.0, (pr[0], pr[1], Z_GRIP), GRIP, f"retry {r} push to the holes", yaw1),
               _w(0.4, (pr[0], pr[1], Z_GRIP), GRIP, f"check {r + 1}", yaw1)]
-    return W
+    return W + [_w(0.4, (pr[0], pr[1], Z_GRIP), GRIP, SQUARE[0], yaw1)]
 
 
 def servo_events(W):
@@ -532,6 +539,8 @@ def servo_events(W):
             out.append((t - 0.1, "line", w.label))
         elif w.label.startswith("check"):
             out.append((t - 0.1, "check", w.label))
+        elif w.label in SQUARE:
+            out.append((t - 0.1, "square", w.label))
     return out
 
 
@@ -706,7 +715,7 @@ def hold_retries(waypoints, t):
 def servo(plans, t):
     """Run each line-up pass and check whose time has come: plans is {arm: ArmPlan}; edits their waypoints in place.
     The last pass of a line-up (before a push) turns only the hole board; a check that finds the dowels in holds the
-    retries and skips their passes."""
+    retries and skips their passes; a square pass runs only once they are in, and turns only the hole board."""
     if not _SERVO["on"] or _M.get("boards") is None or _M.get("tcps") is None:
         return
     ev = _SERVO["events"]
@@ -714,7 +723,7 @@ def servo(plans, t):
         if k in _SERVO["done"] or t < tk:
             continue
         _SERVO["done"].add(k)
-        if _SERVO["entered"]:
+        if _SERVO["entered"] and kind != "square":
             continue
         pa, qa, pb, qb = _M["boards"]
         m = measure(pa, qa, pb, qb)
@@ -724,6 +733,13 @@ def servo(plans, t):
                 _SERVO["entered"] = True
                 for arm in plans:
                     plans[arm].waypoints = hold_retries(plans[arm].waypoints, t)
+        elif kind == "square":
+            if _SERVO["entered"]:
+                d = line_up(pa, qa, pb, qb, _M["tcps"]["right"], _M["tcps"]["left"], _SERVO["b_dx"], _SERVO["b_yaw"],
+                            False)
+                for arm, (dx, dyaw) in d.items():
+                    if arm in plans:
+                        plans[arm].waypoints = shift_after(plans[arm].waypoints, t, dx, dyaw)
         else:
             held = "right" in plans and _holding(plans["right"].waypoints, t)
             last = k + 1 < len(ev) and ev[k + 1][1] == "check" or "mouths" in label

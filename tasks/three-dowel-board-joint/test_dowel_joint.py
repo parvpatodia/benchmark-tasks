@@ -365,10 +365,50 @@ class Tries(unittest.TestCase):
                 if w.label.startswith("retry") or w.label in ("check 2", "check 3"):
                     self.assertEqual((w.pos, w.yaw), (hold.pos, hold.yaw), w.label)
             n = len(M._SERVO["log"])
-            M.servo(plans, 99.0)                      # later passes and checks are skipped
-            self.assertEqual(len(M._SERVO["log"]), n)
+            M.servo(plans, 99.0)                      # later passes and checks are skipped; the square passes run
+            self.assertEqual([r["kind"] for r in M._SERVO["log"][n:]], ["square", "square"])
             fin = [w for w in W if w.label == "push the joint closed slowly"][0]
             self.assertEqual(fin, [w for w in p["left"] if w.label == "push the joint closed slowly"][0])
+        finally:
+            M.reset_memory()
+
+    def test_square_passes_follow_the_tries(self):
+        for v in ("demo", "relay"):
+            labels = [w.label for w in M.plan(0, v)["left"]]
+            last = max(i for i, lb in enumerate(labels) if lb.startswith("check"))
+            self.assertEqual(labels.index(M.SQUARE[0]), last + 1, v)
+            self.assertEqual(labels.index(M.SQUARE[1]), labels.index("push the joint closed slowly") + 1, v)
+            self.assertLess(labels.index(M.SQUARE[1]), labels.index("let go"), v)
+        M.reset_memory()
+
+    def test_square_turns_the_hole_board_once_in(self):
+        """The batch 5 layout 2 failure: in at check 1 with the boards 0.37 deg apart; the square pass turns the hole
+        board's hand that much the other way, and leaves the dowel board's."""
+        try:
+            M.plan(0)
+            ts = [t for t, k, l in M._SERVO["events"] if k == "square"]
+            self.assertEqual(len(ts), 2)
+            p = M.plan(0)
+            plans = {a: self.P(list(w)) for a, w in p.items()}
+            st = LineUp().seat(gap=M.PROBE_GAP, yb=math.radians(0.37))
+            M._M["boards"], M._M["tcps"] = tuple(st[:4]), {"right": st[4], "left": st[5]}
+            M._SERVO["entered"] = True
+            M.servo(plans, ts[0] + 0.01)
+            rec = M._SERVO["log"][-1]
+            self.assertEqual(rec["kind"], "square")
+            self.assertNotIn("right", rec["cmd"])
+            self.assertAlmostEqual(rec["cmd"]["left"][1], -0.37, places=2)
+        finally:
+            M.reset_memory()
+
+    def test_square_does_nothing_until_in(self):
+        try:
+            M.plan(0)
+            ts = [t for t, k, l in M._SERVO["events"] if k == "square"]
+            p, plans = self.run_to(ts[0] + 0.01, gap=M.DOWEL_OUT - 0.001, dx=0.0003)
+            self.assertFalse(M._SERVO["entered"])
+            self.assertEqual(M._SERVO["log"][-1]["kind"], "square")
+            self.assertEqual(M._SERVO["log"][-1]["cmd"], {})
         finally:
             M.reset_memory()
 
