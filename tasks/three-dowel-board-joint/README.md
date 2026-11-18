@@ -98,7 +98,10 @@ a 1 mm grid for stillness. All of these resolve their thresholds (each tool's st
         --instruction "$(python3 -c 'import json;print(json.load(open("task.json"))["instruction"])')"
 
 The seed picks one of three start layouts for the dark board (x shift 0, +12, -12 mm; turn 0, +3, -3 deg). The demo
-reads the seed (a privileged script). Runtime: about 5 min wall per run on one L40S including start-up [EST].
+reads the seed (a privileged script). It also lines the boards up from their true poses, as a worker sights along the
+edges: at the end of the 1 s settle, after a further 1 s, and again with the tips 2 mm short of the holes, it turns
+each hand so its board is square to the bench and shifts the pale board's hand so the two end centres meet (a pass
+moves a hand at most 6 mm and 4 deg). Only the scripted demo reads those poses; the score never uses them. Runtime: about 5 min wall per run on one L40S including start-up [EST].
 
 Stems: `bash sim/mk.sh` writes traced copies to `sim/arm/`; `bash sim/run.sh <stem> <steps> <lock> <seed>` runs one.
 
@@ -112,11 +115,16 @@ Stems: `bash sim/mk.sh` writes traced copies to `sim/arm/`; `bash sim/run.sh <st
 | `s_stack` | the pale board lifted and set down on the dark board's end | 0 |
 | `s_left_only` | the left arm alone carries its board as far as it reaches | 0 |
 | `s_relay` | one arm at a time (see "Why two arms") | 1.0 |
-| `p_fit`, `p_off`, `p_tight`, `p_loose` | the fit alone: boards start in line 30 mm apart; 0.20 mm, 1.0 mm and 1.5 deg off, 0.10 mm, 0.35 mm a side | probe |
+| `p_fit`, `p_off`, `p_tight`, `p_loose` | the fit alone: boards start in line 30 mm apart; 0.20 mm a side; the pale board's end 0.5 mm aside and turned 1 deg about it; 0.10 mm; 0.35 mm | probe |
 
 ## Sim results
 
-Not run yet.
+First probe (open loop, before the line-up): `p_fit`, `p_off`, `p_tight`, `p_loose` and `t00` all scored 0. Both hands
+gripped and slid their boards as planned, but each board sat 0.35 to 1.3 deg off square in its grip, all the same
+way; turned about grips 100 to 115 mm from the seam, that put the end centres 2.5 to 4.0 mm apart sideways (5.5 mm in
+`p_off`, held off on purpose), past the 1.2 mm capture, and every dowel tip stopped on the pale board's end face with
+the seam 20 mm open. The demo now lines the boards up
+(above). Not rerun yet.
 
 ## Reset
 

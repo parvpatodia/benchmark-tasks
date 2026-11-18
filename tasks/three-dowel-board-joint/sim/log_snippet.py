@@ -28,10 +28,14 @@ def _trace(env):
             hands += [*tcp, float(q[list(rob.joint_names).index("joint7")])]
         n = _MEM.get("now") or {}
         if _TRACE["f"] is None:
-            path = _os.path.join(_os.path.dirname(__file__), "trace_" + _os.path.basename(__file__)[:-3] + ".csv")
+            # WHY sim/out, not next to the copy in sim/arm: sim/out is the folder rr.sh collects after a run (the
+            # 2026-11-18 probe's traces were left behind in sim/arm)
+            out = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "out")
+            _os.makedirs(out, exist_ok=True)
+            path = _os.path.join(out, "trace_" + _os.path.basename(__file__)[:-3] + ".csv")
             _TRACE["f"] = open(path, "w")
             _TRACE["f"].write("step,ax,ay,az,ayaw,bx,by,bz,byaw,g0,g1,dx,dz,relyaw,tilta,tiltb,d0,d1,d2,o0,o1,o2,"
-                              "va,vb,lx,ly,lz,lf,rx,ry,rz,rf,rung,clear,still,held,err\n")
+                              "va,vb,lx,ly,lz,lf,rx,ry,rz,rf,rung,clear,still,held,lineup,err\n")
         mm = lambda v: round(1000 * float(v), 3)  # noqa: E731
         yaw = lambda q: round(math.degrees(math.atan2(_rot3(q)[1, 0], _rot3(q)[0, 0])), 3)  # noqa: E731
         row = [_TRACE["n"], mm(pa[0] - origin[0]), mm(pa[1] - origin[1]), mm(pa[2] - origin[2] - TOP), yaw(pa[3:7]),
@@ -41,6 +45,7 @@ def _trace(env):
                mm(np.linalg.norm(va[:3])), mm(np.linalg.norm(vb[:3])),
                *[mm(hands[i] - (TOP if i % 4 == 2 else 0.0)) if i % 4 != 3 else round(hands[i], 5) for i in range(8)],
                n.get("rung", -1), int(bool(n.get("clear"))), int(bool(n.get("still"))), round(_MEM["held"], 2),
+               len(_SERVO["done"]),
                str(_M["error"]).replace(",", ";")]
         _TRACE["f"].write(",".join(str(v) for v in row) + "\n")
         _TRACE["f"].flush()

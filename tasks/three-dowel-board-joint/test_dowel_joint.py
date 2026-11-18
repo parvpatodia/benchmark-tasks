@@ -239,6 +239,150 @@ class Stems(unittest.TestCase):
         self.assertLess(margin, abs(M.LAYOUTS[1][0]))
 
 
+class LineUp(unittest.TestCase):
+    """The demo's line-up passes, on a kinematic stand-in: each board turns and shifts with its hand about the TCP."""
+    BIAS = math.radians(0.7)   # [RUN: the 2026-11-18 p_fit trace, both boards about 0.7 deg off after the grip]
+
+    def seat(self, gap=M.PRE_GAP, ya=0.0, yb=0.0, b_dx=0.0):
+        """Both boards in line at a seam gap with their grips (= TCPs) where the plan puts them, then each turned about
+        its own grip: (a_pos, a_quat, b_pos, b_quat, tcp_a, tcp_b)."""
+        ca = np.array([M.X_LINE, M.SEAM_Y - M.BOARD_L / 2 - gap / 2])
+        cb = np.array([M.X_LINE + b_dx, M.SEAM_Y + M.BOARD_L / 2 + gap / 2])
+        ga, gb = ca + [0.0, -M.GRIP_DY], cb + [0.0, M.GRIP_DY]
+        ca, cb = M._turn_about(ca, ga, ya), M._turn_about(cb, gb, yb)
+        return ([*ca, M.Z_C], M._quat(ya), [*cb, M.Z_C], M._quat(yb), np.array([*ga, M.Z_GRIP]),
+                np.array([*gb, M.Z_GRIP]))
+
+    def apply(self, st, d):
+        """The kinematic answer to a pass: each board turns with its hand about the TCP; the left one also shifts."""
+        pa, qa, pb, qb, ta, tb = st
+        da = d.get("right", (0.0, 0.0))[1]
+        dxb, db = d["left"]
+        ya, yb = M._yaw_of(qa) + da, M._yaw_of(qb) + db
+        ca = M._turn_about(pa, ta, da)
+        cb = M._turn_about(pb, tb, db) + [dxb, 0.0]
+        tb2 = tb + [dxb, 0.0, 0.0]
+        return ([*ca, M.Z_C], M._quat(ya), [*cb, M.Z_C], M._quat(yb), ta, tb2)
+
+    def test_the_probe_miss(self):
+        """Both boards turned 0.7 deg the same way about their grips, 115 mm from the seam each at the 30 mm gap: the
+        ends 2.8 mm apart sideways, past the 1.2 mm capture, with no yaw between them (the probe: 1.9 mm just after the
+        grip, 2.45 mm at the end face, yaws 0.35 to 1.2 deg, all the same sign)."""
+        m = M.measure(*self.seat(ya=self.BIAS, yb=self.BIAS)[:4])
+        lever = M.BOARD_L / 2 + M.GRIP_DY + M.PRE_GAP / 2
+        self.assertAlmostEqual(abs(m["dx"]), 2 * lever * math.sin(self.BIAS), delta=2e-5)
+        self.assertGreater(min(m["off"]), M.CAPTURE)
+        self.assertLess(abs(m["yaw"]), 1e-9)
+
+    def test_one_pass_lines_up(self):
+        for ya, yb, dx in ((self.BIAS, self.BIAS, 0.0), (self.BIAS, -0.3 * self.BIAS, 0.003), (-0.01, 0.02, -0.004)):
+            st = self.seat(ya=ya, yb=yb, b_dx=dx)
+            st2 = self.apply(st, M.line_up(*st))
+            m = M.measure(*st2[:4])
+            self.assertLess(abs(m["dx"]), 1e-6, (ya, yb, dx))
+            self.assertLess(abs(m["yaw"]), 1e-9)
+            self.assertLess(abs(M._yaw_of(st2[1])), 1e-9)
+            self.assertLess(max(m["off"]), 1e-6)
+
+    def test_keeps_a_stems_offset(self):
+        def ends(st):
+            pa, qa, pb, qb = st[:4]
+            end_a = np.asarray(pa) + M._rot3(qa) @ [0.0, M.BOARD_L / 2, 0.0]
+            end_b = np.asarray(pb) + M._rot3(qb) @ [0.0, -M.BOARD_L / 2, 0.0]
+            return end_b[0] - end_a[0]
+        for b_dx, b_yaw in ((M.PITCH, 0.0), M.OFF, (0.0, M.SKEW)):
+            want = ends(self.seat(yb=b_yaw, b_dx=b_dx))          # the stem's own end offset, no grip error
+            st = self.seat(ya=self.BIAS, yb=b_yaw + self.BIAS, b_dx=b_dx)
+            st2 = self.apply(st, M.line_up(*st, b_dx=want, b_yaw=b_yaw))
+            qb = st2[3]
+            self.assertAlmostEqual(ends(st2), want, delta=1e-6)
+            self.assertAlmostEqual(M._yaw_of(qb), b_yaw, delta=1e-9)
+
+    def test_clipped(self):
+        st = self.seat(yb=math.radians(10.0), b_dx=0.020)
+        d = M.line_up(*st)
+        self.assertLessEqual(abs(d["left"][0]), M.LINE_UP_MAX[0])
+        self.assertLessEqual(abs(d["left"][1]), M.LINE_UP_MAX[1])
+
+    def test_relay_follows_the_loose_board(self):
+        """The right hand has let go: only the left moves, and turns its board to the dowel board's yaw."""
+        st = self.seat(gap=0.0, ya=self.BIAS, yb=0.0)
+        d = M.line_up(*st, a_held=False)
+        self.assertNotIn("right", d)
+        st2 = self.apply(st, d)
+        m = M.measure(*st2[:4])
+        self.assertLess(abs(m["yaw"]), 1e-9)
+        self.assertLess(abs(m["dx"]), 2e-5)
+
+    def test_off_probe_inside_capture_skew_outside(self):
+        """Where the dowel tips meet the hole board's end plane (gap = the 20 mm they stand out): the off probe's
+        tips within 0.6 mm of their holes, inside the 1.2 mm capture; the skew stem's all 6 mm out."""
+        def offs(variant):
+            w = [x for x in M.plan(0, variant)["left"] if x.label == "push the joint closed slowly"][0]
+            yaw = w.yaw - M.YAW_L
+            cx, cy = w.pos[0] + M.GRIP_DY * math.sin(yaw), w.pos[1] - M.GRIP_DY * math.cos(yaw)  # grip_point inverted
+            cy = M.SEAM_Y + M.DOWEL_OUT + M.BOARD_L / 2 * math.cos(yaw)   # the end 20 mm off the dowel board's end
+            return M.measure([M.X_LINE, M.SEAM_Y - M.BOARD_L / 2, M.Z_C], Q0, [cx, cy, M.Z_C], M._quat(yaw))["off"]
+        o = offs("off")
+        self.assertLess(max(o), 0.0006)
+        self.assertGreater(max(o), 0.0004)
+        self.assertGreater(min(offs("skew")), 0.006)
+
+    def test_plan_turns_the_hole_board_about_its_end(self):
+        W = M.plan(0, "off")["left"]
+        w = [x for x in W if x.label == "push the joint closed slowly"][0]
+        yaw = w.yaw - M.YAW_L
+        gx = w.pos[0]
+        cx = gx + M.GRIP_DY * math.sin(yaw)                  # grip_point inverted for the hole board
+        self.assertAlmostEqual(cx + M.BOARD_L / 2 * math.sin(yaw), M.X_LINE + M.OFF[0], places=9)
+
+    def test_shift_after_leaves_the_playing_segment(self):
+        W = M.plan(0)["left"]
+        t = M.label_ends(W, M.LINE_UP)[0] - 0.1
+        W2 = M.shift_after(W, t, 0.002, 0.01)
+        i = [w.label for w in W].index(M.LINE_UP[0])
+        self.assertEqual(W2[:i + 1], W[:i + 1])
+        for a, b in zip(W[i + 1:], W2[i + 1:]):
+            self.assertAlmostEqual(b.pos[0] - a.pos[0], 0.002)
+            self.assertAlmostEqual(b.yaw - a.yaw, 0.01)
+            self.assertEqual((a.pos[1:], a.duration, a.finger), (b.pos[1:], b.duration, b.finger))
+
+    def test_passes_before_the_push(self):
+        for v in M.SERVO_VARIANTS:
+            M.plan(0, v)
+            W = M.plan(0, v)["left"]
+            times = M._SERVO["times"]
+            self.assertEqual(len(times), 3, v)
+            push_start = M.label_ends(W, ("bring the tips to the holes",))[0] - 1.5
+            self.assertLess(times[1], push_start)
+            self.assertLess(times[2], M.label_ends(W, ("push the joint closed slowly",))[0] - 4.0)
+            self.assertTrue(M._SERVO["on"])
+        for v in ("nothing", "left_only", "stack"):
+            M.plan(0, v)
+            self.assertFalse(M._SERVO["on"], v)
+
+    def test_servo_runs_each_pass_once(self):
+        class P:
+            def __init__(self, w):
+                self.waypoints = w
+        p = M.plan(0)
+        plans = {a: P(list(w)) for a, w in p.items()}
+        st = self.seat(ya=self.BIAS, yb=self.BIAS)
+        M._M["boards"], M._M["tcps"] = tuple(st[:4]), {"right": st[4], "left": st[5]}
+        try:
+            t0 = M._SERVO["times"][0]
+            M.servo(plans, t0 - 0.05)
+            self.assertEqual(M._SERVO["done"], set())
+            M.servo(plans, t0 + 0.01)
+            once = [w.yaw for w in plans["left"].waypoints]
+            M.servo(plans, t0 + 0.02)
+            self.assertEqual([w.yaw for w in plans["left"].waypoints], once)
+            self.assertEqual(M._SERVO["done"], {0})
+            self.assertAlmostEqual(once[-1] - p["left"][-1].yaw, -self.BIAS, places=9)
+        finally:
+            M.reset_memory()
+
+
 class Demo(unittest.TestCase):
     def test_fits_run_limit(self):
         for s in range(3):

@@ -3,6 +3,7 @@ the end of the dark board on the right; the pale board on the left has three mat
 them in a dry fit: bring the boards together so all three dowels go into their holes, push the joint closed until the
 two ends meet along the whole seam, with the boards level with each other and their edges flush, then let go of both.
 """
+import dataclasses
 import math
 import pathlib
 import sys
@@ -299,13 +300,13 @@ def pads_clear(pads, boards):
 TCP_OFFSET = (0.0, 0.0, 0.134)   # yam_arena.constants: the TCP along the gripper's approach axis
 PAD_TIP = 0.147                  # the pad tips along it: 13 mm past the TCP (yam_arena.constants.PAD_TIP_PAST_TCP)
 PAD_TOP = 0.112                  # the pads' upper end [EST: 35 mm of pad face]
-_M = {"pads": None, "steps": 0, "error": None}
+_M = {"pads": None, "steps": 0, "error": None, "boards": None, "tcps": None}
 _MEM = {"last": None, "now": None, "held": 0.0}
 _CLOCK = {"dt": None, "steps": 0}
 
 
 def reset_memory():
-    _M.update({"pads": None, "steps": 0, "error": None})
+    _M.update({"pads": None, "steps": 0, "error": None, "boards": None, "tcps": None})
     _MEM.update({"last": None, "now": None, "held": 0.0})
     _CLOCK.update({"dt": None, "steps": 0})
 
@@ -325,22 +326,32 @@ def pad_points(g_pos, g_quat, finger):
 
 @on_step
 def read_hands(env):
-    """Both hands' pad points, after every control step."""
+    """Both hands' pad points, after every control step; also both TCPs and both boards' poses, which only the
+    scripted demo's line-up reads (never the score)."""
     try:
         base = env.unwrapped
         origin = _np(base.scene.env_origins)[0]
-        pads = []
+        pads, tcps = [], {}
         for side in ("left", "right"):
             rob = base.scene[f"{side}_robot"]
             g = _np(rob.data.body_link_pose_w)[0][list(rob.body_names).index("gripper")]
             q = _np(rob.data.joint_pos)[0]
             pads += pad_points(g[:3] - origin, g[3:7], q[list(rob.joint_names).index("joint7")])
-        _M["pads"] = pads
+            tcps[side] = g[:3] - origin + _rot3(g[3:7]) @ np.array(TCP_OFFSET)
+        _M["pads"], _M["tcps"] = pads, tcps
         _M["steps"] += 1
         _CLOCK["dt"] = float(base.step_dt)
     except Exception as e:  # WHY: never stop the run; unread hands count as not let go, so no full score
         _M["error"] = repr(e)
         _M["pads"] = None
+    try:  # WHY apart: a failed read here must not blank the pads the score reads
+        base = env.unwrapped
+        origin = _np(base.scene.env_origins)[0]
+        poses = [_np(base.scene[n].data.root_link_pose_w)[0] for n in ("dowel_board", "hole_board")]
+        _M["boards"] = tuple(x for pz in poses for x in (pz[:3] - origin, pz[3:7]))
+    except Exception as e:  # noqa: BLE001
+        _M["boards"] = None
+        _M["error"] = repr(e)
     _CLOCK["steps"] += 1
 
 
@@ -398,6 +409,11 @@ K_Y = 180.0                      # N/m: each arm's TCP stiffness along y at its 
 #                                  J K^-1 J^T from the joints' drive stiffnesses]
 PRESS = F_PRESS / K_Y            # 8.3 mm past the seat each way [ARITH]
 STEADY = 0.8
+MOUTH_GAP = 0.022                # the seam gap of the last line-up: dowel tips 2 mm short of the hole mouths [CHOICE]
+LINE_UP = ("settle, dowel tips 10 mm short", "line up", "line up at the hole mouths")  # a line-up pass at each end
+LINE_UP_MAX = (0.006, math.radians(4.0))  # the most one pass moves a hand (m, rad) [CHOICE: past the 4 mm, 0.7 deg
+#                                  seen in the 2026-11-18 probe, far under a stem's deliberate offset]
+SERVO_VARIANTS = ("demo", "half", "offset", "off", "skew", "relay")
 VARIANT = "demo"                 # sim/mk.sh sets this in stage copies: see stem_plan()
 
 
@@ -417,26 +433,34 @@ def seat_centres(seam=SEAM_Y, dx=0.0):
     return {"dowel_board": (X_LINE, seam - BOARD_L / 2), "hole_board": (X_LINE + dx, seam + BOARD_L / 2)}
 
 
-def hand_plan(name, start, approach, gap_end, b_dx=0.0, b_yaw=0.0, letgo=True, delay=0.0):
+def hand_plan(name, start, approach, gap_end, b_dx=0.0, b_yaw=0.0, letgo=True, delay=0.0, about_end=False):
     """One hand's waypoints for one board. start: (x, y, z, yaw) of the board. approach: pre-seat gap (m). gap_end:
     the seam gap commanded at the end of the push (negative presses past the seat). b_dx, b_yaw: the hole board held
-    off line (the stems)."""
+    off line (the stems): its centre b_dx aside and turned b_yaw about it, or with about_end its end's centre b_dx
+    aside and turned about that."""
     yaw0 = (YAW_L if name == "hole_board" else YAW_R) + start[3]
     yaw1 = (YAW_L + b_yaw) if name == "hole_board" else YAW_R
     s = 1.0 if name == "hole_board" else -1.0
     gx, gy = grip_point(name, start[0], start[1], start[3])
     seat = seat_centres(dx=b_dx)[name]
+    if name == "hole_board" and about_end:
+        seat = (seat[0] - BOARD_L / 2 * math.sin(b_yaw), seat[1])
     pre = (seat[0], seat[1] + s * approach / 2)
+    mouth = (seat[0], seat[1] + s * min(approach, MOUTH_GAP) / 2)
     end = (seat[0], seat[1] + s * gap_end / 2)
     gpre = grip_point(name, pre[0], pre[1], b_yaw if name == "hole_board" else 0.0)
+    gmouth = grip_point(name, mouth[0], mouth[1], b_yaw if name == "hole_board" else 0.0)
     gend = grip_point(name, end[0], end[1], b_yaw if name == "hole_board" else 0.0)
     W = [_w(2.5 + delay, (gx, gy, Z_HOVER), OPEN, "over its board", yaw0),
          _w(STEADY, (gx, gy, Z_HOVER), OPEN, "steady", yaw0),
          _w(1.5, (gx, gy, Z_GRIP), OPEN, "down round the board", yaw0),
          _w(0.6, (gx, gy, Z_GRIP), GRIP, "grip across its width", yaw0),
          _w(5.0, (gpre[0], gpre[1], Z_GRIP), GRIP, "slide it toward the seam", yaw1),
-         _w(1.0, (gpre[0], gpre[1], Z_GRIP), GRIP, "settle, dowel tips 10 mm short", yaw1),
-         _w(5.0, (gend[0], gend[1], Z_GRIP), GRIP, "push the joint closed slowly", yaw1),
+         _w(1.0, (gpre[0], gpre[1], Z_GRIP), GRIP, LINE_UP[0], yaw1),
+         _w(1.0, (gpre[0], gpre[1], Z_GRIP), GRIP, LINE_UP[1], yaw1),
+         _w(1.5, (gmouth[0], gmouth[1], Z_GRIP), GRIP, "bring the tips to the holes", yaw1),
+         _w(1.0, (gmouth[0], gmouth[1], Z_GRIP), GRIP, LINE_UP[2], yaw1),
+         _w(4.0, (gend[0], gend[1], Z_GRIP), GRIP, "push the joint closed slowly", yaw1),
          _w(1.5, (gend[0], gend[1], Z_GRIP), GRIP, "hold the push", yaw1)]
     if letgo:
         # WHY ease first: at the full press each arm is bent 8 mm off its aim, and opening there lets the hand spring
@@ -452,8 +476,23 @@ def hand_plan(name, start, approach, gap_end, b_dx=0.0, b_yaw=0.0, letgo=True, d
 
 
 def plan(seed=None, variant=None):
-    """Both hands' waypoints for a seed and a variant (demo or a stem)."""
+    """Both hands' waypoints for a seed and a variant (demo or a stem); also arms the demo's line-up (_SERVO)."""
     v = VARIANT if variant is None else variant
+    p = _plan(seed, v)
+    b_dx, b_yaw = {"offset": (PITCH, 0.0), "off": OFF, "skew": (0.0, SKEW)}.get(v, (0.0, 0.0))
+    end_dx = b_dx if v == "off" else b_dx + BOARD_L / 2 * math.sin(b_yaw)   # the end's centre aside, as planned
+    left = p.get("left", [])
+    _SERVO.update({"on": v in SERVO_VARIANTS, "b_dx": end_dx, "b_yaw": b_yaw, "done": set(), "log": [],
+                   "times": [t - 0.1 for t in label_ends(left, LINE_UP)]})
+    return p
+
+
+OFF = (0.0005, math.radians(1.0))   # the probe's hole board: its end's centre 0.5 mm aside, turned 1 deg about it;
+#                                     the tips meet the mouths 0.5 mm off, inside the 1.2 mm capture (test) [CHOICE]
+SKEW = math.radians(5.0)            # the skew stem: turned about its centre, the end 6.5 mm aside [ARITH: 75 sin 5 deg]
+
+
+def _plan(seed, v):
     lay = layout(seed)
     A, B = lay["dowel_board"], lay["hole_board"]
     push = -PRESS * 2          # the commanded gap: both hands aim PRESS past the seat
@@ -466,11 +505,11 @@ def plan(seed=None, variant=None):
     if v == "offset":         # the hole board held one dowel pitch to the side: two dowels find holes, one misses
         return {"left": hand_plan("hole_board", B, PRE_GAP, push, b_dx=PITCH),
                 "right": hand_plan("dowel_board", A, PRE_GAP, push)}
-    if v == "off":            # probe: the hole board held 1.0 mm to the side and turned 1.5 deg, inside the capture
-        return {"left": hand_plan("hole_board", B, PRE_GAP, push, b_dx=0.001, b_yaw=math.radians(1.5)),
+    if v == "off":            # probe: the hole board's end held 0.5 mm to the side and turned 1 deg (OFF)
+        return {"left": hand_plan("hole_board", B, PRE_GAP, push, b_dx=OFF[0], b_yaw=OFF[1], about_end=True),
                 "right": hand_plan("dowel_board", A, PRE_GAP, push)}
     if v == "skew":           # the hole board turned 5 deg: both outer dowels outside their capture
-        return {"left": hand_plan("hole_board", B, PRE_GAP, push, b_yaw=math.radians(5.0)),
+        return {"left": hand_plan("hole_board", B, PRE_GAP, push, b_yaw=SKEW),
                 "right": hand_plan("dowel_board", A, PRE_GAP, push)}
     if v == "left_only":      # the left hand carries its board as far toward the other as it reaches; right idles
         far = (B[0], A[1] + BOARD_L / 2 + BOARD_L / 2 + 0.002, Z_C, 0.0)
@@ -502,14 +541,110 @@ def stack_plan(B):
 
 
 def demo():
-    """Both hands: grip, slide together, push the joint closed, let go."""
+    """Both hands: grip, slide together, line the boards up, push the joint closed, let go."""
     return plan(run_seed())
+
+
+# -- the demo's line-up: a privileged correction from the boards' true poses (the score never reads it) -----------------
+# WHY: the 2026-11-18 probe gripped and pushed well but every board came out of the grip turned about 0.7 deg the same
+# way; turned about grips 100 mm from the seam each, that put the ends 2.4 mm apart sideways [ARITH: 200 mm x sin 0.7
+# deg], twice the 1.2 mm capture, and every dowel stopped on the end face. A real worker sights along the edges; the
+# script reads the poses instead.
+_SERVO = {"on": False, "b_dx": 0.0, "b_yaw": 0.0, "done": set(), "log": [], "times": []}
+
+
+def _yaw_of(q):
+    R = _rot3(q)
+    return math.atan2(R[1, 0], R[0, 0])
+
+
+def _turn_about(pt, pivot, ang):
+    """A point (x, y) turned by ang about a pivot (x, y)."""
+    c, s = math.cos(ang), math.sin(ang)
+    dx, dy = pt[0] - pivot[0], pt[1] - pivot[1]
+    return np.array([pivot[0] + c * dx - s * dy, pivot[1] + s * dx + c * dy])
+
+
+def label_ends(waypoints, labels):
+    """The plan time (s) at which each labelled waypoint ends, in plan order."""
+    t, out = 0.0, []
+    for w in waypoints:
+        t += w.duration
+        if w.label in labels:
+            out.append(t)
+    return out
+
+
+def line_up(a_pos, a_quat, b_pos, b_quat, tcp_a, tcp_b, b_dx=0.0, b_yaw=0.0, a_held=True):
+    """One line-up pass: what to add to each hand's later waypoints, {arm: (x shift m, yaw rad)}. The right hand turns
+    the dowel board square to the bench's y (if it still holds it); the left hand turns the hole board to b_yaw and
+    shifts it so its end's centre lands b_dx (along x) from the dowel board's end's centre, once both turns are made.
+    A turn of the hand turns its board about the TCP (the pads hold the board there)."""
+    ya, yb = _yaw_of(a_quat), _yaw_of(b_quat)
+    da = -ya if a_held else 0.0
+    db = (b_yaw + (0.0 if a_held else ya)) - yb
+    end_a = np.asarray(a_pos, float) + _rot3(a_quat) @ np.array([0.0, BOARD_L / 2, 0.0])
+    end_b = np.asarray(b_pos, float) + _rot3(b_quat) @ np.array([0.0, -BOARD_L / 2, 0.0])
+    na = _turn_about(end_a, tcp_a, da)
+    nb = _turn_about(end_b, tcp_b, db)
+    dx = na[0] + b_dx - nb[0]
+    clip = lambda v, m: float(max(-m, min(m, v)))  # noqa: E731
+    out = {"left": (clip(dx, LINE_UP_MAX[0]), clip(db, LINE_UP_MAX[1]))}
+    if a_held:
+        out["right"] = (0.0, clip(da, LINE_UP_MAX[1]))
+    return out
+
+
+def shift_after(waypoints, t, dx, dyaw):
+    """Waypoints with every one after the one playing at plan time t moved dx along x and turned dyaw. WHY only later
+    ones: the playing segment's goal stays put, so the hand never jumps."""
+    end, i = 0.0, len(waypoints)
+    for k, w in enumerate(waypoints):
+        end += w.duration
+        if t < end:
+            i = k
+            break
+    return waypoints[:i + 1] + [dataclasses.replace(w, pos=(w.pos[0] + dx, w.pos[1], w.pos[2]), yaw=w.yaw + dyaw)
+                                for w in waypoints[i + 1:]]
+
+
+def _holding(waypoints, t):
+    """True while the plan at time t is before its let-go."""
+    end = 0.0
+    for w in waypoints:
+        end += w.duration
+        if w.label == "let go":
+            return t < end - w.duration
+    return t < end
+
+
+def servo(plans, t):
+    """Run each line-up pass whose time has come: plans is {arm: ArmPlan}; edits their waypoints in place."""
+    if not _SERVO["on"] or _M.get("boards") is None or _M.get("tcps") is None:
+        return
+    for k, tk in enumerate(_SERVO["times"]):
+        if k in _SERVO["done"] or t < tk:
+            continue
+        _SERVO["done"].add(k)
+        pa, qa, pb, qb = _M["boards"]
+        held = "right" in plans and _holding(plans["right"].waypoints, t)
+        d = line_up(pa, qa, pb, qb, _M["tcps"]["right"], _M["tcps"]["left"], _SERVO["b_dx"], _SERVO["b_yaw"], held)
+        for arm, (dx, dyaw) in d.items():
+            if arm in plans:
+                plans[arm].waypoints = shift_after(plans[arm].waypoints, t, dx, dyaw)
+        m = measure(pa, qa, pb, qb)
+        rec = {"pass": k, "t": round(t, 2), "dx_mm": round(1000 * m["dx"], 3),
+               "relyaw_deg": round(math.degrees(m["yaw"]), 3), "yaw_a_deg": round(math.degrees(_yaw_of(qa)), 3),
+               "yaw_b_deg": round(math.degrees(_yaw_of(qb)), 3),
+               "cmd": {a: (round(1000 * v[0], 3), round(math.degrees(v[1]), 3)) for a, v in d.items()}}
+        _SERVO["log"].append(rec)
+        print("[dowel line-up] " + str(rec), flush=True)
 
 
 def _replan_demo_after_reset():
     """WHY: inspect-robots resets the policy before the embodiment, so yam_scripted would call demo() before the reset
-    has set this trial's seed. This replans on the first action, after the reset. It changes only the scripted demo
-    policy, never the scene or the score."""
+    has set this trial's seed. This replans on the first action, after the reset, and runs the demo's line-up passes
+    before each action. It changes only the scripted demo policy, never the scene or the score."""
     try:
         from yam_arena import scripted
     except ImportError:
@@ -528,6 +663,7 @@ def _replan_demo_after_reset():
         if getattr(self, "_dj_seed", None) is unset:
             self._dj_seed = run_seed()
             reset(self, self._dj_scene)
+        servo(self._plans, float(observation.state_time) + self._dt)
         return act(self, observation)
 
     cls.reset, cls.act, cls._dj_replan = patched_reset, patched_act, True
