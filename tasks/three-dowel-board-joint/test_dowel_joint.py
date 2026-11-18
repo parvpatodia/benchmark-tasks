@@ -698,8 +698,9 @@ class Text(unittest.TestCase):
             self.assertTrue(w in r, w)
         for v in Stems.EXPECT:
             self.assertIn("`t00`" if v == "demo" else f"`s_{v}`", r)
-        for k in ("STEMS_PENDING", "SEEDS_PENDING", "FILM_PENDING", "DREAM_PENDING"):
-            self.assertEqual(r.count(k), 1, k)
+        # WHY: before the sim runs each placeholder appears once; after finish fills them, none remain
+        counts = {k: r.count(k) for k in ("STEMS_PENDING", "SEEDS_PENDING", "FILM_PENDING", "DREAM_PENDING")}
+        self.assertIn(set(counts.values()), ({1}, {0}), counts)
 
 
 if __name__ == "__main__":
