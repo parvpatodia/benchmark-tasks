@@ -81,7 +81,6 @@ class Geometry(unittest.TestCase):
         self.assertAlmostEqual(M.R_HOLE - M.R_DOWEL, M.CLR)
         self.assertAlmostEqual(M.CAPTURE, M.CLR + M.DOWEL_CH)
         self.assertAlmostEqual(M.CAPTURE, 0.0012)
-        self.assertAlmostEqual(math.degrees(M.YAW_CAPTURE), 2.862, places=2)
 
     def test_dowel_fits_hole(self):
         """The 24-sided dowel's corners (on R_DOWEL) sit CLR inside the 16-sided hole's flats in every direction."""
@@ -203,16 +202,30 @@ class Rungs(unittest.TestCase):
 
 
 class Stems(unittest.TestCase):
-    # relay: batch 4 measured 0.5 (bound 18 mm in, the loose dark board turned 0.5 deg); 1.0 was the guess before
-    EXPECT = {"demo": 1.0, "nothing": 0.0, "half": 0.5, "offset": 0.0, "skew": 0.0, "stack": 0.0, "relay": 0.5,
-              "left_only": 0.0}
+    # The design's expectation per stem; the measured scores on the final commit go in the README. relay: reported,
+    # not gated (None), as nothing in the sim stops a relay from seating
+    EXPECT = {"demo": 1.0, "nothing": 0.0, "half": 0.5, "offset": 0.0, "skew": 0.0, "stack": 0.0, "relay": None,
+              "left_only": 0.0, "hold": 0.75}
 
     def test_every_stem_has_an_expectation(self):
         for v in self.EXPECT:
             M.plan(0, v)  # each variant builds
         txt = (HERE / "sim" / "mk.sh").read_text()
-        for v in ("nothing", "half", "offset", "skew", "left_only", "relay", "stack"):
+        for v in ("nothing", "half", "offset", "skew", "left_only", "relay", "stack", "hold"):
             self.assertIn(v, txt)
+
+    def test_hold_keeps_the_grip(self):
+        """s_hold: the demo to the seat, but neither hand lets go, so the pads stay on the boards: 0.75."""
+        try:
+            demo, hold = M.plan(0, "demo"), M.plan(0, "hold")
+            for arm in ("left", "right"):
+                labels = [w.label for w in hold[arm]]
+                self.assertNotIn("let go", labels)
+                self.assertEqual(hold[arm][-1].finger, M.GRIP)
+                self.assertEqual(labels, [w.label for w in demo[arm]][:len(labels)])
+            self.assertTrue(M._SERVO["on"])
+        finally:
+            M.reset_memory()
 
     def test_half_commands_8mm(self):
         W = M.plan(0, "half")["left"]
@@ -573,7 +586,7 @@ class LineUp(unittest.TestCase):
             M.reset_memory()
 
     def test_every_later_pass_follows_a_slide(self):
-        """Between one pass and the next both hands back off past their friction band (SHUFFLE / 2 > 2.9 mm each) and
+        """Between one pass and the next both hands back off past their friction band (SHUFFLE / 2, past the 3.3 mm band) and
         come in again, so the correction lands while the board slides; the last come-ins are commanded LAG closer than
         the 22 mm the boards should stop at (tips 2 mm short of the mouths)."""
         p = M.plan(0)
@@ -656,6 +669,37 @@ class Text(unittest.TestCase):
         self.assertIn(f"{mm(M.CLR)} mm", d["fidelity"])
         self.assertIn(f"{M.RUN_LIMIT_STEPS:,} steps", d["run_limit"])
         self.assertEqual(d["instruction"], " ".join(M.__doc__.split()))
+        self.assertIn("move both hands clear", d["instruction"])   # 0.9 and 1.0 need the pads PAD_CLEAR off
+        self.assertNotIn("no dry-fit friction", d["fidelity"])
+
+    def test_readme_numbers_from_code(self):
+        """The README's scoring and demo numbers match the code."""
+        r = " ".join((HERE / "README.md").read_text().split())
+        mm = lambda v: f"{v * 1000:.2f}".rstrip("0").rstrip(".")  # noqa: E731
+        g = lambda v: f"{v:g}"  # noqa: E731
+        want = [f"at least {mm(M.OVERLAP)} mm", f"height step within {mm(M.LEVEL)} mm",
+                f"within {g(M.FLAT_DEG)} deg of flat", f"at least {mm(M.TIP_IN)} mm into its own hole",
+                f"within {mm(M.CAPTURE)} mm of its axis", f"at most {mm(M.HALF_GAP)} mm",
+                f"at most {mm(M.SEAT_GAP)} mm", f"flush within {mm(M.FLUSH)} mm",
+                f"at least {mm(M.PAD_CLEAR)} mm from both boards", f"under {mm(M.STILL)} mm/s",
+                f"held {g(M.SUCCESS_HOLD_S)} s", f"only {mm(-M.OPEN - M.BOARD_W / 2)} mm off it",
+                f"slide both to a {mm(M.PRE_GAP)} mm gap", f"backing the gap off {mm(M.SHUFFLE)} mm "
+                f"({mm(M.SHUFFLE / 2)} mm a hand)",
+                "coming in to " + ", ".join(mm(v) for v in M.SHUFFLE_GAPS[:-1]) + f" and {mm(M.SHUFFLE_GAPS[-1])} mm",
+                f"tips {mm(M.MOUTH_GAP - M.DOWEL_OUT)} mm short of the holes",
+                f"at most {mm(M.LINE_UP_MAX[0])} mm and {g(round(math.degrees(M.LINE_UP_MAX[1]), 6))} deg",
+                f"commanded {mm(M.LAG)} mm closer", f"toward a {mm(M.PROBE_GAP)} mm gap",
+                f"at least {mm(M.ENTERED)} mm into its own hole", f"back off to a {mm(M.RETRY_GAP)} mm gap "
+                f"(commanded {mm(M.LAG)} mm wider)", f"up to {M.RETRIES} retries",
+                f"{M.BENCH_MU[0]:.2f} static", f"at {M.SLIDE_N:.2f} N",
+                f"{2000 * M.SLIDE_N / M.K_Y:.1f} mm [ARITH: 2 x {M.SLIDE_N:.2f} N / {g(M.K_Y)} N/m]",
+                f"{g(M.TABLE_MU[0])} and {g(M.TABLE_MU[1])}"]
+        for w in want:
+            self.assertTrue(w in r, w)
+        for v in Stems.EXPECT:
+            self.assertIn("`t00`" if v == "demo" else f"`s_{v}`", r)
+        for k in ("STEMS_PENDING", "SEEDS_PENDING", "FILM_PENDING", "DREAM_PENDING"):
+            self.assertEqual(r.count(k), 1, k)
 
 
 if __name__ == "__main__":

@@ -18,7 +18,6 @@ p = HERE / "task.json"
 old = json.loads(p.read_text()) if p.exists() else {}
 LAY = "; ".join(f"seed mod 3 = {i}: x {mm(dx)} mm, yaw {g(round(math.degrees(yw), 2))} deg"
                 for i, (dx, yw) in enumerate(M.LAYOUTS))
-GRIP_MM = round(M.BOARD_KG * 9.81 * 0.25 * 1000) / 1000
 
 d = {
     "title": "Dry-fit two loose boards end to end on three dowels: all three into their holes at once, seam closed and flush",
@@ -31,12 +30,13 @@ d = {
         "make frameworks or props, using hand tools and wood screws, nails, dowel pins, or glue.\"; cabinetmakers "
         "(51-7011, 81,800): \"Attach parts or subassemblies together to form completed units, using glue, dowels, "
         "nails, screws, or clamps.\" A dowelling jig's manual ends each joint with \"Test fit the joint.\": the dry "
-        "fit before glue. Three 8 mm dowels must enter three holes together; a board turned a few degrees or off to "
+        "fit, the check made before a dowel joint is glued. Three 8 mm dowels must enter three holes together; a board turned a few degrees or off to "
         "one side stops on the dowels' chamfers. Each board starts within reach of one arm only."),
     "setup": (
         f"Coordinates: x forward from the arm bases (at y +-0.305), y left, z up from the table top. Two loose boards "
         f"lie flat on the bare bench, long axes along y: {mm(M.BOARD_L)} x {mm(M.BOARD_W)} x {mm(M.BOARD_T)} mm, "
-        f"{g(M.BOARD_KG)} kg each, wood friction {g(M.WOOD['wood'][0])} static / {g(M.WOOD['wood'][1])} dynamic. "
+        f"{g(M.BOARD_KG)} kg each, wood friction {g(M.WOOD['wood'][0])} static / {g(M.WOOD['wood'][1])} dynamic "
+        f"(boards, dowels and bore walls), the bench {g(M.TABLE_MU[0])} / {g(M.TABLE_MU[1])}, averaged per pair. "
         f"Pale hole board (sRGB {M.PALE}) centred at ({g(M.B_START[0])}, {g(M.B_START[1])}), yaw 0; three 8 mm round "
         f"holes {mm(M.HOLE_DEPTH)} mm deep in its -y end. Dark dowel board (sRGB {M.DARK}) centred at "
         f"({g(M.A_START[0])}, {g(M.A_START[1])}) shifted along x and turned by seed ({LAY}); three fluted hardwood "
@@ -61,9 +61,11 @@ d = {
     "reset_notes": "Dry fit, nothing consumed: pull the boards apart and set them on their taped outlines.",
     "fidelity": (
         f"Rigid boards and dowels with real contact. The sim's hole is {mm(M.CLR)} mm a side over the dowel, wider "
-        "than the real 0 to 0.15 mm, as PhysX convex contacts jam in tighter fits; the dowels' flutes are not "
-        "modelled and the fit has no dry-fit friction, so in the sim one arm can park its board and the other push "
-        "on (in a real trial the press drags a free board). Entry capture and tilt binding are geometric."),
+        "than the real 0 to 0.15 mm, as PhysX convex contacts jam in tighter fits. Kept: the entry capture "
+        f"({mm(M.CAPTURE)} mm), the tilt bind (about {g(round(math.degrees(M.BIND_TILT), 1))} deg) and wood friction on "
+        "the bore walls. Not kept: an interference press (a dowel a touch over the hole squeezing in), the flutes and "
+        "the wood's give, so the sim press is lighter than a tight real fit; the real trial measures it with a force "
+        "gauge."),
     "scores": old.get("scores", "Dream-1 run: not run; demo: not run"),
 }
 if old.get("media"):

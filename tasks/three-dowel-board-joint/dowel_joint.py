@@ -1,7 +1,8 @@
 """Two loose boards lie flat on the bench, end to end along y, 0.51 m apart. Three hardwood dowels stand 20 mm out of
 the end of the dark board on the right; the pale board on the left has three matching round holes in its end. Join
 them in a dry fit: bring the boards together so all three dowels go into their holes, push the joint closed until the
-two ends meet along the whole seam, with the boards level with each other and their edges flush, then let go of both.
+two ends meet along the whole seam, with the boards level with each other and their edges flush, then let go of both
+and move both hands clear of the boards.
 """
 import dataclasses
 import math
@@ -44,18 +45,24 @@ CLR = 0.0002                     # hole radius less dowel radius in the sim [CHO
 #                                  per trial], 0 to 0.15 mm a side; PhysX convex contacts jam well under that
 R_HOLE = R_DOWEL + CLR           # the hole's flats (a 16-sided bore) [ARITH]
 HOLE_DEPTH = 0.022               # [CHOICE: half the dowel plus 2 mm, so the ends meet before the dowels bottom]
-HOLE_SIDES = 16
-DOWEL_SIDES = 24
+HOLE_SIDES = 16                  # [CHOICE]
+DOWEL_SIDES = 24                 # [CHOICE]
 CELL = 0.0065                    # half-size of the square cut round each hole that its wedges fill [CHOICE: the walls
 #                                  over and under the cut are 3 mm, under the 19 mm board's 5.5 mm of wood]
 CONTACT = 0.001                  # contact offset of dowels and hole walls [CHOICE: 1 mm; rest offset 0]
-WOOD = {"wood": (0.40, 0.35)}    # static, dynamic friction [EST: dry hardwood]
+WOOD = {"wood": (0.40, 0.35)}    # static, dynamic friction [EST: dry hardwood]; boards, dowels and bore walls
+TABLE_MU = (0.5, 0.5)            # the bench: the station table authors no material, so the scene default applies
+#                                  [SOURCE: Isaac Lab RigidBodyMaterialBaseCfg defaults 0.5 / 0.5, main branch source;
+#                                  the installed Isaac Lab 3.0 not checked]
+BENCH_MU = tuple((w + t) / 2 for w, t in zip(WOOD["wood"], TABLE_MU))   # board on bench 0.45 / 0.425 [ARITH: PhysX
+#                                  averages a pair's friction by default, SOURCE: PxMaterial "Default:
+#                                  PxCombineMode::eAVERAGE"; neither material sets another mode]
+SLIDE_N = BENCH_MU[0] * BOARD_KG * 9.81   # 0.60 N starts a free board sliding on the bench [ARITH]
 DARK = (0.36, 0.24, 0.16)
 PALE = (0.86, 0.74, 0.54)
 DOWEL_COLOR = (0.93, 0.83, 0.62)
 
 CAPTURE = R_HOLE - (R_DOWEL - DOWEL_CH)   # 1.2 mm: a dowel tip enters only within this of its hole's axis [ARITH]
-YAW_CAPTURE = math.atan(CAPTURE / PITCH)  # 2.9 deg: an outer dowel's capture used up by yaw alone [ARITH]
 BIND_TILT = 2 * CLR / DOWEL_OUT           # 1.1 deg: past this a fully entered dowel cannot go on [ARITH]
 
 # -- the layout -----------------------------------------------------------------------------------------------------------
@@ -236,8 +243,9 @@ OVERLAP = -0.0005                # a corner gap under this means the ends overla
 #                                  fraction of a mm; real ends cannot overlap]
 TIP_IN = 0.001                   # each dowel's tip at least this far into its own hole for the first rung (past its
 #                                  chamfer) [CHOICE]
-HALF_GAP = 0.010                 # both corner gaps at most this: more than half the 20 mm in
-STILL = 0.005                    # m/s: both boards still
+HALF_GAP = 0.010                 # both corner gaps at most this: more than half the 20 mm in [CHOICE]
+STILL = 0.005                    # m/s: both boards still [CHOICE: 5 mm over a second, seen on the trial
+#                                  video's 1 mm grid]
 PAD_CLEAR = 0.030                # every pad point at least this far from both boards to count as let go [CHOICE]
 
 
@@ -398,26 +406,29 @@ def distance(objects):
 YAW_L = -math.pi / 2             # left hand's yaw: joint6 near 60 to 94 deg over the plan [RUN: ik]
 YAW_R = math.pi / 2              # right hand's: the mirror
 GRIP_DY = 0.025                  # each grip 25 mm out from its board's centre, away from the seam [CHOICE]
-Z_GRIP = TOP + 0.015             # TCP: the pad tips 2 mm over the bench, the pads on the board's sides
-Z_HOVER = TOP + 0.070            # TCP over a board before the descent (pad tips 38 mm over its top)
-Z_UP = TOP + 0.100               # TCP after letting go
-OPEN = -0.0465                   # finger target fully open (pads 93 mm apart, the board 70 mm)
+Z_GRIP = TOP + 0.015             # TCP: the pad tips 2 mm over the bench, the pads on the board's sides [CHOICE]
+Z_HOVER = TOP + 0.070            # TCP over a board before the descent (pad tips 38 mm over its top) [CHOICE]
+Z_UP = TOP + 0.100               # TCP after letting go [CHOICE]
+OPEN = -0.0465                   # finger target fully open (pads 93 mm apart, the board 70 mm) [CHOICE: just
+#                                  inside yam_arena's FINGER_OPEN -0.04695]
 GRIP = -0.030                    # finger target gripping (5 mm past the board's 35 mm half width) [CHOICE]
-LETGO = -0.0465
-F_PRESS = 1.5                    # N each hand pushes past the seat [CHOICE: over the 0.33 N bench slide of each board]
+LETGO = -0.0465                  # [CHOICE: fully open, as OPEN]
+F_PRESS = 1.5                    # N each hand pushes past the seat [CHOICE: over SLIDE_N, the 0.60 N bench slide of each
+#                                  board]
 K_Y = 180.0                      # N/m: each arm's TCP stiffness along y at its seat grip [RUN: tools/stiffness.py,
 #                                  J K^-1 J^T from the joints' drive stiffnesses]
 PRESS = F_PRESS / K_Y            # 8.3 mm past the seat each way [ARITH]
-STEADY = 0.8
+STEADY = 0.8                     # s over the board before the descent [CHOICE]
 MOUTH_GAP = 0.022                # the seam gap of the last line-ups: dowel tips 2 mm short of the hole mouths [CHOICE]
 SHUFFLE_GAPS = (0.026, 0.024, MOUTH_GAP, MOUTH_GAP)  # each line-up after the first: back off SHUFFLE, come in to this
-SHUFFLE = 0.016                  # [CHOICE: each hand backs 8 mm, past its 2.9 mm band below] WHY: the 2026-11-18 probe 2 showed a correction made with the boards at rest
+SHUFFLE = 0.016                  # [CHOICE: each hand backs 8 mm, past its 3.3 mm friction band (LAG)] WHY: the
+#                                  2026-11-18 probe 2 showed a correction made with the boards at rest
 #                                  is only 10 to 60 % carried out (the bench friction holds the board inside the arm's
 #                                  compliance) and the rest lands at the next slide, so the next pass overshoots; a short
 #                                  slide after every pass lets each correction land before the next is measured
 LINE_UP = ("settle, dowel tips 10 mm short",) + tuple(f"line up {k + 1}" for k in range(len(SHUFFLE_GAPS)))
 LAG = 0.007                      # m: seam gap the boards stop short of a commanded inward gap [RUN: batch 4 s_half,
-#                                  commanded 8 mm, stopped at 15; ARITH 5.9 mm = 2 x 0.40 x 0.135 kg x 9.81 / 180 N/m,
+#                                  commanded 8 mm, stopped at 15; ARITH 6.6 mm = 2 x SLIDE_N 0.60 N / 180 N/m,
 #                                  the bench's static friction inside each arm's compliance]. WHY: batch 4's come-ins
 #                                  to 22 mm left the boards at 30 mm, so the line-up never slid them and its
 #                                  corrections all landed in the push
@@ -432,7 +443,7 @@ RETRY_GAP = 0.026                # a retry backs the boards off to this gap (com
 # while the board slides, so a stalled try backs off, lines up and comes in again, as a person would
 LINE_UP_MAX = (0.006, math.radians(4.0))  # the most one pass moves a hand (m, rad) [CHOICE: past the 4 mm, 0.7 deg
 #                                  seen in the 2026-11-18 probe, far under a stem's deliberate offset]
-SERVO_VARIANTS = ("demo", "half", "offset", "off", "skew", "relay")
+SERVO_VARIANTS = ("demo", "half", "offset", "off", "skew", "relay", "hold")
 SQUARE = ("square the boards", "square at the seat")  # relative line-up passes once the dowels are in: after the
 #                                  tries, and early in the hold at the seat. WHY: batch 5 layout 2 (2026-11-18) entered
 #                                  at check 1 with the boards 0.37 deg apart (0.05 at the last pass, turned 0.3 by the
@@ -570,6 +581,9 @@ def _plan(seed, v):
         return {"left": hand_plan("hole_board", B, PRE_GAP, push), "right": hand_plan("dowel_board", A, PRE_GAP, push)}
     if v == "nothing":
         return {}
+    if v == "hold":           # the demo, but both hands keep their grip to the end: seated, not let go (0.75)
+        return {"left": hand_plan("hole_board", B, PRE_GAP, push, letgo=False),
+                "right": hand_plan("dowel_board", A, PRE_GAP, push, letgo=False)}
     if v == "half":           # push only to an 8 mm gap and let go: more than half in, not seated
         # WHY minus LAG: batch 4 commanded 8 mm and the boards stopped at 15 (0.25, not 0.5)
         return {"left": hand_plan("hole_board", B, PRE_GAP, 0.008 - LAG),

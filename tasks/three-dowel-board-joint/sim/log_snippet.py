@@ -28,7 +28,7 @@ def _trace(env):
             hands += [*tcp, float(q[list(rob.joint_names).index("joint7")])]
         n = _MEM.get("now") or {}
         if _TRACE["f"] is None:
-            # WHY sim/out, not next to the copy in sim/arm: sim/out is the folder rr.sh collects after a run (the
+            # WHY sim/out, not next to the copy in sim/arm: sim/out is the folder collected after a run (the
             # 2026-11-18 probe's traces were left behind in sim/arm)
             out = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "out")
             _os.makedirs(out, exist_ok=True)
