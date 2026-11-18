@@ -32,7 +32,9 @@ def _trace(env):
             # 2026-11-18 probe's traces were left behind in sim/arm)
             out = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "out")
             _os.makedirs(out, exist_ok=True)
-            path = _os.path.join(out, "trace_" + _os.path.basename(__file__)[:-3] + ".csv")
+            # WHY the layout and seed in the name: two seeds of one stem must not overwrite each other's trace
+            path = _os.path.join(out, f"trace_{_os.path.basename(__file__)[:-3]}_L{layout_index(run_seed())}"
+                                      f"_r{run_seed()}.csv")
             _TRACE["f"] = open(path, "w")
             _TRACE["f"].write("step,ax,ay,az,ayaw,bx,by,bz,byaw,g0,g1,dx,dz,relyaw,tilta,tiltb,d0,d1,d2,o0,o1,o2,"
                               "va,vb,lx,ly,lz,lf,rx,ry,rz,rf,rung,clear,still,held,lineup,err\n")
