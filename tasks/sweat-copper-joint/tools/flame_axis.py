@@ -2,7 +2,7 @@
 offline along the scripted demo. No sim.
 
 The live check places the flame from what it measures (``live_axes``): the grip point from the left arm's forward
-kinematics, moved along the gripper's approach axis by the distance sensor's slide reading, and two flame directions
+kinematics, moved along the gripper's approach axis to the depth the distance sensor reads (absolute), and two flame directions
 from it, the orientation sensor's (the torch's measured turn) and the arm's (the grip measured at the lift, carried
 rigid by the wrist). The checked segment runs from the nozzle's end for 300 mm, lengthened by the 15 mm the handle
 can sit either way along the grip section. From the lift to the end of the demo it reports the nearest approach of

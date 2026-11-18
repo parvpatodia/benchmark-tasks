@@ -60,7 +60,7 @@ Hardware:
   a pipe vise so the coupling's mouth is 65 mm over the table.
 - Solder: Harris 95-5, 1/8 in wire wound into a small coil (about 45 g) with a 55 mm straight end, marked every 1 mm
   from its tip. The end stands down in a 10 mm well in a block.
-- Torch: a propane hose torch. A regulator on a bulk cylinder, chained upright, feeds it through a 3 m hose hung from
+- Torch: a straight-tip propane hose torch, its flame along the handle's axis. A regulator on a bulk cylinder, chained upright, feeds it through a 3 m hose hung from
   overhead, so it puts no drag on the arm. The valve stays on one mark for every trial, so the flame looks the same.
   The torch rests on a steel block. The operator lights it there just before the run and shuts it off at the end.
 - Heat rate (the seed): a hidden heat sink, not the flame. A copper block (none, small or large) is clamped to the
@@ -140,7 +140,7 @@ Sensors on the torch and its hand:
   its IMU mode, where "the relative orientation of the BNO055 in space is calculated from the accelerometer and
   gyroscope data" (data sheet BST-BNO055-DS000-12; 100 Hz in that mode; "Operating temperature: -40°C ... +85°C"). No
   magnetometer: the steel bench and vise would bias it. Its heading is zeroed with the torch on the jig before each
-  trial, so from then on it reads the torch's orientation in the rig's frame, whatever the policy does to the torch.
+  trial, at most 30 s before the policy's first action, so from then on it reads the torch's orientation in the rig's frame, whatever the policy does to the torch.
 - Depth in the grip: an ST VL6180X time-of-flight sensor under the left gripper's housing, aimed down between the
   fingers at the handle's top, about 70 mm away in the demo's grasp [ARITH: the housing's underside 70.5 mm above
   the TCP in the sim's gripper hull, the handle's top 0.6 mm above the TCP]. Its data sheet (DocID026171 Rev 6) gives
@@ -159,19 +159,25 @@ Where the live check puts the flame (at the control rate, while the rest's switc
 
 1. When the switch opens (the lift), the grip is measured: the torch's rotation in the gripper's frame (the
    orientation sensor against the left arm's forward kinematics) and the handle's depth between the pads (the
-   distance sensor). No part of the grip is taken from the demo.
+   distance sensor). Orientation and depth are measured, not taken from the demo. The place along the handle is
+   bounded by the sleeves to 15 mm either way of the demo's grasp, and the checked segment covers that span.
 2. The grip point is the TCP from the encoders and forward kinematics, moved along the gripper's approach axis to
-   that depth, then on by the distance sensor's change since the lift.
+   the depth the distance sensor reads (absolute).
 3. Two flame directions leave that point, and either can trip: the orientation sensor's, which turns with the torch,
    and the arm's, the lift's grip carried rigid by the wrist.
 4. Each checked segment runs from 15 mm behind the nozzle's end to 15 mm past 300 mm out along the flame, which covers
    every place the handle can sit along the grip section.
 
-Error budget of the sensor's axis [ARITH]: its angle error is held to 1.5 degrees (0.5 from the jig, 1 for drift and
-motion, both gated each session, below). The segment's points lie 125 to 455 mm from the grip point, so that error
+Error budget of the sensor's axis [ARITH]: its angle error is held to 1.5 degrees (0.5 from the jig, 1 for drift, the
+session test, and motion, the dry run; both below). The segment's points lie 125 to 455 mm from the grip point, so that error
 moves them 3.3 to 11.9 mm. The depth reading adds at most 2 mm (gated). So, at the worst, the true axis can come
 within 16 mm of a link at the segment's far end, and 25 mm at the nozzle, before the 30 mm check trips. The arm's own
-kinematic error is not in this budget; it is not measured here.
+kinematic error is not in this budget; it is not measured here. The right hand's nearest approach (below) falls at
+the lift, its fingertip 397 mm out from the grip point [RUN], where the budget is 12.4 mm against the demo's 10.7 mm
+margin over 30 mm. So the dry run's measured distance to the right hand must be at least 37 mm (30 mm plus the
+1 degree drift share there, 6.9 mm); if it is not, the orientation sensor is re-zeroed and the dry run repeated
+before the flame is lit. A policy that brings the flame nearer the other hand than the demo does takes that risk:
+the 30 mm rule applies to the measured axis.
 
 In the scripted demo, from the lift on, the segment passes no nearer than 108.6 mm to the left gripper's housing
 and fingers, 153.5 mm to the left arm's other links (its base included), 40.7 mm to the right hand's gripper
@@ -234,11 +240,14 @@ at its actuator):
   depth gauge, the reading must stay within 2 mm of the rod's true depth [CHOICE], also with the sensor warmed by
   heat gun to its 45 C trip. With the fingers closed to 22 mm on nothing, the reading must lie beyond the handle's
   span (the beam clears the fingers);
+- flame axis: with the rest's switch held open and the torch in the left hand, the right gripper jogged toward the
+  computed segment; the relay must log the flame-axis input before the fingers come within 30 mm of the line, read
+  with a rule against the torch;
 - data gaps: each sensor's lead unplugged once; the relay must log the data-gap input;
 - grip window: the fingers closed on each sleeve, on the burner tube and on the nozzle must stop outside 22 ± 3 mm;
 - orientation: re-zeroed on the jig, the sensor's tilt must read the jig's within 0.5 degrees [CHOICE]; then, with
-  the torch left lit on its rest for 150 s, the trial's length, its heading and tilt must change by under 1 degree
-  [CHOICE], or it is recalibrated or replaced;
+  the torch left lit on its rest for 180 s (the trial's 150 s, plus the 30 s allowed from zeroing to the policy's
+  first action), its heading and tilt must change by under 1 degree [CHOICE], or it is recalibrated or replaced;
 - the time from each trip to the flame going out (the gas left in the hose burns off), read from the flame
   thermocouple's log, must be under 3 s [CHOICE].
 
