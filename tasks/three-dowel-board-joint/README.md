@@ -128,7 +128,7 @@ and shifts the pale board's hand so the two end centres meet; the last pass turn
 board's yaw. A pass moves a hand at most 6 mm and 4 deg. The slides are there because a correction made with a board at
 rest is only partly carried out (bench friction against the arm's compliance) and the rest lands at the next slide. Every gap it aims for is commanded 7 mm closer (wider when backing off), because the boards stop that far short
 (batch 4: commanded 8 mm, stopped at 15, the bench friction inside each arm's compliance). Then it tries: it pushes
-toward a 15 mm gap and checks whether every tip is at least 3 mm into its own hole. If not (the ends met the mouths more than the 0.2 mm bore allows and the dowels stopped on their chamfers), it backs off to a 26 mm gap, lines up, comes in to the mouths, lines up again and pushes again, up to two retries; once a check finds the dowels in, the rest of the retries are held. Then it pushes the joint closed. Only the scripted demo reads those poses; the score never uses them. Runtime: about 5 min wall per run on one L40S including start-up [EST].
+toward a 15 mm gap and checks whether every tip is at least 3 mm into its own hole. If not (the ends met the mouths more than the 0.2 mm bore allows and the dowels stopped on their chamfers), it backs off to a 26 mm gap, lines up, comes in to the mouths, lines up again and pushes again, up to two retries; once a check finds the dowels in, the rest of the retries are held. With the tips in, it squares the boards (turns the pale board's hand by the boards' relative turn), pushes the joint closed, and squares them once more early in the hold at the seat. Only the scripted demo reads those poses; the score never uses them. Runtime: about 5 min wall per run on one L40S including start-up [EST].
 
 Stems: `bash sim/mk.sh` writes traced copies to `sim/arm/`; `bash sim/run.sh <stem> <steps> <lock> <seed>` runs one.
 
@@ -169,6 +169,8 @@ batch 4 the come-ins to 22 mm left the boards near 30 mm (inside the friction ba
 the back-off is now 8 mm a hand, past that band. Stems (seed 0, layout 1): `s_nothing`, `s_offset`, `s_skew`, `s_stack`
 and `s_left_only` 0 as expected; `s_half` 0.25, not 0.5, because its 8 mm commanded gap stopped at 15 mm (now
 commanded 7 mm closer); `s_relay` 0.5 (above).
+
+Batch 5: layouts 0 and 1 seated (1.0 at 759 steps). Layout 2 entered at the first check, but the chamfers had turned the boards 0.37 deg apart (0.05 deg at the last line-up), and nothing corrected a turn once the tips were in: it closed one corner and left the other 0.32 mm open, past the 0.3 mm seat gap, so 0.5. The demo now squares the boards after the tries and at the seat (above); a tip 5 mm in still has about 4.6 deg of turn in its 0.2 mm bore [ARITH], the seated joint 1.1 deg.
 
 Demo on three seeds: SEEDS_PENDING
 
