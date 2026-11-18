@@ -125,7 +125,7 @@ edges: five passes, at the end of the 1 s settle and then after each of four sho
 last two ending with the tips 2 mm short of the holes). Each pass turns each hand so its board is square to the bench
 and shifts the pale board's hand so the two end centres meet; the last pass turns only the pale board, to the dark
 board's yaw. A pass moves a hand at most 6 mm and 4 deg. The slides are there because a correction made with a board at
-rest is only partly carried out (bench friction against the arm's compliance) and the rest lands at the next slide. Only the scripted demo reads those poses; the score never uses them. Runtime: about 5 min wall per run on one L40S including start-up [EST].
+rest is only partly carried out (bench friction against the arm's compliance) and the rest lands at the next slide. Then it tries: it pushes to a 15 mm commanded gap and checks whether every tip is at least 3 mm into its own hole. If not (the ends met the mouths more than the 0.2 mm bore allows and the dowels stopped on their chamfers), it backs off to a 26 mm gap, lines up, comes in to the mouths, lines up again and pushes again, up to two retries; once a check finds the dowels in, the rest of the retries are held. Then it pushes the joint closed. Only the scripted demo reads those poses; the score never uses them. Runtime: about 5 min wall per run on one L40S including start-up [EST].
 
 Stems: `bash sim/mk.sh` writes traced copies to `sim/arm/`; `bash sim/run.sh <stem> <steps> <lock> <seed>` runs one.
 
@@ -160,6 +160,8 @@ for the seed's layout. Layout 1's plan still caught the board (its 12 mm shift i
 so the hand dragged the board over); layout 2's put a finger on the board, the hand stopped 15 mm high and turned the
 board 12.5 deg, and the trial scored 0. `mechanism.py` now places Body-only tasks too (test), and all earlier results
 above ran in layout 0.
+
+Batch 4 (placement fixed): the boards started where each layout puts them (dark board at x 350.0, 361.9 and 338.1 mm, turned 0, 3.0 and -3.0 deg), the grips held, and the line-up ended within 0.65 mm. Layout 1 seated (1.0); in layouts 0 and 2 the ends met the mouths 0.25 to 0.46 mm off and every dowel stopped at the end of its 1 mm chamfer (0). The demo now retries (above).
 
 Demo on three seeds: SEEDS_PENDING
 

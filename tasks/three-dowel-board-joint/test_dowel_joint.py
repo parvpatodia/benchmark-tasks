@@ -286,6 +286,108 @@ class Placement(unittest.TestCase):
         self.assertEqual(M.layout_index(2566101560), 2)
         self.assertIn(M.place_layout, place)
 
+    def test_placed_pose_matches_the_plan_for_every_layout(self):
+        """place_layout writes, for each layout, the start pose the demo plans its grips for; the batch 4 traces
+        (step 10, after the reset settled) show the same poses [RUN]."""
+        seen = {0: (350.0, -330.0, 0.0), 1: (361.932, -330.005, 2.977), 2: (338.069, -329.995, -2.976)}
+        seeds = {0: 377265627, 1: 1415158438, 2: 2566101560}
+        mech = sys.modules["mechanism"]
+        write = M._write_root
+        try:
+            for lay, seed in seeds.items():
+                got = {}
+                M._write_root = lambda base, name, xyz, yaw: got.__setitem__(name, (*xyz, yaw))
+                mech._SEED[0] = seed
+                M.place_layout(types_ns(unwrapped=None))
+                self.assertEqual(M.layout_index(seed), lay)
+                want = M.layout(seed)
+                for name in ("dowel_board", "hole_board"):
+                    self.assertEqual(got[name], want[name], (lay, name))
+                a = got["dowel_board"]
+                self.assertAlmostEqual(1000 * a[0], seen[lay][0], delta=0.1)
+                self.assertAlmostEqual(1000 * a[1], seen[lay][1], delta=0.1)
+                self.assertAlmostEqual(math.degrees(a[3]), seen[lay][2], delta=0.05)
+                for arm, name in (("right", "dowel_board"), ("left", "hole_board")):
+                    w = [x for x in M.plan(seed)[arm] if x.label == "grip across its width"][0]
+                    x, y, _, yaw = got[name]
+                    self.assertAlmostEqual(w.pos[0], M.grip_point(name, x, y, yaw)[0], places=9)
+                    self.assertAlmostEqual(w.pos[1], M.grip_point(name, x, y, yaw)[1], places=9)
+                    base_yaw = M.YAW_R if arm == "right" else M.YAW_L
+                    self.assertAlmostEqual(w.yaw - base_yaw, yaw, places=9)
+        finally:
+            M._write_root = write
+            mech._SEED[0] = None
+
+
+def types_ns(**k):
+    import types
+    return types.SimpleNamespace(**k)
+
+
+class Tries(unittest.TestCase):
+    class P:
+        def __init__(self, w):
+            self.waypoints = w
+
+    def run_to(self, t, gap, dx=0.0):
+        p = M.plan(0)
+        plans = {a: self.P(list(w)) for a, w in p.items()}
+        st = LineUp().seat(gap=gap, b_dx=dx)
+        M._M["boards"], M._M["tcps"] = tuple(st[:4]), {"right": st[4], "left": st[5]}
+        M.servo(plans, t)
+        return p, plans
+
+    def check_time(self, n):
+        return [t for t, k, l in M._SERVO["events"] if l == f"check {n}"][0]
+
+    def test_tries_in_the_plan(self):
+        W = M.plan(0)["left"]
+        labels = [w.label for w in W]
+        self.assertEqual(sum(lb.startswith("check") for lb in labels), 1 + M.RETRIES)
+        seat = M.grip_point("hole_board", *M.seat_centres()["hole_board"], 0.0)
+        for lb, g in (("push to the holes", M.PROBE_GAP), ("retry 1 back off", M.RETRY_GAP),
+                      ("retry 2 line up at the mouths", M.MOUTH_GAP)):
+            self.assertAlmostEqual(W[labels.index(lb)].pos[1] - seat[1], g / 2, places=9)
+        self.assertLess(labels.index(f"check {1 + M.RETRIES}"), labels.index("push the joint closed slowly"))
+        self.assertGreater(M.PROBE_GAP, 0.0)
+        self.assertLess(M.PROBE_GAP + M.ENTERED, M.DOWEL_OUT)   # a try that went in is ENTERED deep at PROBE_GAP
+
+    def test_in_at_the_first_check_holds_the_retries(self):
+        try:
+            M.plan(0)
+            t = self.check_time(1) + 0.01
+            p, plans = self.run_to(t, gap=M.PROBE_GAP)
+            self.assertTrue(M._SERVO["entered"])
+            W = plans["left"].waypoints
+            hold = [w for w in W if w.label == "check 1"][0]
+            for w in W:
+                if w.label.startswith("retry") or w.label in ("check 2", "check 3"):
+                    self.assertEqual((w.pos, w.yaw), (hold.pos, hold.yaw), w.label)
+            n = len(M._SERVO["log"])
+            M.servo(plans, 99.0)                      # later passes and checks are skipped
+            self.assertEqual(len(M._SERVO["log"]), n)
+            fin = [w for w in W if w.label == "push the joint closed slowly"][0]
+            self.assertEqual(fin, [w for w in p["left"] if w.label == "push the joint closed slowly"][0])
+        finally:
+            M.reset_memory()
+
+    def test_stalled_on_the_chamfers_retries(self):
+        """The batch 4 failure: ends 0.3 mm off with the tips 1 mm in (seam gap 19 mm): not in, so the retry runs."""
+        try:
+            M.plan(0)
+            t = self.check_time(1) + 0.01
+            p, plans = self.run_to(t, gap=M.DOWEL_OUT - 0.001, dx=0.0003)
+            self.assertFalse(M._SERVO["entered"])
+            back = [w for w in plans["left"].waypoints if w.label == "retry 1 back off"][0]
+            seat = M.grip_point("hole_board", *M.seat_centres()["hole_board"], 0.0)
+            self.assertGreater(back.pos[1] - seat[1], M.RETRY_GAP / 2 - 0.007)   # still backs off (line-up may shift x)
+            r1 = [t for t, k, l in M._SERVO["events"] if l == "retry 1 line up at the mouths"][0]
+            M.servo(plans, r1 + 0.01)
+            self.assertEqual(M._SERVO["log"][-1]["kind"], "line")
+            self.assertNotIn("right", M._SERVO["log"][-1]["cmd"])   # the pass before a push turns only the hole board
+        finally:
+            M.reset_memory()
+
 
 class LineUp(unittest.TestCase):
     """The demo's line-up passes, on a kinematic stand-in: each board turns and shifts with its hand about the TCP."""

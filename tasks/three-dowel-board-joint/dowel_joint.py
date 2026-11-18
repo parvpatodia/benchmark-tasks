@@ -416,6 +416,13 @@ SHUFFLE = 0.004                  # [CHOICE] WHY: the 2026-11-18 probe 2 showed a
 #                                  compliance) and the rest lands at the next slide, so the next pass overshoots; a short
 #                                  slide after every pass lets each correction land before the next is measured
 LINE_UP = ("settle, dowel tips 10 mm short",) + tuple(f"line up {k + 1}" for k in range(len(SHUFFLE_GAPS)))
+PROBE_GAP = 0.015                # each try pushes to this commanded gap (tips 5 mm in if they entered) [CHOICE]
+ENTERED = 0.003                  # a try counts as in when every tip is this deep in its own hole [CHOICE]
+RETRIES = 2                      # tries after the first [CHOICE]
+RETRY_GAP = 0.026                # a retry backs the boards off to this gap, lines up, and comes in again [CHOICE]
+# WHY the tries: batch 4 (2026-11-18) seated layout 1 but in layouts 0 and 2 the ends met the mouths 0.25 to 0.46 mm
+# off, past the 0.2 mm bore, and every dowel stopped at the end of its 1 mm chamfer; a correction that small only lands
+# while the board slides, so a stalled try backs off, lines up and comes in again, as a person would
 LINE_UP_MAX = (0.006, math.radians(4.0))  # the most one pass moves a hand (m, rad) [CHOICE: past the 4 mm, 0.7 deg
 #                                  seen in the 2026-11-18 probe, far under a stem's deliberate offset]
 SERVO_VARIANTS = ("demo", "half", "offset", "off", "skew", "relay")
@@ -470,7 +477,8 @@ def hand_plan(name, start, approach, gap_end, b_dx=0.0, b_yaw=0.0, letgo=True, d
          _w(5.0, (gpre[0], gpre[1], Z_GRIP), GRIP, "slide it toward the seam", yaw1),
          _w(1.0, (gpre[0], gpre[1], Z_GRIP), GRIP, LINE_UP[0], yaw1),
          *cycles,
-         _w(4.0, (gend[0], gend[1], Z_GRIP), GRIP, "push the joint closed slowly", yaw1),
+         *tries(name, seat, approach, by, yaw1),
+         _w(3.0, (gend[0], gend[1], Z_GRIP), GRIP, "push the joint closed slowly", yaw1),
          _w(1.5, (gend[0], gend[1], Z_GRIP), GRIP, "hold the push", yaw1)]
     if letgo:
         # WHY ease first: at the full press each arm is bent 8 mm off its aim, and opening there lets the hand spring
@@ -485,6 +493,38 @@ def hand_plan(name, start, approach, gap_end, b_dx=0.0, b_yaw=0.0, letgo=True, d
     return W
 
 
+def tries(name, seat, approach, by, yaw1):
+    """The first try and RETRIES more: push to PROBE_GAP and check; a retry backs off to RETRY_GAP, lines up there,
+    comes in to the mouths, lines up again, and pushes. servo() turns the retries into holds once a check finds the
+    dowels in."""
+    s = 1.0 if name == "hole_board" else -1.0
+    at = lambda g: grip_point(name, seat[0], seat[1] + s * min(approach, g) / 2, by)  # noqa: E731
+    pr, back, mouth = at(PROBE_GAP), at(RETRY_GAP), at(MOUTH_GAP)
+    W = [_w(2.0, (pr[0], pr[1], Z_GRIP), GRIP, "push to the holes", yaw1),
+         _w(0.4, (pr[0], pr[1], Z_GRIP), GRIP, "check 1", yaw1)]
+    for r in range(1, RETRIES + 1):
+        W += [_w(1.0, (back[0], back[1], Z_GRIP), GRIP, f"retry {r} back off", yaw1),
+              _w(0.4, (back[0], back[1], Z_GRIP), GRIP, f"retry {r} line up", yaw1),
+              _w(0.8, (mouth[0], mouth[1], Z_GRIP), GRIP, f"retry {r} come in", yaw1),
+              _w(0.4, (mouth[0], mouth[1], Z_GRIP), GRIP, f"retry {r} line up at the mouths", yaw1),
+              _w(2.0, (pr[0], pr[1], Z_GRIP), GRIP, f"retry {r} push to the holes", yaw1),
+              _w(0.4, (pr[0], pr[1], Z_GRIP), GRIP, f"check {r + 1}", yaw1)]
+    return W
+
+
+def servo_events(W):
+    """(time, kind, label) of every line-up pass and check in a hand's plan, in order; each 0.1 s before its
+    waypoint ends."""
+    out, t = [], 0.0
+    for w in W:
+        t += w.duration
+        if w.label in LINE_UP or (w.label.startswith("retry") and "line up" in w.label):
+            out.append((t - 0.1, "line", w.label))
+        elif w.label.startswith("check"):
+            out.append((t - 0.1, "check", w.label))
+    return out
+
+
 def plan(seed=None, variant=None):
     """Both hands' waypoints for a seed and a variant (demo or a stem); also arms the demo's line-up (_SERVO)."""
     v = VARIANT if variant is None else variant
@@ -493,7 +533,8 @@ def plan(seed=None, variant=None):
     end_dx = b_dx if v == "off" else b_dx + BOARD_L / 2 * math.sin(b_yaw)   # the end's centre aside, as planned
     left = p.get("left", [])
     _SERVO.update({"on": v in SERVO_VARIANTS, "b_dx": end_dx, "b_yaw": b_yaw, "done": set(), "log": [],
-                   "times": [t - 0.1 for t in label_ends(left, LINE_UP)]})
+                   "times": [t - 0.1 for t in label_ends(left, LINE_UP)], "events": servo_events(left),
+                   "entered": False})
     return p
 
 
@@ -560,7 +601,8 @@ def demo():
 # way; turned about grips 100 mm from the seam each, that put the ends 2.4 mm apart sideways [ARITH: 200 mm x sin 0.7
 # deg], twice the 1.2 mm capture, and every dowel stopped on the end face. A real worker sights along the edges; the
 # script reads the poses instead.
-_SERVO = {"on": False, "b_dx": 0.0, "b_yaw": 0.0, "done": set(), "log": [], "times": []}
+_SERVO = {"on": False, "b_dx": 0.0, "b_yaw": 0.0, "done": set(), "log": [], "times": [], "events": [],
+          "entered": False}
 
 
 def _yaw_of(q):
@@ -630,26 +672,57 @@ def _holding(waypoints, t):
     return t < end
 
 
+def entered(m):
+    """Every dowel's tip at least ENTERED into its own hole and within the capture of its axis."""
+    return min(m["depth"]) >= ENTERED and max(m["off"]) <= CAPTURE
+
+
+def hold_retries(waypoints, t):
+    """Waypoints with every retry and check after time t held where the playing one ends (the dowels are in)."""
+    end, i = 0.0, len(waypoints)
+    for k, w in enumerate(waypoints):
+        end += w.duration
+        if t < end:
+            i = k
+            break
+    here = waypoints[i] if i < len(waypoints) else waypoints[-1]
+    return waypoints[:i + 1] + [dataclasses.replace(w, pos=here.pos, yaw=here.yaw)
+                                if w.label.startswith(("retry", "check")) else w for w in waypoints[i + 1:]]
+
+
 def servo(plans, t):
-    """Run each line-up pass whose time has come: plans is {arm: ArmPlan}; edits their waypoints in place."""
+    """Run each line-up pass and check whose time has come: plans is {arm: ArmPlan}; edits their waypoints in place.
+    The last pass of a line-up (before a push) turns only the hole board; a check that finds the dowels in holds the
+    retries and skips their passes."""
     if not _SERVO["on"] or _M.get("boards") is None or _M.get("tcps") is None:
         return
-    for k, tk in enumerate(_SERVO["times"]):
+    ev = _SERVO["events"]
+    for k, (tk, kind, label) in enumerate(ev):
         if k in _SERVO["done"] or t < tk:
             continue
         _SERVO["done"].add(k)
+        if _SERVO["entered"]:
+            continue
         pa, qa, pb, qb = _M["boards"]
-        held = "right" in plans and _holding(plans["right"].waypoints, t)
-        last = k == len(_SERVO["times"]) - 1
-        d = line_up(pa, qa, pb, qb, _M["tcps"]["right"], _M["tcps"]["left"], _SERVO["b_dx"], _SERVO["b_yaw"],
-                    held and not last)
-        for arm, (dx, dyaw) in d.items():
-            if arm in plans:
-                plans[arm].waypoints = shift_after(plans[arm].waypoints, t, dx, dyaw)
         m = measure(pa, qa, pb, qb)
-        rec = {"pass": k, "t": round(t, 2), "dx_mm": round(1000 * m["dx"], 3),
+        d = {}
+        if kind == "check":
+            if entered(m):
+                _SERVO["entered"] = True
+                for arm in plans:
+                    plans[arm].waypoints = hold_retries(plans[arm].waypoints, t)
+        else:
+            held = "right" in plans and _holding(plans["right"].waypoints, t)
+            last = k + 1 < len(ev) and ev[k + 1][1] == "check" or "mouths" in label
+            d = line_up(pa, qa, pb, qb, _M["tcps"]["right"], _M["tcps"]["left"], _SERVO["b_dx"], _SERVO["b_yaw"],
+                        held and not last)
+            for arm, (dx, dyaw) in d.items():
+                if arm in plans:
+                    plans[arm].waypoints = shift_after(plans[arm].waypoints, t, dx, dyaw)
+        rec = {"pass": k, "kind": kind, "t": round(t, 2), "dx_mm": round(1000 * m["dx"], 3),
                "relyaw_deg": round(math.degrees(m["yaw"]), 3), "yaw_a_deg": round(math.degrees(_yaw_of(qa)), 3),
-               "yaw_b_deg": round(math.degrees(_yaw_of(qb)), 3),
+               "yaw_b_deg": round(math.degrees(_yaw_of(qb)), 3), "depth_mm": [round(1000 * v, 2) for v in m["depth"]],
+               "entered": _SERVO["entered"],
                "cmd": {a: (round(1000 * v[0], 3), round(math.degrees(v[1]), 3)) for a, v in d.items()}}
         _SERVO["log"].append(rec)
         print("[dowel line-up] " + str(rec), flush=True)
