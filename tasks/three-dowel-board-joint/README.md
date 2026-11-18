@@ -37,10 +37,11 @@ chamfer size, wood friction, the dry-fit press, the dowel's and hole's real diam
   prism of 4.0 mm corner radius), 22 mm deep, a sharp rim; the dowel's tip has a 1.0 mm x 45 deg chamfer. The sim
   hole is 0.05 mm a side wider than the real maximum: PhysX convex contact at much tighter clearances tends to jam
   where wood would slide (stated in fidelity). Contact offset 1 mm on dowels and hole walls, rest offset 0.
-- What that keeps [ARITH]: a tip enters only within 1.2 mm of its hole's axis (chamfer plus clearance); yaw alone uses
-  up an outer dowel's 1.2 mm at 2.9 deg (dowels 24 mm either side of the middle one); a fully entered dowel cannot tilt
-  more than about 1.1 deg (2 x 0.2 mm over 20 mm). A board off by a few degrees or a couple of millimetres stops on the
-  dowels' chamfers, and the ends cannot meet.
+- What that keeps [ARITH]: a tip enters only within 1.2 mm of its hole's axis (chamfer plus clearance); a fully entered
+  dowel cannot sit more than about 1.1 deg off its hole's axis (2 x 0.2 mm over 20 mm), so the two boards must be within
+  about that in yaw to close. A board a couple of millimetres off stops on the dowels' chamfers; one turned a degree or
+  more binds part way in (probe 2 below: at 0.20 mm a side, 1.6 to 2.0 deg apart bound about 1 mm in; at 0.10 mm,
+  0.5 to 1.0 deg did).
 - What it leaves out: the flutes, the dry-fit friction (a few newtons [EST], measured with a force gauge in the real
   trial below), wood compliance.
 
