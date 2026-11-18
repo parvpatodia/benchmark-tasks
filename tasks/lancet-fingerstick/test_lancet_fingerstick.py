@@ -612,8 +612,8 @@ class LazyRoutes(unittest.TestCase):
         self.assertIsNone(why)
 
     def test_one_arm_sim_stems(self):
-        """sim/one_arm.py, appended by sim/mk.sh for the next sim batch, keeps the left arm parked: in the replay both
-        its press (o00) and its jab (j00) score 0, the hand not steadied."""
+        """sim/one_arm.py, appended by sim/mk.sh to the one-arm copies (o00, j00; both scored 0 in PhysX, README Sim
+        results), keeps the left arm parked: in the replay both its press and its jab score 0, the hand not steadied."""
         src = (HERE / "sim" / "one_arm.py").read_text()
         for jab in (False, True):
             ns = dict(vars(M))
@@ -712,22 +712,23 @@ class ReadmeNumbers(unittest.TestCase):
             self.assertIn(s, t)
 
     def test_cradle_numbers(self):
-        """The cradle and block sizes under Real trials are the model's (3 mm cradle floor [CHOICE])."""
-        t, f = self.TXT, 0.003
-        top_f, top_w = M.HZ + M.REST_F_Z, M.HZ + M.REST_W_Z
-        for s in (f"ring finger's axis {1000 * M.HZ:.0f} mm over the", f"{1000 * M.PIVOT_X:.0f} mm behind the ring's apex",
-                  f"{1000 * (M.STUB_X - M.PIVOT_X):.0f} mm behind the ridge",
-                  f"its top {1000 * top_f:.1f} mm over the table, from {1000 * (M.PIVOT_X - 0.020):.0f} to "
-                  f"{1000 * M.PIVOT_X:.0f}",
+        """The rig's sizes under Real trials are the model's: the hinge pin at the pivot, the wrist block as the stop."""
+        t = self.TXT
+        pin, top_w = M.HZ + M.REST_F_Z, M.HZ + M.REST_W_Z
+        for s in (f"{1000 * M.PIVOT_X:.0f} mm behind the ring's apex and {1000 * pin:.1f} mm over the table",
                   f"its top {1000 * top_w:.1f} mm over the table, centred {1000 * M.STUB_X:.0f} mm behind the apex",
-                  f"{1000 * M.STUB_YZ[0]:.0f} mm to the thumb side", f"{1000 * (top_f - f):.1f} mm and {1000 * (top_w - f):.1f} mm",
+                  f"{1000 * M.STUB_YZ[0]:.0f} mm to the thumb side", f"{1000 * (M.STUB_X - M.PIVOT_X):.0f} mm behind the pin",
                   f"{1000 * (M.STUB_X + 0.040 - M.PIVOT_X + 0.030):.0f} by 60 by 5 mm base plate ({1000 * (M.PIVOT_X - 0.030):.0f} "
                   f"to", f"{1000 * (M.STUB_X + 0.040):.0f} mm behind the apex), ballasted to {M.BASE_KG:g} kg",
                   f"centre of mass {1000 * (M.COM_X - M.PIVOT_X):.0f} mm behind the pivot, a moment of "
-                  f"{W * (M.COM_X - M.PIVOT_X):.3f} N m"):
+                  f"{W * (M.COM_X - M.PIVOT_X):.3f} N m", f"{1000 * 2 * M.STUB_R:.0f} mm forearm stub",
+                  f"{1000 * (M.L_W + 2 * M.CUP_CLEAR):.1f} by {1000 * (M.L_T + 2 * M.CUP_CLEAR):.1f} mm, "
+                  f"{1000 * M.CUP_D:.0f} mm deep, {1000 * M.CUP_CLEAR:.1f} mm each side",
+                  f"{1000 * (M.STAND_H + M.TAB_H):.0f} mm over the table, is where the shield's face rests",
+                  f"rim {1000 * (M.STAND_H + M.TAB_H + M.CUP_D):.0f} mm over the table",
+                  f"a {1000 * 2 * M.STAND_HALF:.0f} mm square block {1000 * M.STAND_H:.0f} mm high"):
             self.assertIn(s, t)
         self.assertGreater(M.STUB_YZ[0], 0.0)   # +y in the rolled frame is the thumb side
-
 
     def test_tipping_force_sits_with_its_place(self):
         """The README pairs each tipping force with where on the site it acts (smallest near the apex)."""
@@ -744,6 +745,72 @@ class ReadmeNumbers(unittest.TestCase):
         for w in ("other hand", "left", "right gripper", "your hand", "grip "):
             self.assertNotIn(w, ins.lower())
         self.assertEqual(json.loads((HERE / "task.json").read_text())["instruction"], ins)
+
+
+def real_square_tilt(s, theta, r, lean_apex, lean_middle):
+    """README Real trials, Square: the lancet's angle off the skin's normal (deg) from what the trial reads. s (mm back
+    from the apex) and theta (deg round from the pad's middle line toward the side facing up) from the ink patch on the
+    template; r the fingertip's radius (check 3b); lean_apex and lean_middle the housing top's lean (deg) toward the
+    apex in the along-finger view and toward the pad's middle line in the across-finger view."""
+    beta = math.asin((r - s) / r) if s < r else 0.0
+    gamma = math.radians(30.0) - math.radians(theta)
+    n = np.array([math.tan(beta) / math.cos(gamma), math.tan(gamma), 1.0])
+    d = np.array([math.tan(math.radians(lean_apex)), math.tan(math.radians(lean_middle)), 1.0])
+    return math.degrees(math.acos(float(n @ d) / (np.linalg.norm(n) * np.linalg.norm(d))))
+
+
+class RealTrial(unittest.TestCase):
+    def test_real_square_check_matches_the_scorer(self):
+        """The README's two-camera squareness reading gives the scorer's own tilt (tilt_of against site_of's normal)
+        over the whole site, both fingers, lancets leaning up to 25 deg any way."""
+        rng = np.random.default_rng(3)
+        for _ in range(400):
+            name = ("ring", "middle")[int(rng.integers(2))]
+            v, u0, _, r, _ = M.FINGERS[name]
+            s = float(rng.uniform(*M.SITE_S))
+            theta = float(rng.uniform(15.0, 45.0))
+            rho = math.sqrt(r * r - (r - s) ** 2) if s < r else r
+            a = -math.radians(theta)
+            p = M.hand_to_mech((u0 + s, v + rho * math.sin(a), rho * math.cos(a)))
+            site = M.site_of(p)
+            self.assertEqual(site[0], name)
+            self.assertAlmostEqual(site[4], 0.0, places=9)
+            tip = math.radians(float(rng.uniform(0.0, 25.0)))
+            az = float(rng.uniform(-math.pi, math.pi))
+            d = np.array([math.sin(tip) * math.cos(az), math.sin(tip) * math.sin(az), math.cos(tip)])
+            k = np.cross([0.0, 0.0, 1.0], d)
+            ang = math.asin(min(1.0, float(np.linalg.norm(k))))
+            q = (0.0, 0.0, 0.0, 1.0) if ang < 1e-12 else tuple(
+                list(k / np.linalg.norm(k) * math.sin(ang / 2)) + [math.cos(ang / 2)])
+            code = math.degrees(M.tilt_of(q, (0.0, 0.0, 0.0, 1.0), site[3]))
+            lean_apex = math.degrees(math.atan2(-d[0], d[2]))      # the apex lies toward -x
+            lean_middle = math.degrees(math.atan2(d[1], d[2]))     # the pad's middle line lies toward +y
+            self.assertAlmostEqual(real_square_tilt(1000 * s, theta, 1000 * r, lean_apex, lean_middle), code, places=6)
+
+    def test_rig_scad_is_current(self):
+        """rig.scad is what tools/rig_scad.py writes from the task's numbers now."""
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("rig_scad", HERE / "tools" / "rig_scad.py")
+        rs = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(rs)
+        txt = (HERE / "rig.scad").read_text()
+        self.assertEqual(txt, rs.text(), "rerun python3 tools/rig_scad.py")
+        for a, b in ("{}", "()", "[]"):
+            self.assertEqual(txt.count(a), txt.count(b))
+        n = rs.numbers()
+        self.assertEqual(n["pin"], (round(1000 * M.PIVOT_X, 3), round(1000 * (M.HZ + M.REST_F_Z), 3)))
+        self.assertEqual(n["wrist_top"], round(1000 * (M.HZ + M.REST_W_Z), 3))
+        self.assertEqual(n["stub_lever"], round(1000 * (M.STUB_X - M.PIVOT_X), 3))
+        # the shield's face rests on the post at the model's height, and the cup's rim is the model's socket wall
+        face = round(1000 * (M.STAND_H + M.TAB_H), 3)
+        self.assertAlmostEqual(face + 0.5, 1000 * (M.L_START[2] - M.TOP), places=6)
+        self.assertIn(f"cylinder(d = {rs.POST_D}, h = {face})", txt)
+        self.assertIn(f"cube([{round(1000 * (M.L_W + 2 * M.CUP_CLEAR), 3)}, {round(1000 * (M.L_T + 2 * M.CUP_CLEAR), 3)}",
+                      txt)
+        rim = face + round(1000 * M.CUP_D, 3)
+        self.assertIn(f"h = {round(rim - (1000 * M.STAND_H - rs.CUP_SINK), 3)}", txt)
+        for s in ("tools/rig_scad.py", "rig.scad", f"{n['pin'][1]:.1f} mm over the table"):
+            self.assertIn(s, ReadmeNumbers.TXT)
 
 
 if __name__ == "__main__":
