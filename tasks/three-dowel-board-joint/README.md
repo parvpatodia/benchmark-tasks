@@ -54,8 +54,9 @@ arm alone cannot carry the other board to the joint, or its own board onto the o
 `left_only`, expected 0). It does not show that a one-arm push could never close the joint.
 
 The relay is a sim simplification. The sim has no dry-fit friction, so a relay (the right arm sets its board down on
-the seam line and lets go, then the left arm pushes its board on) seats in the sim; stem `relay` runs it and is
-expected to score 1.0, and we report it rather than hide it. In the real trial the dowels need a press of a few newtons
+the seam line and lets go, then the left arm pushes its board on) could seat in the sim; stem `relay` runs it. Batch 4
+measured 0.5: pushed on alone, the loose dark board turned 0.5 deg and the joint bound 18 mm in. We report it
+rather than hide it. In the real trial the dowels need a press of a few newtons
 [EST], while a free board starts sliding on the bench at about 0.53 N [ARITH: 0.135 kg x 9.81 x 0.40, the sim boards'
 static friction, EST for real wood on laminate], so the pushed board would slide away unless the other hand holds it.
 Real-trial pass criterion for the two-arm need: it is confirmed only if the measured insertion press (force gauge, below)
@@ -125,7 +126,9 @@ edges: five passes, at the end of the 1 s settle and then after each of four sho
 last two ending with the tips 2 mm short of the holes). Each pass turns each hand so its board is square to the bench
 and shifts the pale board's hand so the two end centres meet; the last pass turns only the pale board, to the dark
 board's yaw. A pass moves a hand at most 6 mm and 4 deg. The slides are there because a correction made with a board at
-rest is only partly carried out (bench friction against the arm's compliance) and the rest lands at the next slide. Then it tries: it pushes to a 15 mm commanded gap and checks whether every tip is at least 3 mm into its own hole. If not (the ends met the mouths more than the 0.2 mm bore allows and the dowels stopped on their chamfers), it backs off to a 26 mm gap, lines up, comes in to the mouths, lines up again and pushes again, up to two retries; once a check finds the dowels in, the rest of the retries are held. Then it pushes the joint closed. Only the scripted demo reads those poses; the score never uses them. Runtime: about 5 min wall per run on one L40S including start-up [EST].
+rest is only partly carried out (bench friction against the arm's compliance) and the rest lands at the next slide. Every gap it aims for is commanded 7 mm closer (wider when backing off), because the boards stop that far short
+(batch 4: commanded 8 mm, stopped at 15, the bench friction inside each arm's compliance). Then it tries: it pushes
+toward a 15 mm gap and checks whether every tip is at least 3 mm into its own hole. If not (the ends met the mouths more than the 0.2 mm bore allows and the dowels stopped on their chamfers), it backs off to a 26 mm gap, lines up, comes in to the mouths, lines up again and pushes again, up to two retries; once a check finds the dowels in, the rest of the retries are held. Then it pushes the joint closed. Only the scripted demo reads those poses; the score never uses them. Runtime: about 5 min wall per run on one L40S including start-up [EST].
 
 Stems: `bash sim/mk.sh` writes traced copies to `sim/arm/`; `bash sim/run.sh <stem> <steps> <lock> <seed>` runs one.
 
@@ -138,7 +141,7 @@ Stems: `bash sim/mk.sh` writes traced copies to `sim/arm/`; `bash sim/run.sh <st
 | `s_skew` | the pale board turned 5 deg | 0 |
 | `s_stack` | the pale board lifted and set down on the dark board's end | 0 |
 | `s_left_only` | the left arm alone carries its board as far as it reaches | 0 |
-| `s_relay` | one arm at a time (see "Why two arms") | 1.0 |
+| `s_relay` | one arm at a time (see "Why two arms") | 0.5 (batch 4) |
 | `p_fit`, `p_off`, `p_tight`, `p_loose` | the fit alone: boards start in line 30 mm apart; 0.20 mm a side; the pale board's end 0.5 mm aside and turned 1 deg about it; 0.10 mm; 0.35 mm | probe |
 
 ## Sim results
@@ -161,7 +164,11 @@ so the hand dragged the board over); layout 2's put a finger on the board, the h
 board 12.5 deg, and the trial scored 0. `mechanism.py` now places Body-only tasks too (test), and all earlier results
 above ran in layout 0.
 
-Batch 4 (placement fixed): the boards started where each layout puts them (dark board at x 350.0, 361.9 and 338.1 mm, turned 0, 3.0 and -3.0 deg), the grips held, and the line-up ended within 0.65 mm. Layout 1 seated (1.0); in layouts 0 and 2 the ends met the mouths 0.25 to 0.46 mm off and every dowel stopped at the end of its 1 mm chamfer (0). The demo now retries (above).
+Batch 4 (placement fixed): the boards started where each layout puts them (dark board at x 350.0, 361.9 and 338.1 mm, turned 0, 3.0 and -3.0 deg), the grips held, and the line-up ended within 0.65 mm. Layout 1 seated (1.0); in layouts 0 and 2 the ends met the mouths 0.25 to 0.46 mm off and every dowel stopped at the end of its 1 mm chamfer (0). The demo now retries (above). In
+batch 4 the come-ins to 22 mm left the boards near 30 mm (inside the friction band), so the line-up never slid them;
+the back-off is now 8 mm a hand, past that band. Stems (seed 0, layout 1): `s_nothing`, `s_offset`, `s_skew`, `s_stack`
+and `s_left_only` 0 as expected; `s_half` 0.25, not 0.5, because its 8 mm commanded gap stopped at 15 mm (now
+commanded 7 mm closer); `s_relay` 0.5 (above).
 
 Demo on three seeds: SEEDS_PENDING
 

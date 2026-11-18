@@ -411,15 +411,22 @@ PRESS = F_PRESS / K_Y            # 8.3 mm past the seat each way [ARITH]
 STEADY = 0.8
 MOUTH_GAP = 0.022                # the seam gap of the last line-ups: dowel tips 2 mm short of the hole mouths [CHOICE]
 SHUFFLE_GAPS = (0.026, 0.024, MOUTH_GAP, MOUTH_GAP)  # each line-up after the first: back off SHUFFLE, come in to this
-SHUFFLE = 0.004                  # [CHOICE] WHY: the 2026-11-18 probe 2 showed a correction made with the boards at rest
+SHUFFLE = 0.016                  # [CHOICE: each hand backs 8 mm, past its 2.9 mm band below] WHY: the 2026-11-18 probe 2 showed a correction made with the boards at rest
 #                                  is only 10 to 60 % carried out (the bench friction holds the board inside the arm's
 #                                  compliance) and the rest lands at the next slide, so the next pass overshoots; a short
 #                                  slide after every pass lets each correction land before the next is measured
 LINE_UP = ("settle, dowel tips 10 mm short",) + tuple(f"line up {k + 1}" for k in range(len(SHUFFLE_GAPS)))
-PROBE_GAP = 0.015                # each try pushes to this commanded gap (tips 5 mm in if they entered) [CHOICE]
+LAG = 0.007                      # m: seam gap the boards stop short of a commanded inward gap [RUN: batch 4 s_half,
+#                                  commanded 8 mm, stopped at 15; ARITH 5.9 mm = 2 x 0.40 x 0.135 kg x 9.81 / 180 N/m,
+#                                  the bench's static friction inside each arm's compliance]. WHY: batch 4's come-ins
+#                                  to 22 mm left the boards at 30 mm, so the line-up never slid them and its
+#                                  corrections all landed in the push
+PROBE_GAP = 0.015                # each try pushes to this gap (tips 5 mm in if they entered), commanded LAG closer
+#                                  [CHOICE]
 ENTERED = 0.003                  # a try counts as in when every tip is this deep in its own hole [CHOICE]
 RETRIES = 2                      # tries after the first [CHOICE]
-RETRY_GAP = 0.026                # a retry backs the boards off to this gap, lines up, and comes in again [CHOICE]
+RETRY_GAP = 0.026                # a retry backs the boards off to this gap (commanded LAG wider: they lag outward too),
+#                                  lines up, and comes in again [CHOICE]
 # WHY the tries: batch 4 (2026-11-18) seated layout 1 but in layouts 0 and 2 the ends met the mouths 0.25 to 0.46 mm
 # off, past the 0.2 mm bore, and every dowel stopped at the end of its 1 mm chamfer; a correction that small only lands
 # while the board slides, so a stalled try backs off, lines up and comes in again, as a person would
@@ -445,11 +452,13 @@ def seat_centres(seam=SEAM_Y, dx=0.0):
     return {"dowel_board": (X_LINE, seam - BOARD_L / 2), "hole_board": (X_LINE + dx, seam + BOARD_L / 2)}
 
 
-def hand_plan(name, start, approach, gap_end, b_dx=0.0, b_yaw=0.0, letgo=True, delay=0.0, about_end=False):
+def hand_plan(name, start, approach, gap_end, b_dx=0.0, b_yaw=0.0, letgo=True, delay=0.0, about_end=False, park=False,
+              retries=RETRIES):
     """One hand's waypoints for one board. start: (x, y, z, yaw) of the board. approach: pre-seat gap (m). gap_end:
     the seam gap commanded at the end of the push (negative presses past the seat). b_dx, b_yaw: the hole board held
     off line (the stems): its centre b_dx aside and turned b_yaw about it, or with about_end its end's centre b_dx
-    aside and turned about that."""
+    aside and turned about that. park: only set the board down on its seat (no line-up slides, no tries); retries:
+    how many retries the tries hold time for."""
     yaw0 = (YAW_L if name == "hole_board" else YAW_R) + start[3]
     yaw1 = (YAW_L + b_yaw) if name == "hole_board" else YAW_R
     s = 1.0 if name == "hole_board" else -1.0
@@ -466,7 +475,7 @@ def hand_plan(name, start, approach, gap_end, b_dx=0.0, b_yaw=0.0, letgo=True, d
     for k, g in enumerate(SHUFFLE_GAPS):
         g = min(approach, g)
         back = grip_point(name, seat[0], seat[1] + s * (g + SHUFFLE) / 2, by)
-        come = grip_point(name, seat[0], seat[1] + s * g / 2, by)
+        come = grip_point(name, seat[0], seat[1] + s * max(0.0, g - LAG) / 2, by)
         cycles += [_w(0.6, (back[0], back[1], Z_GRIP), GRIP, f"back off {k + 1}", yaw1),
                    _w(0.6, (come[0], come[1], Z_GRIP), GRIP, f"come in {k + 1}", yaw1),
                    _w(0.4, (come[0], come[1], Z_GRIP), GRIP, LINE_UP[k + 1], yaw1)]
@@ -476,8 +485,8 @@ def hand_plan(name, start, approach, gap_end, b_dx=0.0, b_yaw=0.0, letgo=True, d
          _w(0.6, (gx, gy, Z_GRIP), GRIP, "grip across its width", yaw0),
          _w(5.0, (gpre[0], gpre[1], Z_GRIP), GRIP, "slide it toward the seam", yaw1),
          _w(1.0, (gpre[0], gpre[1], Z_GRIP), GRIP, LINE_UP[0], yaw1),
-         *cycles,
-         *tries(name, seat, approach, by, yaw1),
+         *([] if park else cycles),
+         *([] if park else tries(name, seat, approach, by, yaw1, retries)),
          _w(3.0, (gend[0], gend[1], Z_GRIP), GRIP, "push the joint closed slowly", yaw1),
          _w(1.5, (gend[0], gend[1], Z_GRIP), GRIP, "hold the push", yaw1)]
     if letgo:
@@ -493,16 +502,17 @@ def hand_plan(name, start, approach, gap_end, b_dx=0.0, b_yaw=0.0, letgo=True, d
     return W
 
 
-def tries(name, seat, approach, by, yaw1):
+def tries(name, seat, approach, by, yaw1, retries=RETRIES):
     """The first try and RETRIES more: push to PROBE_GAP and check; a retry backs off to RETRY_GAP, lines up there,
     comes in to the mouths, lines up again, and pushes. servo() turns the retries into holds once a check finds the
     dowels in."""
     s = 1.0 if name == "hole_board" else -1.0
-    at = lambda g: grip_point(name, seat[0], seat[1] + s * min(approach, g) / 2, by)  # noqa: E731
-    pr, back, mouth = at(PROBE_GAP), at(RETRY_GAP), at(MOUTH_GAP)
+    # WHY approach 0 holds the seat: the stack stem's right hand only sets its board on the seam line
+    at = lambda g: grip_point(name, seat[0], seat[1] + s * (g if approach > 0 else 0.0) / 2, by)  # noqa: E731
+    pr, back, mouth = at(PROBE_GAP - LAG), at(RETRY_GAP + LAG), at(MOUTH_GAP - LAG)
     W = [_w(2.0, (pr[0], pr[1], Z_GRIP), GRIP, "push to the holes", yaw1),
          _w(0.4, (pr[0], pr[1], Z_GRIP), GRIP, "check 1", yaw1)]
-    for r in range(1, RETRIES + 1):
+    for r in range(1, retries + 1):
         W += [_w(1.0, (back[0], back[1], Z_GRIP), GRIP, f"retry {r} back off", yaw1),
               _w(0.4, (back[0], back[1], Z_GRIP), GRIP, f"retry {r} line up", yaw1),
               _w(0.8, (mouth[0], mouth[1], Z_GRIP), GRIP, f"retry {r} come in", yaw1),
@@ -552,7 +562,9 @@ def _plan(seed, v):
     if v == "nothing":
         return {}
     if v == "half":           # push only to an 8 mm gap and let go: more than half in, not seated
-        return {"left": hand_plan("hole_board", B, PRE_GAP, 0.008), "right": hand_plan("dowel_board", A, PRE_GAP, 0.008)}
+        # WHY minus LAG: batch 4 commanded 8 mm and the boards stopped at 15 (0.25, not 0.5)
+        return {"left": hand_plan("hole_board", B, PRE_GAP, 0.008 - LAG),
+                "right": hand_plan("dowel_board", A, PRE_GAP, 0.008 - LAG)}
     if v == "offset":         # the hole board held one dowel pitch to the side: two dowels find holes, one misses
         return {"left": hand_plan("hole_board", B, PRE_GAP, push, b_dx=PITCH),
                 "right": hand_plan("dowel_board", A, PRE_GAP, push)}
@@ -566,9 +578,10 @@ def _plan(seed, v):
         far = (B[0], A[1] + BOARD_L / 2 + BOARD_L / 2 + 0.002, Z_C, 0.0)
         return {"left": hand_plan("hole_board", B, PRE_GAP, far[1] - seat_centres()["hole_board"][1])}
     if v == "relay":          # one hand at a time: right parks its board on the seam line and lets go, then left
-        right = hand_plan("dowel_board", A, 0.0, 0.0)
+        # WHY park and one retry: one arm after the other must still fit the 60 s run limit (test)
+        right = hand_plan("dowel_board", A, 0.0, 0.0, park=True)
         t_right = sum(w.duration for w in right)
-        left = hand_plan("hole_board", B, PRE_GAP, push, delay=t_right)
+        left = hand_plan("hole_board", B, PRE_GAP, push, delay=t_right, retries=1)
         return {"left": left, "right": right}
     if v == "stack":          # the left hand lifts its board and sets it down on the dowel board's end
         return {"right": hand_plan("dowel_board", A, 0.0, 0.0), "left": stack_plan(B)}
