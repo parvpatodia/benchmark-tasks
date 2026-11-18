@@ -18,5 +18,5 @@
   "run_limit": "1,200 steps (60 s at 20 Hz)",
   "reset_notes": "Dry fit, nothing consumed: pull the boards apart and set them on their taped outlines.",
   "fidelity": "Rigid boards and dowels with real contact. The sim's hole is 0.2 mm a side over the dowel, wider than the real 0 to 0.15 mm, as PhysX convex contacts jam in tighter fits. Kept: the entry capture (1.2 mm), the tilt bind (about 1.1 deg) and wood friction on the bore walls. Not kept: an interference press (a dowel a touch over the hole squeezing in), the flutes and the wood's give, so the sim press is lighter than a tight real fit; the real trial measures it with a force gauge.",
-  "scores": "Dream-1 run: not run; demo: not run"
+  "scores": "Dream-1 run: 0 (1,200 steps); demo: 1.0 (success at 38.35 s, step 767; a scripted demo that reads the seed and the boards' poses)"
 }

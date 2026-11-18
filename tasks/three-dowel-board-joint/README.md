@@ -193,13 +193,13 @@ Earlier commits, one line each (the stems' numbers there do not carry over to th
 - Batch 4: layout 1 1.0; layouts 0 and 2 met the mouths 0.25 to 0.46 mm off and stalled on the chamfers (0). The come-ins stopped 7 mm short inside the friction band; `s_half` 0.25, `s_relay` 0.5. Fix: tries and retries, commands offset by that lag, 8 mm back-offs.
 - Batch 5: layouts 0 and 1 1.0 (759 steps); layout 2 0.5: the chamfers turned the boards 0.37 deg apart after entry and one corner stayed 0.32 mm open. Fix: the square passes.
 
-Stems on the final commit: STEMS_PENDING
+Stems on the final commit: s_nothing 0, s_half 0.5, s_offset 0, s_skew 0, s_stack 0, s_left_only 0, s_hold 0.75, s_relay 0
 
-Demo on three seeds: SEEDS_PENDING
+Demo on three seeds: seed 0 (layout 1) 1.0, seed 1 (layout 2) 1.0, seed 2 (layout 0) 1.0, each at 767 steps
 
-Filmed demo: FILM_PENDING
+Filmed demo: the scripted demo (privileged: it reads the seed and the boards' true poses) scored 1.0 and ended on success at step 767 (38.35 s); it took 251 s of wall time on a shared GPU.
 
-Dream-1: DREAM_PENDING
+Dream-1: the one Dream-1 run scored 0 over 1,200 steps.
 
 ## Reset
 
