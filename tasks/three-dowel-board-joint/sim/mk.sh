@@ -1,7 +1,7 @@
 #!/bin/bash
 # mk.sh: sim copies of the task in sim/arm/: dowel_joint.py as is, plus traced copies (log_snippet.py appended).
 # t00 / t00b: the demo (bench start, seeds via the CLI). Probe (the fit alone, boards start in line 30 mm apart):
-# p_fit (sim clearance 0.20 mm a side), p_off (hole board 1.0 mm aside and 1.5 deg turned), p_tight (0.10 mm),
+# p_fit (sim clearance 0.20 mm a side), p_off (hole board end 0.5 mm aside, turned 1 deg about it), p_tight (0.10 mm),
 # p_loose (0.35 mm). Stems (expected scores in test_dowel_joint.py): s_nothing, s_half, s_offset, s_skew, s_left_only,
 # s_relay, s_stack. Rerun after any task edit.
 set -eu

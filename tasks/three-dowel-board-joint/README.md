@@ -20,10 +20,13 @@ here, `[ARITH]` derived, `[EST]` estimate, `[CHOICE]` design choice, `[RUN]` com
 | Occupation | O*NET 47-2031.00 Carpenters, Employment (2025) "889,700 employees", Core task "Assemble and fasten materials to make frameworks or props, using hand tools and wood screws, nails, dowel pins, or glue."; O*NET 51-7011.00 Cabinetmakers and Bench Carpenters, "81,800 employees", Core "Attach parts or subassemblies together to form completed units, using glue, dowels, nails, screws, or clamps." | category |
 | Dowel | Hafele 267.83.240: "Wood Dowel, Fluted, Kiln-dried hardwood, 8 x 40 mm" | 8 mm x 40 mm |
 | Chamfer | Cindoco 8 mm x 38 mm MG dowel pins: "Pins are chamfered for easy insertion" (size not given) | tip chamfer exists; 1.0 mm is [EST] |
+| Force gauge | Mark-10 Series 5 page: "M5-2 Force gauge, 2 lbF / 32 ozF / 1 kgF / 1000 gF / 10 N", resolution 0.002 N in its table, "Accuracy: ±0.1% of full scale" | the slide and press checks |
+| Feeler gauge | Starrett 66MA: "THICKNESS GAGE, 20 LEAVES, 0.05-1.0mm", leaves "0.05, 0.10, ... 0.30, ... 1.0" | the 0.3 mm and 1 mm checks |
+| Pin gauge | Vermont Gage "Pin Gage, Minus, Class ZZ, 8.00mm", "Tolerance 0.005 mm" (an 8.20 mm one of the same class is assumed to exist, not checked) | the hole checks |
 | Jig and bit | JessEm 08370 dowelling jig manual: "standard with a 8 mm drill bit and bushings"; "The drill bit should be deep enough to accommodate half the dowel you are using."; "We want three (3) holes in this first row. One (1) in the center and one (1) in each outside hole."; "Test fit the joint." | 8 mm holes, 20 mm of dowel each side, three in a row, the dry fit |
 
-Not sourced: board size and mass, dowel pitch (24 mm), hole depth (22 mm), chamfer size, wood friction, the dowel's
-and hole's real diameters (measured per trial, below).
+Not sourced: board size and mass, dowel pitch (24 mm, marked out, not the jig's bushing pitch), hole depth (22 mm),
+chamfer size, wood friction, the dry-fit press, the dowel's and hole's real diameters (measured per trial, below).
 
 ## The fit, in the sim and real
 
@@ -38,21 +41,31 @@ and hole's real diameters (measured per trial, below).
   up an outer dowel's 1.2 mm at 2.9 deg (dowels 24 mm either side of the middle one); a fully entered dowel cannot tilt
   more than about 1.1 deg (2 x 0.2 mm over 20 mm). A board off by a few degrees or a couple of millimetres stops on the
   dowels' chamfers, and the ends cannot meet.
-- What it leaves out: the flutes, the dry-fit friction (a few newtons by hand, measured with a force gauge in the
-  real trial below), wood compliance.
+- What it leaves out: the flutes, the dry-fit friction (a few newtons [EST], measured with a force gauge in the real
+  trial below), wood compliance.
 
 ## Why two arms
 
 Each board starts within reach of one arm only [RUN: yam_arena IK, top-down grip at the board's grip height, x 0.35]:
 the left arm's error is 0.3 mm at y -0.075, 11 mm at -0.10 and 23 mm at -0.125, while the dark board's grip starts at
-y -0.33 and carrying the pale board onto it would need y -0.155. The right arm is the mirror image. So one arm alone can
-neither reach the other board nor carry its own board to it (stem `left_only`, expected 0).
+y -0.33 and carrying the pale board onto it would need y -0.155. The right arm is the mirror image. What that shows: one
+arm alone cannot carry the other board to the joint, or its own board onto the other where it starts (stem
+`left_only`, expected 0). It does not show that a one-arm push could never close the joint.
 
-What the sim does not enforce: in a real trial the press needed to slide the dowels in (a few newtons) is more than the
-0.33 N it takes to slide a free board on the bench (0.135 kg x 9.81 x 0.25), so one hand must hold the dark board while
-the other pushes. The sim has no dry-fit friction, so a relay (the right arm sets its board on the seam line and lets
-go, then the left arm pushes its board on) seats in the sim. Stem `relay` runs it and is expected to score 1.0; we
-report it rather than hide it.
+The relay is a sim simplification. The sim has no dry-fit friction, so a relay (the right arm sets its board down on
+the seam line and lets go, then the left arm pushes its board on) seats in the sim; stem `relay` runs it and is
+expected to score 1.0, and we report it rather than hide it. In the real trial the dowels need a press of a few newtons
+[EST], while a free board starts sliding on the bench at about 0.53 N [ARITH: 0.135 kg x 9.81 x 0.40, the sim boards'
+static friction, EST for real wood on laminate], so the pushed board would slide away unless the other hand holds it.
+Real-trial pass criterion for the two-arm need: it is confirmed only if the measured insertion press (force gauge, below)
+exceeds the measured force to slide a free board on the bench.
+
+## Against other benchmarks
+
+robosuite's TwoArmPegInHole has one arm hold a board with a square hole and the other a long peg, both in the air, and
+the ACT / ALOHA sim set has a bimanual peg-into-socket insertion. Here the parts are two loose boards lying on a bench,
+there are three round dowels that must each find its own hole at the same time (a 1.2 mm capture per dowel), and full
+credit needs a closed, flush, level seam and both hands let go, measured with a feeler gauge and a straightedge.
 
 ## Scoring (`score()`, the last step only; `success()` must hold 1 s)
 
@@ -76,17 +89,23 @@ Nothing earlier counts: a joint seated and pulled apart scores what it ends as (
 
 Real trial measurement: a 0.3 mm feeler gauge must not enter the seam at either edge; a straightedge across the joint's
 side with the same 0.3 mm feeler for flush; a straightedge across both tops with a 1 mm feeler for the height step; the
-1 mm tip depth and the half-in gap with a depth rule; a tape for the 30 mm hand clearance; an overhead 60 fps video over
+1 mm tip depth inferred from a seam gap of at most 19 mm (the dowels stand 20 mm out) and the half-in gap, both with a
+depth rule; a tape for the 30 mm hand clearance; an overhead 60 fps video over
 a 1 mm grid for stillness. All of these resolve their thresholds (each tool's step is at or under the threshold).
 
 ## Building the real trial
 
 - Boards: two 150 x 70 x 19 mm pieces of planed hardwood (one stained dark), ends square within 0.2 mm (try square).
-- Dowels: Hafele 267.83.240 (8 x 40 mm fluted), caliper-checked as above, pushed 20 mm into three holes in the dark
-  board's end, 24 mm apart, at mid-thickness, drilled with the JessEm 08370 jig and its 8 mm bit with the stop collar
-  set for 20 mm; the pale board's holes drilled the same way to 22 mm. Each hole pin-gauged as above.
-- Friction checks: pull a board along the bench with a force gauge (expect about 0.3 N); push the pale board onto the
-  dowels by hand along the bench with the gauge and record the peak (the dry-fit press).
+- Dowels: Hafele 267.83.240 (8 x 40 mm fluted), caliper-checked as above, glued 20 mm into three holes in the dark
+  board's end with PVA and cured before any trial (so that half is rigid, as in the sim). The holes are marked out 24 mm
+  apart [CHOICE] at mid-thickness and drilled with the JessEm 08370 jig and its 8 mm bit, stop collar set for 20 mm;
+  the pale board's holes are drilled the same way to 22 mm, and stay dry. Each hole checked with Vermont Gage Class ZZ
+  pin gauges (0.005 mm tolerance): an 8.00 mm plus gauge as the go and an 8.20 mm minus gauge as the no-go [CHOICE;
+  only the 8.00 mm minus listing was checked].
+- Feeler gauges: a Starrett 66MA set (0.30 mm and 1.0 mm leaves used).
+- Friction checks with a Mark-10 M5-2 force gauge (10 N, 0.002 N steps): pull a free board along the bench and record
+  the peak (expect about 0.5 N [EST]); push the pale board onto the dowels along the bench with the gauge while the dark
+  board is held, and record the peak (the dry-fit press, a few newtons [EST]). Compare the two (above).
 - Bench: a smooth laminate top; the boards on taped outlines, centres at (0.35, 0.33) and (0.35, -0.33) plus the seed's
   shift and turn. Nothing clamps either board. No hazard: rigid wood parts, no blade, heat or chemistry.
 
@@ -130,7 +149,13 @@ Probe 2 (three line-up passes, the boards at rest between them): `p_fit` 1.0 in 
 0.09 mm, flush 0.23 mm). `p_loose` (0.35 mm a side) 0.5: seated (gaps 0.01 and 0.13 mm) but 0.37 mm off flush, which
 the looser holes allow. `p_tight` (0.10 mm) 0: the dowels entered 0.2 to 1.0 mm and bound with the boards 0.5 to 1.0
 deg apart in yaw. `p_off` 0: the same bind at 1.6 to 2.0 deg. `t00` 0: the passes made at rest landed late and the
-last overshot, so the ends met the mouths 1.69 mm apart. The demo now slides between passes (above). Not rerun yet.
+last overshot, so the ends met the mouths 1.69 mm apart. The demo now slides between passes (above).
+
+Demo on three seeds: SEEDS_PENDING
+
+Filmed demo: FILM_PENDING
+
+Dream-1: DREAM_PENDING
 
 ## Reset
 
