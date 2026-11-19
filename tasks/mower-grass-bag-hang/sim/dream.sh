@@ -9,13 +9,15 @@ TASK=$(cd .. && pwd); O=$PWD/out/dream
 B=${LOCKS:-$HOME/locks}/${LOCK_BASE:-sim.lock}
 case $1 in a) L=$B;; b) L=$B.b;; c) L=$B.c;; *) echo "lock a|b|c"; exit 2;; esac
 [ -e "$O" ] && { echo "REFUSED: $O exists: Dream-1 already ran (or started) for this revision"; exit 4; }
-[ -f ~/.dreamlabs/credentials ] || { echo "no ~/.dreamlabs/credentials"; exit 2; }
+[ -n "${DREAM_URL:-}" ] || [ -f ~/.dreamlabs/credentials ] || { echo "no ~/.dreamlabs/credentials"; exit 2; }
 mkdir -p "$O"
 I=$(python3 -c "import json;print(json.load(open('$TASK/task.json'))['instruction'])")
 ( cd "$TASK" && sha256sum mower_bag.py mechanism.py task.json ) > "$O/files.sha256"
 while [ "$(nvidia-smi --query-compute-apps=pid --format=csv,noheader | wc -l)" -ge "${SIMCAP:-3}" ]; do sleep 20; done
 inspect-robots --version > "$O/version.txt" 2>&1 || true
-flock "$L" inspect-robots run --embodiment yam_arena --policy dream \
+# WHY DREAM_URL: 11-19 our Dream key is disabled; Parv OK'd the team bridge (127.0.0.1:8211). Its runs share $HOME/dream.lock with teammates.
+DL=${DREAM_URL:+$HOME/dream.lock}; DL=${DL:-$L}
+flock "$DL" flock "$L" inspect-robots run --embodiment yam_arena --policy dream ${DREAM_URL:+-P server_url=$DREAM_URL} \
   -E task=$TASK/mower_bag.py -E object_jitter=0 -E control_hz=20 -E cam_width=320 -E cam_height=176 \
   --instruction "$I" --scorer task_score --max-steps 1200 --store-frames --log-dir "$O" > "$O/run.log" 2>&1 || true
 for log in "$O"/*.json; do case $log in *.live.json) ;; *) inspect-robots video "$log" --out "$O/cams" >> "$O/run.log" 2>&1 || true;; esac; done
