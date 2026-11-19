@@ -12,7 +12,8 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 import numpy as np  # noqa: E402
 from mechanism import Joint, Link, Shape, body, mechanism, on_place, on_reset, on_step, run_seed  # noqa: E402,F401
-from yam_arena import station  # noqa: E402,F401
+from yam_arena import ik, station  # noqa: E402,F401
+from yam_arena.constants import READY, SHOULDER, WRIST  # noqa: E402
 from yam_arena.demo import Waypoint  # noqa: E402
 from yam_arena.task_file import TABLE_TOP  # noqa: E402
 
@@ -572,8 +573,10 @@ FLAP_UP = math.radians(110.0)    # the flap held this far open [CHOICE: joint6 -
 LET_FLAP = math.radians(30.0)    # the flap is lowered to this over its resting angle, then let go [CHOICE: the left
 #                                  fingers stay clear of the bag's cover, tools/clearance.py]
 STEADY = 0.8                     # s over a part before a touch-down [CHOICE]
-SEAT_PUSH = 0.020                # the bar is lowered this far past the seat so the hooks take the bag [CHOICE: more
-#                                  than the arm's sag under the 1 kg bag, about 20 mm, EST: TCP stiffness about 0.5 N/mm]
+SEAT_PUSH = 0.020                # the bar is lowered this far past the seat so the hooks take the bag [CHOICE: the
+#                                  lowering is commanded without the load compensation (LOADED), so the hand presses
+#                                  the rod down about 4.5 N (20 mm at about 0.22 N/mm, ARITH: the joint-spring model
+#                                  of tools/sagcheck.py) and the hooks take all of it]
 CARRY_Z = Z_LYING - TOP + 0.010  # rod centre while sliding the bag forward low: 10 mm over its lying height [CHOICE]
 LIFT_Z = 0.322                   # rod centre over the hooks: its underside 12 mm over the lips [CHOICE: the demo's
 #                                  margin, not a requirement]
@@ -585,7 +588,8 @@ NUDGE, SHOVE = 0.008, 0.070      # s_nudge / s_shove: how far the mower is rolle
 #                                  the shove passes the 60 mm limit and stays short of the 80 mm stop]
 PUSH_LAG = 0.002                 # m the push stops short of its target against the mower's damping [EST]
 VARIANT = "demo"                 # sim/mk.sh sets this in stem copies: see _plan()
-SERVO_LABELS = ("line up behind the hooks", "line up over the slots", "line up again")
+SERVO_LABELS = ("line up behind the hooks", "line up over the slots", "line up again", "check the height")
+BEHIND = (SERVO_LABELS[0], SERVO_LABELS[3])   # the passes behind the hooks: they aim the rod SHORT behind the slot
 PUSH_LABEL = "line up the push"
 UNLOAD_LABEL = "rest on the hooks"
 FOLLOW_LABEL = "follow the roll"
@@ -670,7 +674,10 @@ def left_plan(t_hold, variant, push=None):
          *flap_arc(0.0, FLAP_UP, 4.0, PINCH, "raise the flap")]
     roll = 0.0
     if push is None:
-        W.append(_w(t_hold, pinch_point(FLAP_UP), PINCH, "hold the flap up", flap_rot(FLAP_UP)))
+        # WHY a follow pass in the demo too: the traced PhysX run of 704ea7f rolled the mower 12.8 mm (the rod pushed
+        # the hooks' lips), and the pinch then lowered the flap on points planned for no roll
+        W += [_w(t_hold, pinch_point(FLAP_UP), PINCH, "hold the flap up", flap_rot(FLAP_UP)),
+              _w(0.4, pinch_point(FLAP_UP), PINCH, FOLLOW_LABEL, flap_rot(FLAP_UP))]
     else:   # WHY: the flap rolls with the mower; a pinch held at fixed world points would drag it or slip
         t_push, roll = push
         W += [_w(t_push, pinch_point(FLAP_UP), PINCH, "hold the flap up", flap_rot(FLAP_UP)),
@@ -741,7 +748,11 @@ def right_plan(start, variant, wait):
     tgt = (sx + dx, dy)
     W += [_w(3.0, bar_tcp((sx - SHORT, dy), 0.0, CARRY_Z), BAR_GRIP, "slide in, square", R1),
           _w(1.5, bar_tcp((sx - SHORT, dy), 0.0, LIFT_Z), BAR_GRIP, "lift over the lips", R1),
-          _w(1.0, bar_tcp((sx - SHORT, dy), 0.0, LIFT_Z), BAR_GRIP, SERVO_LABELS[0], R1)]
+          _w(1.0, bar_tcp((sx - SHORT, dy), 0.0, LIFT_Z), BAR_GRIP, SERVO_LABELS[0], R1),
+          # WHY a second pass before the carry: a pass moves only later waypoints, so the first one's height fix would
+          # otherwise ramp in during the carry and the rod would reach the lips before it had risen (traced PhysX run
+          # of 704ea7f: +40 mm asked at 16.0 s, the rod met the lips' outer faces at 18 s, 24 mm under their tops)
+          _w(0.8, bar_tcp((sx - SHORT, dy), 0.0, LIFT_Z), BAR_GRIP, SERVO_LABELS[3], R1)]
     if variant == "ground":                                 # let go over the bench, short of the hooks
         drop = bar_tcp((sx - SHORT, dy), 0.0, LIFT_Z)
         return W + [_w(0.8, drop, BAR_OPEN, "let go short of the hooks", R1),
@@ -814,7 +825,10 @@ def lift_route(seat_z):
              (1.5, (LIFT_OUT, LIFT_LOW), -LIFT_TIP, "down to the lip's height"),
              (0.8, (LIFT_OUT, LIFT_LOW), -LIFT_TIP, LIFT_LABEL),
              (3.0, (LIFT_IN, LIFT_LOW), -LIFT_TIP, "in under the lip"),
-             (4.0, (LIFT_IN, LIFT_Z), tilt_hung, "rise, lifting the lip"),
+             # WHY three steps: the bag turns 30 deg on the way up, and the demo's load compensation (commanded) is
+             # exact only at waypoints; in one step the hand strayed 2.9 mm mid-rise (tools/sagcheck.py)
+             *[(4.0 / 3, (LIFT_IN, LIFT_LOW + (LIFT_Z - LIFT_LOW) * k / 3), -LIFT_TIP + (tilt_hung + LIFT_TIP) * k / 3,
+                "rise, lifting the lip") for k in (1, 2, 3)],
              (2.0, (sx, LIFT_Z), tilt_hung, "carry over the slots"),
              (2.0, (sx, seat_z), tilt_hung, "lower into the hooks"),
              (0.8, (sx, seat_z), tilt_hung, "settle in the hooks"),
@@ -872,8 +886,78 @@ def plan(seed=None, variant=None):
 
 def demo():
     """Left hand raises the flap and holds it; right hand hangs the bag on both hooks and lets go; left hand lowers the
-    flap onto the bag and lets go; both draw back."""
-    return plan(run_seed())
+    flap onto the bag and lets go; both draw back. The right hand's loaded waypoints are commanded against the bag's
+    sag (commanded)."""
+    return commanded(plan(run_seed()))
+
+
+# -- the demo's load compensation ---------------------------------------------------------------------------------------
+# WHY: the arm holds each joint on a PD spring (yam_arena.constants: 80 N m/rad at joints 1 to 3, 10 at joints 4 to 6)
+# and its gravity compensation covers the arm alone, so the 1 kg bag bends the hand away from the plan. The traced
+# PhysX run of 704ea7f (t00, seed 0) showed it at "line up behind the hooks": the TCP 6.6 mm back, 11.9 mm left and
+# 45.4 mm low, the bag yawed 4.6 deg [RUN]; this model gives 5.5, 13.1, 48.5 mm and 4.1 deg [ARITH]. The rod then met
+# the hooks' lips from the side and never went over them. So each loaded waypoint is commanded at the joint angles the
+# weight bends onto the planned pose: q_cmd = q - K^-1 J(q)^T w (J the TCP's 6x6 Jacobian, w the bag's wrench at the
+# TCP). Plans, tests and tools/clearance.py keep the planned poses (where the hand should end up).
+ARM_K = np.array([SHOULDER["stiffness"]] * 3 + [WRIST["stiffness"]] * 3)   # N m/rad, joints 1 to 6
+LOADED = frozenset({"lift off the bench", "wait for the flap", "slide in, square", "lift over the lips", *SERVO_LABELS,
+                    "carry over the slots", "lift to the hooks", "push in to the slots", "square behind the flap",
+                    "tip nose-down", "down to the lip's height", LIFT_LABEL, "in under the lip",
+                    "rise, lifting the lip"})
+# WHY not the lowering and after: the hooks take the bag there; commanded with the load, the hand would lift it off
+
+
+def _bag_com():
+    m = sum(s.mass for s in BAG.shapes)
+    return np.sum([s.mass * np.asarray(s.center, float) for s in BAG.shapes], axis=0) / m, m
+
+
+BAG_COM, BAG_MASS = _bag_com()   # in B [ARITH]
+
+
+def tcp_jacobian(q, base):
+    """6x6 Jacobian of the TCP (linear; angular, world frame) in the arm joints, by finite differences of ik.tcp_pose."""
+    p0, R0 = ik.tcp_pose(q, base)
+    J, e = np.zeros((6, 6)), 1e-6
+    for i in range(6):
+        dq = np.array(q, float)
+        dq[i] += e
+        p, R = ik.tcp_pose(dq, base)
+        W = (R - R0) @ R0.T / e
+        J[:3, i], J[3:, i] = (p - p0) / e, 0.5 * np.array([W[2, 1] - W[1, 2], W[0, 2] - W[2, 0], W[1, 0] - W[0, 1]])
+    return J
+
+
+def bag_wrench(R_tcp):
+    """The bag's weight as a wrench at the TCP on the bar (force; moment about the TCP), the bag held at its planned
+    rotation for this TCP rotation (level for bar_rot(0))."""
+    Rb = R_tcp @ bar_rot(0.0).R.T
+    r = Rb @ (BAG_COM - np.array([HANDLE_X, 0.0, BAR_Z]))
+    F = np.array([0.0, 0.0, -9.81 * BAG_MASS])
+    return np.r_[F, np.cross(r, F)]
+
+
+def sag_dq(q, base, R_tcp):
+    """Joint deflection under the bag at joints q: K^-1 J^T w [ARITH, linear joint springs]."""
+    return tcp_jacobian(q, base).T @ bag_wrench(R_tcp) / ARM_K
+
+
+def commanded(plans):
+    """The plans with the right hand's LOADED waypoints raised against the bag's sag (see above)."""
+    from yam_arena.demo import grip_rotation
+    out = dict(plans)
+    if "right" not in plans:
+        return out
+    base, q, W = np.asarray(station.BASES["right"], float), np.array(READY, float), []
+    for w in plans["right"]:
+        R = grip_rotation(w.yaw)
+        q, _, _ = ik.solve(w.pos, ik.matrix_to_quat_xyzw(R), q, base_pos=base, iters=200)
+        if w.label in LOADED:
+            p, Rc = ik.tcp_pose(q - sag_dq(q, base, R), base)
+            w = dataclasses.replace(w, pos=(float(p[0]), float(p[1]), float(p[2])), yaw=Rot(Rc))
+        W.append(w)
+    out["right"] = W
+    return out
 
 
 # -- the demo's corrections: a privileged line-up of the rod from the bag's true pose (the score never reads it) -------------
@@ -881,10 +965,10 @@ def demo():
 # (the slot leaves 5.5 mm a side); a person looks at the hooks, the script reads the pose instead.
 _SERVO = {"on": False, "done": set(), "log": [], "events": [], "left_events": [], "left_done": set(), "roll": 0.0,
           "dy": 0.0, "dx": 0.0}
-SERVO_MAX = (0.025, math.radians(6.0))   # the most one pass moves the hand (m, rad) [CHOICE: over the arm's ~20 mm
-#                                           sag under the bag]
-SERVO_MAX_Z1 = 0.040             # the first pass may lift the hand this far [CHOICE: the sag under the bag may reach
-#                                  about 36 mm, EST]
+SERVO_MAX = (0.025, math.radians(6.0))   # the most one pass moves the hand (m, rad) [CHOICE: over what
+#                                           commanded leaves of the arm's sag under the bag]
+SERVO_MAX_Z1 = 0.040             # the passes behind the hooks may lift the hand this far [CHOICE: a margin over
+#                                  what commanded leaves; uncompensated, the sag was 45 mm, RUN]
 
 
 def servo_events(W, labels=(*SERVO_LABELS, PUSH_LABEL, UNLOAD_LABEL, LIFT_LABEL)):
@@ -922,7 +1006,7 @@ def rod_error(bag_pos, bag_quat, label, roll):
     sx = slot_x_world(roll) + _SERVO["dx"]
     if label == LIFT_LABEL:
         return np.array([X_M + roll + LIFT_OUT, 0.0, TOP + LIFT_LOW]) - np.asarray(bag_pos, float), -yaw_rod
-    want_x = sx - SHORT if label == SERVO_LABELS[0] else sx
+    want_x = sx - SHORT if label in BEHIND else sx
     want = np.array([want_x, _SERVO["dy"], TOP + LIFT_Z])
     return want - np.asarray(bag_pos, float), -yaw_rod
 
@@ -966,7 +1050,7 @@ def servo(plans, t):
             # the rod turns about the hand: where the rod centre lands after the turn, then the shift that remains
             pb_turned = tcp + _rz(dyaw) @ (np.asarray(pb) - tcp)
             d = (np.asarray(pb) + d) - pb_turned
-        cap = np.array([SERVO_MAX[0], SERVO_MAX[0], SERVO_MAX_Z1 if label == SERVO_LABELS[0] else SERVO_MAX[0]])
+        cap = np.array([SERVO_MAX[0], SERVO_MAX[0], SERVO_MAX_Z1 if label in BEHIND else SERVO_MAX[0]])
         d = np.clip(d, -cap, cap)
         plans["right"].waypoints = shift_after(plans["right"].waypoints, t, d, dyaw, tcp)
         rec = {"pass": k, "label": label, "t": round(t, 2), "d_mm": [round(1000 * v, 2) for v in d],

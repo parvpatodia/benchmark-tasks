@@ -1,5 +1,6 @@
 """ikcheck.py: IK error over every waypoint, interpolated at 20 Hz, for both arms, for the demo on seeds 0 to 9 and for
-every stem (variant) of the task file. Waypoints the task file lists in FREE_AIR (no part within 7 mm) may err up to
+every stem (variant) of the task file, on the poses the demo commands (mower_bag.commanded: the right hand's loaded
+waypoints raised against the bag's sag). Waypoints the task file lists in FREE_AIR (no part within 7 mm) may err up to
 3 mm / 2 deg; every other one 0.5 mm / 0.5 deg. Also prints each arm's smallest joint margin to its limits. Ends with
 TOTAL BAD n. No sim."""
 import pathlib
@@ -48,7 +49,7 @@ if __name__ == "__main__":
     M = load(HERE / "mower_bag.py").module
     total = 0
     for s in range(10):
-        total += check(f"demo seed {s}", M.plan(s, "demo"), M.FREE_AIR)
+        total += check(f"demo seed {s}", M.commanded(M.plan(s, "demo")), M.FREE_AIR)
     for v in ("one_arm", "lift", "one_hook", "tips", "ground", "hold", "prop", "pinch", "slam", "nudge", "shove"):
-        total += check(f"s_{v}", M.plan(0, v), M.FREE_AIR)
+        total += check(f"s_{v}", M.commanded(M.plan(0, v)), M.FREE_AIR)
     print("TOTAL BAD", total)

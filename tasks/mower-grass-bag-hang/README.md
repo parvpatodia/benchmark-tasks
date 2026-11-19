@@ -158,24 +158,36 @@ Its grips are pitched, not straight down: each waypoint's yaw carries a full TCP
 to yam_scripted's planner (it changes only the demo policy, never the scene or the score).
 
 1. Left: beside the flap's left edge, approach along -y, pinch the plate 50 mm from the hinge, swing it up to 110 deg
-   in 10 deg steps, hold.
+   in 10 deg steps, hold; then move the later waypoints by the mower's measured roll (at most 25 mm).
 2. Right: from behind, round the bag's bar (approach 70 deg from vertical), grip, lift 10 mm, wait for the flap,
    slide in under it, lift over the lips (the demo's margin: the rod's underside 12 mm over them), carry over the
-   slots, lower 20 mm past the seat (more than the arm's sag under the bag), set the tail down on the bench, let go,
-   slide off the bar, draw back. Three line-up passes (behind the hooks, over the slots, again) correct the rod's
-   pose, each at most 25 mm and 6 deg (the first up to 40 mm in height, for the arm's sag); one more aims the hand
-   where it is before it opens.
+   slots, lower 20 mm past the seat so the hooks take the bag, set the tail down on the bench, let go, slide off the
+   bar, draw back. Four line-up passes (behind the hooks, again behind them before the carry, over the slots, again)
+   correct the rod's pose, each at most 25 mm and 6 deg (the two behind the hooks up to 40 mm in height); one more
+   aims the hand where it is before it opens.
+
+Load compensation. The arm holds each joint on a PD spring (80 N m/rad at joints 1 to 3, 10 at 4 to 6, from
+yam_arena's constants) and its gravity compensation covers the arm alone, so the 1 kg bag bends the hand away from
+the plan. The traced PhysX run of commit 704ea7f measured the TCP 6.6 mm back, 11.9 mm left and 45.4 mm low at the
+line-up behind the hooks [RUN]; the spring model (`tools/sagcheck.py`, static balance with the full kinematics)
+gives 6.5, 11.4 and 45.4 mm [ARITH]. Without compensation the rod met the lips from the side and never went over
+them. The demo therefore commands each loaded waypoint (lift to the line-ups) at q - K^-1 J^T w, the joint angles
+the weight bends onto the planned pose; the model puts the hand within 1.22 mm and 0.68 deg of the plan on every
+loaded stretch (5 Hz) of seeds 0 to 9 and every stem. The lowering and what follows are commanded as planned, so the
+hooks take the bag. Plans, tests and the clearance sweep keep the planned poses; `tools/ikcheck.py` checks the
+commanded ones.
 3. Left: lower the flap to 30 deg over its resting angle, let go (it closes the rest at about 4 rad/s), draw out
    sideways, back off.
 
-Demo length 34.5 s; success expected about 1 s later, inside the 60 s run limit (test).
+Demo length 35.7 s; success expected about 1 s later, inside the 60 s run limit (test).
 
 Offline checks [RUN]: IK error at most 0.10 mm on every waypoint near a part and 1.7 mm in free air (the left wrist
 sits on its stop beside the flap), for seeds 0 to 9 and every stem. Gripper sweep (the scorer's finger and housing
 points along the planned paths; for `s_nudge` and `s_shove` the mower rolls with the push): least clearance 3.5 mm
 (right fingers sliding off the bar over the cover), 3.7 mm (left fingers over the bag's rod end while raising the
 flap), 9 mm (left fingertips to the hook), 7 mm (left hand to the flap after letting go); the bag clears the opening
-flap by 31.7 mm and the lips by 32.7 mm. At the demo's end the whole left gripper is 79 mm from the bag and 42 mm from
+flap by 31.7 mm and the lips by 32.7 mm, also with the pinched flap 10 deg under its plan (the traced run held it
+at 101 to 103 deg of 110). At the demo's end the whole left gripper is 79 mm from the bag and 42 mm from
 the flap, the right 73 mm from the bag. Let go, the flap falls onto the left's lower finger and stays on it until the
 hand slides out sideways (a contact the sweep leaves out).
 

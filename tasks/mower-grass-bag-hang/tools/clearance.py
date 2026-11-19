@@ -6,7 +6,9 @@ the flap while pinched) are left out for that hand, and so is the bag against th
 hooks on. Ends with CLEARANCE BAD n (any other clearance under 3 mm). Planned poses, no IK, no sim.
 
 Gripper model: mower_bag.gripper_points, the same points the scorer reads (finger slices and the housing, EST from the
-YAM gripper mesh). For s_nudge and s_shove the mower (and its flap) roll as the plan pushes them."""
+YAM gripper mesh). For s_nudge and s_shove the mower (and its flap) roll as the plan pushes them. The demo is swept a
+second time with the pinched flap FLAP_LOW under its planned angle (scaled by angle), as the traced PhysX run held it
+(103 of 110 deg)."""
 import math
 import pathlib
 import sys
@@ -23,6 +25,7 @@ from yam_arena.task_file import load  # noqa: E402
 
 M = load(HERE / "mower_bag.py").module
 LIMIT = 0.003
+FLAP_LOW = math.radians(10.0)   # [RUN: the 704ea7f trace held the flap at 101 to 103 deg for a planned 110]
 PINCHED = {"pinch the flap", "raise the flap", "hold the flap up", "lower the flap", "keep holding",
            "let go of the flap"}   # WHY let go: the fingers open from round the plate
 GRIPPED = {"grip the bar", "lift off the bench", "wait for the flap", "slide in, square", "lift over the lips",
@@ -78,7 +81,7 @@ def unloaded(W):
     return out
 
 
-def sweep(name, plans, seed):
+def sweep(name, plans, seed, flap_low=0.0):
     plans = {arm: (unloaded(W) if arm == "right" else W) for arm, W in plans.items()}
     A = {arm: ArmPlan(W, station.BASES[arm]) for arm, W in plans.items()}
     T = max((a.duration for a in A.values()), default=0.0) + 1.0
@@ -106,6 +109,7 @@ def sweep(name, plans, seed):
                 label = "keep holding"
             if label in PINCHED:
                 theta, pinch_seen = flap_angle(tg["left"][0], roll), True
+                theta -= flap_low * max(0.0, theta) / M.FLAP_UP
             elif pinch_seen:
                 theta, released = {"s_pinch": M.UNDER, "s_tips": None, "s_hold": None}.get(name, M.REST), True
                 if theta is None:       # the flap lands on a bag held higher than hung: not tracked
@@ -172,6 +176,7 @@ if __name__ == "__main__":
     total = 0
     for s in (0, 1, 2):
         total += sweep("demo", M.plan(s, "demo"), s)
+        total += sweep("demo flap low", M.plan(s, "demo"), s, FLAP_LOW)
     for v in ("one_arm", "lift", "one_hook", "tips", "ground", "hold", "prop", "pinch", "slam", "nudge", "shove"):
         total += sweep(f"s_{v}", M.plan(0, v), 0)
     print("CLEARANCE BAD", total)

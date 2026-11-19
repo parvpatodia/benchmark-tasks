@@ -534,6 +534,58 @@ class Clearances(unittest.TestCase):
         self.assertGreater(M.FLAP_W / 2 - (M.Y_BESIDE - (M.PAD_TIP - M.TCP_OFFSET[2])), -0.008)
 
 
+class Sag(unittest.TestCase):
+    """The demo's load compensation (mower_bag.commanded) against the joint-spring model of the arm."""
+
+    @classmethod
+    def setUpClass(cls):
+        sys.path.insert(0, str(HERE / "tools"))
+        import sagcheck
+        cls.S = sagcheck
+        from yam_arena import station
+        cls.base = np.asarray(station.BASES["right"], float)
+
+    def _settled(self, w_plan, w_cmd):
+        from yam_arena import ik
+        from yam_arena.demo import grip_rotation
+        R, Rc = grip_rotation(w_plan.yaw), grip_rotation(w_cmd.yaw)
+        q0, _, _ = ik.solve(w_plan.pos, ik.matrix_to_quat_xyzw(R), None, base_pos=self.base, iters=300)
+        qc, _, _ = ik.solve(w_cmd.pos, ik.matrix_to_quat_xyzw(Rc), q0, base_pos=self.base, iters=300)
+        return (ik.tcp_pose(self.S.settle(q0, self.base), self.base)[0],
+                ik.tcp_pose(self.S.settle(qc, self.base), self.base)[0])
+
+    def test_model_sag_matches_the_traced_run(self):
+        # the 704ea7f PhysX trace (t00, seed 0): TCP minus plan at "line up behind the hooks", before its pass, was
+        # (-6.6, 11.9, -45.4) mm
+        p = M.plan(1415158438, "demo")["right"]
+        w = next(w for w in p if w.label == M.SERVO_LABELS[0])
+        raw, _ = self._settled(w, w)
+        err = 1000 * (raw - np.asarray(w.pos))
+        for got, want in zip(err, (-6.6, 11.9, -45.4)):
+            self.assertAlmostEqual(got, want, delta=3.0)
+
+    def test_compensated_hand_lands_on_the_plan(self):
+        p = M.plan(1415158438, "demo")
+        c = M.commanded(p)
+        n = 0
+        for w, wc in zip(p["right"], c["right"]):
+            if w.label in M.LOADED:
+                n += 1
+                _, fixed = self._settled(w, wc)
+                self.assertLess(np.linalg.norm(fixed - np.asarray(w.pos)), 0.001, w.label)
+            else:
+                self.assertEqual(w, wc)
+        self.assertEqual(n, 9)
+        self.assertEqual(p["left"], c["left"])
+
+    def test_height_pass_before_the_carry(self):
+        labels = [w.label for w in M.plan(0, "demo")["right"]]
+        i = labels.index(M.SERVO_LABELS[0])
+        self.assertEqual(labels[i + 1:i + 3], [M.SERVO_LABELS[3], "carry over the slots"])
+        self.assertIn(M.SERVO_LABELS[3], [lab for _, lab in M.servo_events(M.plan(0, "demo")["right"])])
+        self.assertNotIn("lower into the hooks", M.LOADED)
+
+
 class Text(unittest.TestCase):
     def setUp(self):
         self.task = json.loads((HERE / "task.json").read_text())
