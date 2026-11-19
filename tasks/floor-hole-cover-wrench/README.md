@@ -72,12 +72,12 @@ underside corners and its cleats' feet, never from its centre.
 | Plate flat | every corner's underside within 3 mm of the deck top (`FLAT_TOL`) | a 3 mm feeler leaf or 3 mm hex key does not go under any corner |
 | Plate placed | every corner within 20 mm of a corner of the pencilled outline (`OUTLINE_TOL`) | steel rule from each plate corner to the nearest outline corner |
 | Cleats in | both cleats' feet inside the hole, at least 10 mm below the deck top (`CLEAT_DOWN`) | implied by the flat check: a cleat on the deck holds its side 19.1 mm up |
-| Wrench put away | every corner of the wrench inside the tote's inner walls, its lowest point at most 3 mm over the tote floor (`REST_TOL`, `wrench_check`) | top photo for the walls; a 3 mm feeler does not pass under the wrench's lowest point |
+| Wrench put away | every corner of the wrench inside the tote's inner walls (up to 2 mm into a wall allowed, `WALL_TOL`, for contact), its lowest point at most 3 mm over the tote floor (`REST_TOL`, `wrench_check`) | top photo for the walls; a 3 mm feeler does not pass under the wrench's lowest point |
 | Released | every point of both grippers (finger slices and housing, `gripper_points`) at least 30 mm from cover and wrench (`CLEAR`) | tape from each gripper to each part |
 | Still | both parts under 5 mm/s and 0.05 rad/s | video, 1 s without motion |
-| Latch | a plate corner 20 mm or more below the deck top at any step (`DROP`) | video: the cover went over the deck's edge or tipped into the hole |
+| Latch | at any step, a plate corner 20 mm or more below the deck top (`DROP`), or the wrench's lowest point 20 mm or more below it anywhere but over the hole | video: the cover went over the deck's edge or tipped into the hole, or the wrench went off the deck |
 
-Rungs (`rung`, `score`): 0 if latched or the wrench is still in the hole; 0.25 put away with the hole not covered;
+Rungs (`rung`, `score`): 0 if latched (cover or wrench off the deck) or the wrench is still in the hole; 0.25 put away with the hole not covered;
 0.5 hole covered with the wrench out but not put away; 0.75 both, but a gripper within 30 mm of a part or a part
 moving; 0.9 both, released and still; 1.0 that for 1 s (success, ends the run); 0 otherwise.
 

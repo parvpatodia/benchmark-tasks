@@ -242,6 +242,8 @@ DROP = 0.020                     # a plate corner 20 mm or more below the deck t
 #                                  its edge or into the hole) [CHOICE: a seated or set-aside cover never goes below it]
 REST_TOL = 0.003                 # the wrench's lowest point within 3 mm of the tote's floor: resting on it [CHOICE: a
 #                                  3 mm feeler leaf must not pass under the wrench's lowest point]
+WALL_TOL = 0.002                 # the wrench may press this far into a tote wall (4 mm thick) and still be inside
+#                                  [CHOICE: contact pushes a resting part a fraction of a mm into what it touches]
 CLEAR = 0.030                    # every point of both grippers (fingers and housing) at least 30 mm from the cover
 #                                  and the wrench [CHOICE: a hand that is off the parts, read with a tape]
 STILL = 0.005                    # m/s: the cover and the wrench still [CHOICE]
@@ -289,12 +291,16 @@ def cover_check(pos, quat):
 
 def wrench_check(pos, quat):
     pts = world_points(pos, quat, WRENCH_CORNERS_W)
-    ix, iy = TOTE_IN[0] / 2, TOTE_IN[1] / 2
+    ix, iy = TOTE_IN[0] / 2 + WALL_TOL, TOTE_IN[1] / 2 + WALL_TOL
     inside = bool(np.all(np.abs(pts[:, 0] - XT) <= ix) and np.all(np.abs(pts[:, 1] - YT) <= iy))
     low = float(pts[:, 2].min() - (TOP + TOTE_FLOOR_Z))
     resting = inside and -0.002 <= low <= REST_TOL
     in_hole = bool(any(in_hole_xy(p) and p[2] < TOP + DECK_Z for p in pts))
-    return {"in_tote": inside, "low": low, "away": bool(resting), "in_hole": in_hole}
+    # off the floor: its lowest point DROP or more below the deck's top anywhere but over the hole (fallen off the
+    # deck onto the bench, or further)
+    k = int(np.argmin(pts[:, 2]))
+    dropped = bool(pts[k, 2] <= TOP + DECK_Z - DROP and not in_hole_xy(pts[k]))
+    return {"in_tote": inside, "low": low, "away": bool(resting), "in_hole": in_hole, "dropped": dropped}
 
 
 def points_to_shapes(pts_world, R, p, shapes):
@@ -323,7 +329,8 @@ def measure(objects, pads):
 
 
 def rung(m, latched):
-    """0 to 4. 0: the cover went off the deck at any time, or the wrench is still in the hole, or neither the hole is
+    """0 to 4. 0: the cover or the wrench went off the deck at any time, or the wrench is still in the hole, or neither
+    the hole is
     covered nor the wrench put away. 1: wrench put away, hole not covered. 2: hole covered, wrench out of the hole
     but not put away. 3: both. 4: both, no gripper within CLEAR of the cover or the wrench, both still."""
     if latched or m["w_in_hole"]:
@@ -426,7 +433,7 @@ def update(objects):
         return _MEM
     _MEM["last"] = objects
     m = measure(objects, _M["pads"])
-    _MEM["latched"] = _MEM["latched"] or m["dropped"]
+    _MEM["latched"] = _MEM["latched"] or m["dropped"] or m["w_dropped"]
     r = rung(m, _MEM["latched"])
     done = r == 4
     _MEM["held"] = _MEM["held"] + (_CLOCK["dt"] or 0.0) if done else 0.0

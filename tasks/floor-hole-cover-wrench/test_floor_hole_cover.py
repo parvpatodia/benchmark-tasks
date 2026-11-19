@@ -354,6 +354,26 @@ class Scoring(unittest.TestCase):
         p = (M.XT - lo[:, 0].mean(), M.YT, M.TOP + M.TOTE_FLOOR_Z - lo[:, 2].min())
         self.assertTrue(M.wrench_check(p, q)["away"])
 
+    def test_wall_contact_edge(self):
+        """Against the far wall: up to WALL_TOL into it is still inside (contact), past it is not."""
+        corners = M.world_points((0.0, 0.0, 0.0), qz(0.0), M.WRENCH_CORNERS_W)
+        to_wall = M.XT + M.TOTE_IN[0] / 2 - (M.XT + corners[:, 0].max())
+        for into, want in ((M.WALL_TOL - 0.0005, 1.0), (M.WALL_TOL + 0.0005, 0.5)):
+            self.assertEqual(score_held(lambda: objs(wrench=in_tote(dx=to_wall + into))), want, into)
+
+    def test_wrench_off_the_deck_latches_zero(self):
+        """Knocked off the deck onto the bench (or further): 0, even if later put away."""
+        off = S((M.DECK_X[1] + 0.15, 0.0, M.TOP), qz(0.0))
+        self.assertTrue(M.wrench_check(off.pos, off.quat_xyzw)["dropped"])
+        self.assertEqual(score_held(lambda: objs(wrench=off)), 0.0)
+        M.reset_memory()
+        M._M["pads"], M._CLOCK["dt"] = FAR, 0.05
+        M.score(objs(wrench=off))
+        self.assertEqual(max(M.score(objs()) for _ in range(30)), 0.0)
+        for s in range(20):      # in the pocket it is not dropped
+            w = in_hole(s)
+            self.assertFalse(M.wrench_check(w.pos, w.quat_xyzw)["dropped"], s)
+
     def test_cover_off_the_deck_latches_zero(self):
         """Off the deck at any step: 0 even after it is put back."""
         M.reset_memory()
@@ -595,7 +615,8 @@ class Text(unittest.TestCase):
         f = lambda v: f"{v * 1000:.0f} mm"  # noqa: E731
         for n in (f(M.FLAT_TOL), f(M.OUTLINE_TOL), f(M.CLEAT_DOWN), f(M.REST_TOL), f(M.CLEAR), f(M.DROP),
                   f"{M.CLEAT_H * 1000:.1f} mm", f"{M.STILL * 1000:.0f} mm/s", f"{M.SPIN:g} rad/s", "0.25", "0.5",
-                  "0.75", "0.9", "1.0", f"{M.SUCCESS_HOLD_S:g} s", "held above the floor"):
+                  "0.75", "0.9", "1.0", f"{M.SUCCESS_HOLD_S:g} s", "held more than 3 mm above the floor",
+                  f"{M.WALL_TOL * 1000:.0f} mm into a wall", "or the wrench did"):
             self.assertIn(n, s, n)
 
     def test_setup_numbers(self):
