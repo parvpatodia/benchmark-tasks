@@ -12,7 +12,7 @@ I=$(python3 -c "import json;print(json.load(open('$TASK/task.json'))['instructio
 ( cd "$TASK" && sha256sum lancet_fingerstick.py mechanism.py task.json ) > "$O/files.sha256"
 while [ "$(nvidia-smi --query-compute-apps=pid --format=csv,noheader | wc -l)" -ge "${SIMCAP:-3}" ]; do sleep 20; done
 inspect-robots --version > "$O/version.txt" 2>&1 || true
-# WHY DREAM_URL: 11-19 our Dream key is disabled; Parv OK'd the team bridge (127.0.0.1:8211). Its runs share $HOME/dream.lock with teammates.
+# WHY DREAM_URL: optional local Dream bridge (127.0.0.1:8211) instead of a key file. Its runs share $HOME/dream.lock with teammates.
 DL=${DREAM_URL:+$HOME/dream.lock}; DL=${DL:-$L}
 flock "$DL" flock "$L" inspect-robots run --embodiment yam_arena --policy dream ${DREAM_URL:+-P server_url=$DREAM_URL} \
   -E task=$TASK/lancet_fingerstick.py -E object_jitter=0 -E control_hz=20 -E cam_width=320 -E cam_height=176 \
