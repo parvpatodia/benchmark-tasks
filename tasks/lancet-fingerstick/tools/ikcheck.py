@@ -1,8 +1,10 @@
-"""ikcheck.py [seed=N | cli=N | corners]: per-waypoint static IK error of both arms' demo plans (each pose alone) and
-each plan's interpolated worst, and joint6 against its +-2.0944 rad limit (the arms' clearance from each other is
+"""ikcheck.py [seed=N | cli=N | corners]: per-waypoint static IK error of both arms' demo plans (each pose held, its IK
+started from the pose before it) and each plan's interpolated worst (lancet_fingerstick.TiltPlan, the plan the patched
+scripted demo plays), and joint6 against its +-2.0944 rad limit (the arms' clearance from each other is
 tools/grippers.py's). seed=N is the run seed as the task sees it; cli=N the inspect-robots --seed N (its trial seed); corners the
 eight corners of the layout box; stems the sim stems (sim/stems.py) on --seed 0. With no argument: the eight corners,
 --seed 0, 2, 4 and the stems. No sim."""
+import dataclasses
 import math
 import pathlib
 import sys
@@ -13,10 +15,9 @@ warnings.simplefilter("ignore")
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 import lancet_fingerstick as F  # noqa: E402
 from yam_arena import station  # noqa: E402
-from yam_arena.demo import ArmPlan, Waypoint  # noqa: E402
 
 J6 = 2.0944
-STEMS = "ojxwfkciagy"               # the sim stems (sim/stems.py, sim/mk.sh)
+STEMS = "ojxwfkcagy"               # the sim stems (sim/stems.py, sim/mk.sh)
 
 
 def stem_plan(stem, seed):
@@ -36,15 +37,17 @@ def check(seed, name, stem=None):
     plans = dict(zip(("right", "left"), F.plan(0.0, seed) if stem is None else stem_plan(stem, seed)))
     total_bad = 0
     for side, ws in plans.items():
-        bad = []
+        bad, q0 = [], None
         for w in ws:
-            p = ArmPlan([Waypoint(1.0, w.pos, w.finger, "a", w.yaw), Waypoint(0.5, w.pos, w.finger, "b", w.yaw)],
-                        station.BASES[side])
+            p = F.TiltPlan([dataclasses.replace(w, duration=1.0, label="a"), dataclasses.replace(w, duration=0.5,
+                                                                                               label="b")],
+                           station.BASES[side], **({} if q0 is None else {"q_start": q0}))
             t, j6 = 0.0, 0.0
             while t <= p.duration:
                 q, _ = p.action7(t)
                 j6 = max(j6, abs(float(q[5])))
                 t += 0.1
+            q0 = p.q.copy()
             if p.worst_ik_mm > 0.5 or p.worst_ik_deg > 0.5 or j6 > J6:
                 bad.append(f"  {w.label:40s} {p.worst_ik_mm:6.2f} mm {p.worst_ik_deg:6.2f} deg j6 {j6:5.2f} pos "
                            f"{tuple(round(v, 4) for v in w.pos)} yaw {math.degrees(w.yaw):.0f}")
@@ -52,7 +55,7 @@ def check(seed, name, stem=None):
         print(side, len(ws), "waypoints;", len(bad), "bad")
         if bad:
             print("\n".join(bad))
-        p = ArmPlan(ws, station.BASES[side])
+        p = F.TiltPlan(ws, station.BASES[side])
         t, j6 = 0.0, 0.0
         while t <= p.duration:
             q, _ = p.action7(t)
@@ -60,6 +63,8 @@ def check(seed, name, stem=None):
             t += 0.02
         print(f"  interpolated: dur {p.duration:.1f} s worst {p.worst_ik_mm:.2f} mm {p.worst_ik_deg:.2f} deg; max "
               f"|joint6| {j6:.2f} rad (limit {J6})")
+        if p.worst_ik_mm > 0.5 or p.worst_ik_deg > 0.5 or j6 > J6:
+            total_bad += 1
     return total_bad
 
 

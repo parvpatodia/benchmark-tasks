@@ -1,12 +1,13 @@
 """rig_scad.py: writes ../rig.scad, the printable real-trial rig, from the task's own numbers (no hand-copied sizes).
 
-Parts: the base (plate, the palm block with the index finger and the thumb on a pedestal, the post the slide's rail is
-screwed to, the spring pins' bosses and the lower stop post), the ring finger (its two segments and the web under its
-knuckle that the slide's block is bolted to, with a foot round the spring pins), printed shims under the springs, and
-the lancet stand (a fixed block and post holding the tab cap, and a cup keyed to the housing that turns on the post,
-stopped at +-100 deg). Bought parts: a miniature linear guide, M2 screws and inserts, two 4 x 40 mm dowels, two 4 mm
-shaft collars, two compression springs (specs in the file's header). Units mm; z from the table top; x along the fingers toward the wrist from the
-ring's apex, y to the thumb side (the model's hand mechanism frame, with z shifted by its HZ).
+Parts: the base (the palm block, palm up and pitched 20 deg, with the index finger and the thumb, on the post the
+slide's rail is screwed to), the seat (the spring pins' bosses and the lower stop post), the ring finger (its two
+segments and the web behind its knuckle that the slide's block is bolted to, with a foot round the spring pins), printed
+shims under the springs, and the lancet stand (a fixed block and post holding the tab cap, and a cup keyed to the
+housing that turns on the post, stopped at +-100 deg). Cut and bought: the plywood board under it all (clamped to the
+table), a miniature linear guide, M2 and M3 screws and inserts, two 4 x 80 mm dowels, two 4 mm shaft collars, two
+compression springs (specs in the file's header). Units mm; z from the table top; x horizontal along the hand toward
+the wrist from the ring's apex, y to the thumb side (the model's hand mechanism frame, with z shifted by its HZ).
 
 WHY generated: the rig must be rebuildable from the model; generating it from lancet_fingerstick.py makes the print take
 its sizes from the model (test_rig_scad_is_current checks the committed file against a fresh run). Not rendered here:
@@ -26,13 +27,18 @@ sys.path.insert(0, str(HERE))
 import lancet_fingerstick as F  # noqa: E402
 
 OUT = HERE / "rig.scad"
-PIN_D, PIN_L = 4.0, 40.0   # mm: the spring pins, 4 x 40 mm steel dowels (a standard length) [CHOICE]
-PIN_PRESS = 8.0      # mm: each pressed through the plate (5) and its boss (3) [CHOICE]
-BOSS_D, BOSS_H = 8.0, 3.0   # mm: the pins' bosses on the plate [CHOICE]
+PIN_D, PIN_L = 4.0, 45.0   # mm: the spring pins, 4 x 45 mm steel dowels [CHOICE: long enough to carry the collars]
+BOSS_D = 8.0         # mm: the shims' diameter, round each pin on the pillar's top [CHOICE]
+PIN_PRESS = 10.0     # mm: each pin pressed this far into the seat pillar's top [CHOICE]
+PILLAR_SCREWS_Y = 8.0   # mm: two M3 screws up through the board into the pillar's bottom, either side of the axis [CHOICE]
+M3_INSERT, M3_CLEAR = 4.0, 3.4   # mm: an M3 heat-set insert's hole, an M3 clearance hole [EST: common sizes]
+POST_SCREWS_X = (0.130, 0.155)   # m: two M3 screws up through the board into the post's inserts [CHOICE]
+CLAMP_X = 0.400      # m: the C-clamps over the board's bar, 20 mm from its end [CHOICE]
 SHIM_T, SHIMS = 1.0, 2      # mm: printed shims under each spring on its boss; one out cuts each spring's force by its
 #                             rate x 1 mm [CHOICE: the preload's adjustment, README checks 1 and R]
 COLLAR_H, COLLAR_OD = 5.0, 10.0   # mm: a 4 mm bore shaft collar, its width and diameter [EST: a common size]
 FOOT_HALF_Y = 18.5   # mm: the web's foot across y, round the pins (15 mm out) [CHOICE]
+FINGER_N = 48        # the printed fingers' sides (the sim's colliders have 16, round the same circle)
 WEB_LOW_HALF_Y = 8.5   # mm: the web where the block is bolted on, the block's half-width [SOURCE: W 17]
 STOP_HALF_Y = 3.0    # mm: the lower stop post [CHOICE]
 M2_CLEAR, M2_HEAD, M2_INSERT = 2.4, 4.0, 3.2   # mm: an M2 clearance hole, its head's counterbore, a heat-set insert's
@@ -70,20 +76,33 @@ def spring(rest, comp, bottom, k_each):
             "solid": round((n + 2) * d, 2), "index": round(c, 1), "f_max": round(f_max, 2), "tau": round(tau)}
 
 
+def site_mech():
+    """The demo's site in the mechanism frame (m)."""
+    v, u0, _, rd, _ = F.FINGERS["ring"]
+    t = F.SITE_TURN
+    return F.hand_to_mech((u0 + F.SITE_AIM, v + rd * math.sin(t), rd * math.cos(t)))
+
+
 def numbers():
     """The rig's numbers (mm), each from the model. The tests and the README read these."""
     hz = F.HZ
     z = lambda v: mm(hz + v)  # noqa: E731
-    web = (mm(F.WEB_X[0]), mm(F.WEB_X[1]), mm(2 * F.WEB_HALF_Y), z(F.FOOT_Z[1]), z(-0.003))
+    board_t = mm(F.BOARD_T)
+    web = (mm(F.WEB_X[0]), mm(F.WEB_X[1]), mm(2 * F.WEB_HALF_Y), z(F.FOOT_Z[1]), z(F.SLIDE_Z))
     foot = (z(F.FOOT_Z[0]), z(F.FOOT_Z[1]))
     block = (z(F.BLOCK_Z[0]), z(F.BLOCK_Z[1]))
     rail = (round(mm(F.POST_X[0]) - mm(F.RAIL["rail_h"]), 3), mm(F.POST_X[0]), z(F.RAIL_Z[0]), z(F.RAIL_Z[1]))
-    seat = round(5.0 + BOSS_H + SHIMS * SHIM_T, 3)
+    pillar_top = z(F.PILLAR_TOP)
+    seat = round(pillar_top + SHIMS * SHIM_T, 3)
     rest = round(foot[0] - seat, 3)                              # each spring's length at rest, seat to foot
     comp = round(1000 * F.ring_target(), 3)                      # its compression there (preload plus weight)
     k_each = F.K_RING / 2 / 1000                                 # N/mm, two in parallel
     bottom = round(rest - 1000 * F.DROP_STOP, 3)
-    lever = round(mm(F.WEB_X[1] + F.RAIL["height"] / 2 - F.SITE_AIM), 1)   # the press (at the site) to the block
+    block_mid = (F.WEB_X[1] + F.RAIL["height"] / 2, 0.0, (F.BLOCK_Z[0] + F.BLOCK_Z[1]) / 2)
+    lever = round(1000 * math.dist(block_mid, site_mech()), 1)   # the press (at the site) to the block's middle
+    rp = F.FINGERS["ring"][4]
+    end_x = F.RING_END_S * math.cos(F.PITCH) + rp * abs(math.sin(F.PITCH)) / math.cos(math.pi / FINGER_N)   # the ring's flat base end, its far edge
+    collar_top = round(foot[1] + COLLAR_H, 3)
     return {
         "web": web,
         "foot": foot,
@@ -92,23 +111,30 @@ def numbers():
                           round((block[0] + block[1]) / 2 + mm(F.RAIL["C"]) / 2, 3)),
         "rail": rail,
         "rail_holes_z": tuple(round(rail[2] + RAIL_HOLE_E + i * RAIL_HOLE_P, 3) for i in range(3)),
-        "post": (mm(F.POST_X[0]), mm(F.POST_X[1]), 24.0, 5.0, rail[3]),
+        "post": (mm(F.POST_X[0]), mm(F.POST_X[1]), mm(F.POST_Y[0]), mm(F.POST_Y[1]), board_t,
+                 z(F.POST_TOP)),
         "stop_top": z(F.GUIDE_TOP),
         "drop_stop": round(foot[0] - z(F.GUIDE_TOP), 3),
         "pins": (round(mm(F.WEB_X[0] + F.WEB_X[1]) / 2, 3), mm(F.SPRING_Y)),
-        "pin": {"bottom": 0.0, "top": PIN_L, "length": PIN_L},
-        "collar": (foot[1], round(foot[1] + COLLAR_H, 3)),
+        "pin": {"bottom": round(pillar_top - PIN_PRESS, 3), "top": round(pillar_top - PIN_PRESS + PIN_L, 3),
+                "length": PIN_L},
+        "pillar": (round(mm((F.WEB_X[0] + F.WEB_X[1]) / 2 - F.PILLAR_X), 3),
+                   round(mm((F.WEB_X[0] + F.WEB_X[1]) / 2 + F.PILLAR_X), 3), mm(F.PILLAR_Y), board_t, pillar_top),
+        "collar": (foot[1], collar_top),
+        "collar_under_finger": round(z(F.SLIDE_Z) - mm(rp) - collar_top, 1),
         "seat_top": seat,
         "spring": {"rate_each": round(k_each, 3), "rest": rest, "comp": comp, "free": round(rest + comp, 3),
                    "bottom": bottom, "force_rest_each": round(k_each * comp, 3),
                    **spring(rest, comp, bottom, k_each)},
-        # the ring's knuckle end over the rail's top at the lower stop, at the rail's near face [ARITH]
-        "finger_clear": round(mm(hz) - 1000 * F.DROP_STOP - z(F.RAIL_Z[1])
-                              - math.sqrt(mm(F.FINGERS["ring"][4]) ** 2 - (rail[0] - mm(F.KNUCKLE_X)) ** 2), 2),
+        # the ring's flat base end clear of the rail's face along x (it never meets the rail, at any drop) [ARITH]
+        "finger_clear": round(rail[0] - 1000 * end_x, 2),
         "lever": lever,
         "moment_15N": round(15.0 * lever / 1000, 2),
-        "plate": (mm(F.PLATE_X[0]), mm(F.PLATE_X[1]), mm(F.PLATE_Y[0]), mm(F.PLATE_Y[1]), 5.0),
-        "ring_axis_z": mm(hz),
+        "board": tuple((mm(x0), mm(x1), mm(y0), mm(y1)) for (x0, x1), (y0, y1) in F.BOARD),
+        "board_t": board_t,
+        "clamp_x": mm(CLAMP_X),
+        "apex_z": mm(hz),
+        "pitch_deg": round(math.degrees(F.PITCH), 3),
         "stand": (mm(2 * F.STAND_HALF), mm(F.STAND_H)),
         "cup_pocket": (mm(F.L_W + 2 * F.CUP_CLEAR), mm(F.L_T + 2 * F.CUP_CLEAR), mm(F.CUP_D)),
         "tab_stop_deg": round(math.degrees(F.TAB_STOP), 3),
@@ -118,49 +144,54 @@ def numbers():
 
 
 def base_size():
-    """The base part's bounding box (mm, x by y by z): the plate and the fixed parts (index, palm, thumb), rounded up to
+    """The base part's bounding box (mm, x by y by z): the post and the fixed parts (index, palm, thumb), rounded up to
     the mm. WHY: the bed it needs (OpenSCAD is not installed, so this is from the model's shapes, not a render)."""
-    lo = [min([F.PLATE_X[0]] + [s.bounds()[0][0] for s in F.HAND_SHAPES]),
-          min([F.PLATE_Y[0]] + [s.bounds()[0][1] for s in F.HAND_SHAPES]), -F.HZ]
-    hi = [max([F.PLATE_X[1]] + [s.bounds()[1][0] for s in F.HAND_SHAPES]),
-          max([F.PLATE_Y[1]] + [s.bounds()[1][1] for s in F.HAND_SHAPES]),
-          max(s.bounds()[1][2] for s in F.HAND_SHAPES)]
+    shapes = list(F.HAND_SHAPES) + [F.support_shapes()[-1]]
+    lo = [min(s.bounds()[0][i] for s in shapes) for i in range(3)]
+    hi = [max(s.bounds()[1][i] for s in shapes) for i in range(3)]
     return tuple(int(math.ceil(1000 * (b - a) - 1e-6)) for a, b in zip(lo, hi))
+
+
+def hull_lines(pts, z):
+    return "hull() for (p = [" + ", ".join(pt(p, z) for p in pts) + "]) translate(p) cube(0.01, center = true);"
+
+
+def rod_lines(a, ra, b, rb, z, note):
+    """A flat-ended rod (hand frame a to b), the sim's _rod_hull with FINGER_N sides."""
+    return [f"  {hull_lines(F._rod_hull(a, ra, b, rb, F.SKIN, n=FINGER_N).points, z)}   // {note}"]
 
 
 def finger_lines(name, wall):
     v, u0, u1, rd, rp = F.FINGERS[name]
-    y, zz = F._axis_yz(v)
     z = F.HZ
-    x0, xd, x1 = u0 - F.APEX[0], u0 + F.DIP - F.APEX[0], u1 - F.APEX[0]
-    a = f"[{mm(x0 + rd)}, {mm(y)}, {mm(zz + z)}]"
-    d = f"[{mm(xd)}, {mm(y)}, {mm(zz + z)}]"
-    b = f"[{mm(x1)}, {mm(y)}, {mm(zz + z)}]"
+    tip, dip = F.hand_to_mech((u0 + rd, v, 0.0)), F.hand_to_mech((u0 + F.DIP, v, 0.0))
     rr = f"{mm(rd)} - lance_wall" if wall else f"{mm(rd)}"
-    return [f"  // {name}: distal radius {mm(rd)}, proximal {mm(rp)}"
-            + (": the distal pad thinner by the Lance finger's wall, which brings it back" if wall else ""),
-            f"  capsule({a}, {d}, {rr});", f"  capsule({d}, {b}, {mm(rp)});"]
+    end = (F.RING_END_S + F.APEX[0]) if name == "ring" else u1
+    out = [f"  // {name}: distal radius {mm(rd)}, proximal {mm(rp)}"
+           + (": the distal pad thinner by the Lance finger's wall, which brings it back" if wall else ""),
+           f"  capsule({pt(tip, z)}, {pt(dip, z)}, {rr});"]
+    out += rod_lines((u0 + F.DIP, v, 0.0), rp, (end, v, 0.0), rp, z,
+                     "its proximal segment" + (", on to the web behind the knuckle" if name == "ring" else ""))
+    if name != "ring":
+        out.append(f"  translate({pt(F.hand_to_mech((u1, v, 0.0)), z)}) sphere({mm(rp)});   // its knuckle")
+    return out
 
 
 def hand_lines():
     z = F.HZ
     out = ["module index() {"] + finger_lines("index", False)
     v, _, u1, _, rp = F.FINGERS["index"]
-    ra, rb = F.hand_to_mech((u1 - 0.004, v, 0.0)), F.hand_to_mech((F.PALM_U[0] + 0.006, v, 0.0))
-    out.append(f"  capsule({pt(ra, z)}, {pt(rb, z)}, {mm(rp)});   // the rod from its knuckle into the palm block")
+    out += rod_lines((u1 - 0.004, v, 0.0), rp, (F.PALM_U[0] + 0.006, v, 0.0), rp, z,
+                     "the rod from its knuckle into the palm block")
     out.append("}")
     palm = [F.hand_to_mech((u, v, w)) for w in (-F.PALM_W, F.PALM_W) for u, v in
             ((F.PALM_U[0], F.PALM_V[0]), (F.PALM_U[1], F.PALM_V[0]), (F.PALM_U[1], F.PALM_V[1]),
              (F.PALM_U[0], F.PALM_V[1]))]
-    out.append("module palm() { hull() for (p = [" + ", ".join(pt(p, z) for p in palm) + "]) translate(p) "
-               "cube(0.01, center = true); }")
-    out.append("// the pedestal: the palm block's footprint carried down to the plate (not in the sim, which holds the base "
-               "rigid)")
-    out.append("module pedestal() { hull() { palm(); translate([0, 0, 5]) linear_extrude(0.01) projection() palm(); } }")
+    out.append("module palm() { " + hull_lines(palm, z) + " }")
     (tv, tu, tr), (bv, bu, br) = F.THUMB
-    ta, tb = F.hand_to_mech((tu, tv, 0.0)), F.hand_to_mech((bu, bv, 0.0))
-    out.append(f"module thumb() {{ hull() {{ translate({pt(ta, z)}) sphere({mm(tr)}); "
-               f"translate({pt(tb, z)}) sphere({mm(br)}); }} }}")
+    out.append("module thumb() {")
+    out += rod_lines((tu, tv, 0.0), tr, (bu, bv, 0.0), br, z, "tip to base, as the sim's")
+    out.append("}")
     out.append("module ring_finger(lance_wall) {")
     out += finger_lines("ring", True)
     out.append("}")
@@ -173,9 +204,9 @@ def lines():
     fb, ft = n["foot"]
     bh0, bh1 = n["block_holes_z"]
     pxm, py = n["pins"]
-    px0, px1, phw, pb, ptop = n["post"]
+    px0, px1, py0, py1, pb, ptop = n["post"]
     sp, pin = n["spring"], n["pin"]
-    x0, x1, y0, y1, pt_ = n["plate"]
+    bt = n["board_t"]
     cpw, cpt, cpd = n["cup_pocket"]
     sw, sh = n["stand"]
     stop, half = n["tab_stop_deg"], n["stop_half_deg"]
@@ -184,28 +215,40 @@ def lines():
     floor = sh - CUP_SINK
     wide = n["block"][1] + 5.0                    # the web is the block's width up to 5 mm over its top, then narrows
     holes = "[" + ", ".join(f"[{y}, {z}]" for y in (-mm(F.RAIL["B"]) / 2, mm(F.RAIL["B"]) / 2) for z in (bh0, bh1)) + "]"
+    ymid = round((py0 + py1) / 2, 3)
+    sx0, sx1, sy, _, stp = n["pillar"]
+    bs = n["base_size"]
+    rects = " ".join(f"translate([{x0}, {y0}]) square([{round(x1 - x0, 3)}, {round(y1 - y0, 3)}]);"
+                     for x0, x1, y0, y1 in n["board"])
     r = ["// rig.scad: the real-trial rig for lancet-fingerstick, written by tools/rig_scad.py from lancet_fingerstick.py.",
-         "// Do not edit by hand; rerun the tool. Units mm, z from the table top, x toward the wrist from the ring's apex,",
-         "// y to the thumb side. Render each part on its own: part = \"base\", \"ring\", \"stand\", \"cup\" or \"shims\"",
-         "// (\"all\" views the set assembled, the ring finger on its top stop).",
-         f"// The base prints in one piece, {n['base_size'][0]} by {n['base_size'][1]} by {n['base_size'][2]} mm: a bed of at "
-         f"least {n['base_size'][0] + 10} by {n['base_size'][1] + 10} mm",
-         f"// with {n['base_size'][2] + 5} mm of height (from the model's shapes; not rendered).",
-         "// Print (CHOICE, not trialled): PETG; base on its plate with tree supports under the fingers, thumb and palm;",
-         "// ring on its side with supports under the pad; stand on its bottom; cup rim up; shims flat.",
+         "// Do not edit by hand; rerun the tool. Units mm, z from the table top, x level along the hand toward the wrist",
+         "// from the ring's apex, y to the thumb side. The hand lies palm up, its fingers sloping "
+         f"down {abs(n['pitch_deg']):g} deg toward their tips.",
+         "// Render each part on its own: part = \"base\", \"seat\", \"ring\", \"stand\", \"cup\", \"shims\" or "
+         "\"board\" (a 2D outline",
+         "// to cut from plywood); \"all\" views the set assembled, the ring finger on its top stop.",
+         f"// The base prints in one piece, {bs[0]} by {bs[1]} by {bs[2]} mm: a bed of at least {bs[0] + 10} by "
+         f"{bs[1] + 10} mm with {bs[2] + 5} mm",
+         "// of height (from the model's shapes; not rendered).",
+         "// Print (CHOICE, not trialled): PETG; base on the post's bottom with tree supports under the palm, fingers and",
+         "// thumb; ring on its side with supports under the pad; seat, stand and shims flat; cup rim up.",
+         f"// Cut: the board from {bt:g} mm plywood to the outline (part \"board\"), drilled for the post's and the "
+         "pillar's screws.",
          f"// Bought: one miniature linear guide {F.RAIL['part']} ({mm(F.RAIL['rail_len']):g} mm rail, block "
          f"{mm(F.RAIL['block_l'])} mm, pitch moment {F.RAIL['MP']} N m);",
          f"// four M2 x 6 socket screws (web to block, heads in {M2_HEAD:g} mm counterbores 2.2 deep, so 2.2 mm enters the "
-         "block's 2.5 mm thread)",
-         "// and three M2 x 6 screws with M2 heat-set inserts (rail to post);",
-         f"// two {PIN_D:g} x {pin['length']:g} mm steel dowel pins pressed {PIN_PRESS:g} mm into the plate and its bosses; "
+         "block's 2.5 mm thread);",
+         "// three M2 x 6 screws with M2 heat-set inserts (rail to post); four M3 x 16 screws up through the board into "
+         "M3 inserts, two in the post's bottom and two in the pillar's;",
+         f"// two {PIN_D:g} x {pin['length']:g} mm steel dowel pins pressed {PIN_PRESS:g} mm into the seat pillar's top; "
          f"two {PIN_D:g} mm bore shaft collars",
          f"// ({COLLAR_OD:g} mm OD, {COLLAR_H:g} mm wide) clamped on the pins on the web's foot, the top stop; two "
          "compression springs, one on each pin",
          f"// under the foot, each music wire {sp['wire']} mm, OD {sp['od']} mm, {sp['active']} active coils, "
          f"{sp['total']} total, ends closed and ground,",
          f"// free length {sp['free']} mm, rate {sp['rate_each']} N/mm, solid {sp['solid']} mm (under the "
-         f"{sp['bottom']} mm it reaches) [ARITH; README check R measures it].",
+         f"{sp['bottom']} mm it reaches) [ARITH; README check R measures it];",
+         f"// two C-clamps (throat 60 mm or more) over the board's bar at x {n['clamp_x']:g}, holding it to the table.",
          'part = "all";',
          "lance_wall = 1.0;   // the Lance trainer finger's wall, measured with calipers (README check 3b) [EST until measured]",
          "tab_w = 6.0; tab_t = 3.0; tab_h = 4.0;   // the lancet's tab cap, measured with calipers (README check 3) [EST]",
@@ -214,10 +257,9 @@ def lines():
          ]
     r += hand_lines()
     r += [
-        f"// the slide, on the ring: a web x {wx0} to {wx1} fused under the knuckle, {2 * WEB_LOW_HALF_Y:g} mm wide up to "
-        f"z {wide} and {ww:g} mm",
-        f"// above it (clear of the holding pads), the block bolted to its +x face; its foot (z {fb} to {ft}) rides the "
-        f"two pins,",
+        f"// the slide, on the ring: a web x {wx0} to {wx1} fused under the finger behind its knuckle, "
+        f"{2 * WEB_LOW_HALF_Y:g} mm wide up to z {wide}",
+        f"// and {ww:g} mm above it, the block bolted to its +x face; its foot (z {fb} to {ft}) rides the two pins,",
         f"// pushed up by the springs against the collars, and lands on the stop post after {n['drop_stop']} mm",
         "module web() { difference() { union() {",
         f"  translate([{wx0}, {-WEB_LOW_HALF_Y}, {fb}]) cube([{round(wx1 - wx0, 3)}, {2 * WEB_LOW_HALF_Y:g}, "
@@ -231,26 +273,39 @@ def lines():
         "   // the block's four screws",
         "} }",
         "module ring() { union() { ring_finger(lance_wall); web(); } }",
-        f"// the post: x {px0} to {px1}, the rail screwed to its -x face through three heat-set inserts (z "
-        + ", ".join(f"{v:g}" for v in n["rail_holes_z"]) + ")",
+        f"// the post under the palm block: x {px0} to {px1}, y {py0} to {py1}, z {pb} to {ptop}; the rail screwed to its "
+        "-x face through three",
+        "// heat-set inserts (z " + ", ".join(f"{v:g}" for v in n["rail_holes_z"]) + "), two M3 inserts in its bottom",
         "module post() { difference() {",
-        f"  translate([{px0}, {-phw / 2}, {pb}]) cube([{round(px1 - px0, 3)}, {phw}, {round(ptop - pb, 3)}]);",
+        f"  translate([{px0}, {py0}, {pb}]) cube([{round(px1 - px0, 3)}, {round(py1 - py0, 3)}, {round(ptop - pb, 3)}]);",
         f"  for (z = {list(n['rail_holes_z'])}) translate([{px0 - 0.01}, 0, z]) rotate([0, 90, 0]) "
-        f"cylinder(d = {M2_INSERT}, h = 5); }} }}",
-        f"// the pins' bosses (their seats, z {pb:g} to {pb + BOSS_H:g}, then {SHIMS} shims of {SHIM_T:g} mm: the springs "
-        f"sit at z {n['seat_top']}) and the lower stop post (top z {n['stop_top']})",
-        f"module bosses() {{ for (y = [{-py}, {py}]) translate([{pxm}, y, {pb}]) cylinder(d = {BOSS_D:g}, h = {BOSS_H:g}); }}",
-        f"module stop_post() {{ translate([{wx0}, {-STOP_HALF_Y}, {pb}]) cube([{round(wx1 - wx0, 3)}, {2 * STOP_HALF_Y:g}, "
-        f"{round(n['stop_top'] - pb, 3)}]); }}",
+        f"cylinder(d = {M2_INSERT}, h = 5);",
+        f"  for (x = {[mm(v) for v in POST_SCREWS_X]}) translate([x, {ymid}, {pb - 0.01}]) cylinder(d = {M3_INSERT:g}, "
+        "h = 8); } }",
+        f"// the seat on the board: a pillar x {sx0} to {sx1}, y +-{sy:g}, z {bt:g} to {stp:g} (then {SHIMS} shims of "
+        f"{SHIM_T:g} mm: the springs sit at z {n['seat_top']}),",
+        f"// the pins pressed {PIN_PRESS:g} mm into its top, and the lower stop post on it (top z {n['stop_top']}); two M3 "
+        "screws up through the board hold it",
+        "module seat() { difference() { union() {",
+        f"  translate([{sx0}, {-sy}, {bt}]) cube([{round(sx1 - sx0, 3)}, {round(2 * sy, 3)}, {round(stp - bt, 3)}]);",
+        f"  translate([{wx0}, {-STOP_HALF_Y}, {stp - 0.01}]) cube([{round(wx1 - wx0, 3)}, {2 * STOP_HALF_Y:g}, "
+        f"{round(n['stop_top'] - stp + 0.01, 3)}]); }}",
+        f"  for (y = [{-py}, {py}]) translate([{pxm}, y, {round(stp - PIN_PRESS, 3)}]) cylinder(d = {PIN_D - 0.1:g}, "
+        f"h = {PIN_PRESS + 0.01:g});   // the pins pressed in",
+        f"  for (y = [{-PILLAR_SCREWS_Y:g}, {PILLAR_SCREWS_Y:g}]) translate([{pxm}, y, {bt - 0.01}]) "
+        f"cylinder(d = {M3_INSERT:g}, h = 8);   // its M3 inserts",
+        "} }",
         f"module shims() {{ for (i = [0 : {2 * SHIMS - 1}]) translate([12 * i, 0, 0]) difference() {{ "
         f"cylinder(d = {BOSS_D:g}, h = {SHIM_T:g}); translate([0, 0, -0.01]) cylinder(d = {PIN_D + 0.3:g}, h = {SHIM_T + 0.02:g}); }} }}",
-        "module base() { difference() { union() {",
-        f"  translate([{x0}, {y0}, 0]) cube([{round(x1 - x0, 3)}, {round(y1 - y0, 3)}, {pt_}]);   // the plate, ballasted "
-        f"to {F.BASE_KG:g} kg and taped down",
-        "  post(); bosses(); stop_post(); index(); palm(); pedestal(); thumb(); }",
-        f"  for (y = [{-py}, {py}]) translate([{pxm}, y, -0.01]) cylinder(d = {PIN_D - 0.1:g}, h = {PIN_PRESS + 0.02:g});"
-        "   // the pins pressed in",
-        "} }",
+        "module base() { union() { post(); index(); palm(); thumb(); } }",
+        f"// the board: {bt:g} mm plywood, a plate under the hand and a bar back between the arm bases, clamped at x "
+        f"{n['clamp_x']:g}",
+        f"module board_outline() {{ difference() {{ union() {{ {rects} }}",
+        f"  for (y = [{-PILLAR_SCREWS_Y:g}, {PILLAR_SCREWS_Y:g}]) translate([{pxm}, y]) circle(d = {M3_CLEAR:g});"
+        "   // the pillar's screws",
+        f"  for (x = {[mm(v) for v in POST_SCREWS_X]}) translate([x, {ymid}]) circle(d = {M3_CLEAR:g}); }} }}"
+        "   // the post's screws",
+        f"module board() {{ color(\"tan\") linear_extrude({bt:g}) board_outline(); }}",
         f"module stand() {{ difference() {{ translate([{-sw / 2}, {-sw / 2}, 0]) cube([{sw}, {sw}, {sh}]);",
         f"  translate([0, 0, {floor}]) cylinder(d = {CUP_OD + FIT}, h = {CUP_SINK + 1}); }}   // the cup's recess",
         f"  difference() {{ cylinder(d = {POST_D}, h = {face});   // the fixed post, its top at the shield's face",
@@ -271,7 +326,10 @@ def lines():
         f"translate([{STOP_R - STOP_PIN_D / 2 - FIT / 2}, 0]) square([{STOP_PIN_D + FIT}, 3.4]);",
         "} }",
         'if (part == "base" || part == "all") color("grey") base();',
+        'if (part == "seat" || part == "all") color("grey") seat();',
         'if (part == "ring" || part == "all") ring();',
+        'if (part == "board") board_outline();',
+        'if (part == "all") board();',
         'if (part == "stand" || part == "all") translate([0, -120, 0]) stand();',
         'if (part == "cup" || part == "all") translate([0, -120, 0]) color("white") cup();',
         'if (part == "shims") shims();',
