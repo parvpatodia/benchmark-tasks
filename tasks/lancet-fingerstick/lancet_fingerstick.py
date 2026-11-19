@@ -41,10 +41,13 @@ F_FIRE = 8.0                     # N on the shield fires it [EST: inside the 4 -
 F_FIRE_MAX_REAL = 15.0           # N: the real BD lancet is used only if it fires at or under this (README Real trials)
 Q_TOUCH = 5e-5                   # m: the shield pushed this far off its stop is touching something (under it the
 #                                  model reads no force on the shield)
-F_TOUCH = F_PRE + K_SHIELD * Q_TOUCH   # 1.2 N: the shield's force once it is off its stop. It marks contact, not a
-#                                  press: the shield cannot leave its stop unless its face is on something. On the ring
-#                                  finger it starts the hold-and-still window (the touch); a real trial reads the same
-#                                  event as the first side-camera frame where the shield's face meets the ring finger
+F_TOUCH = F_PRE + K_SHIELD * Q_TOUCH   # the shield's force once it is off its stop (a placement's start, below)
+TOUCH_D = 0.0003                 # m: the shield's face this close to the ring finger's skin (or the shield off its stop
+#                                  with the face on it) is the touch, which starts the hold-and-still window. WHY a
+#                                  distance and not a force: a real trial reads the touch as the first side-camera frame
+#                                  where the face meets the finger, and the camera sees contact, not force. In the t00
+#                                  trace the face sat 0.03 to 0.29 mm off the skin for 0.5 s before the shield left its
+#                                  stop [RUN]
 LANCET_KG = (0.0020, 0.0020)     # housing, shield [EST: 4 g in all]. WHY 2 g on the shield: at 0.5 g (600x lighter than
 #                                  the hand) PhysX let it sink 2.9 mm into the fingertip at 3.8 N, so it never fired [RUN]
 
@@ -238,10 +241,15 @@ HOLD_SEG = (DIP, KNUCKLE_S)      # m along the ring's axis from its apex: where 
 HOLD_R = 0.015                   # m: and at most this far from the finger's axis
 HOLD_ACROSS = 0.004              # m: and at most this far off it along the gripper's closing direction [CHOICE]. WHY:
 #                                  closed on the 15.6 mm finger, both pads touch it only with the finger between them
-HOLD_GAP_ON = FINGERS["ring"][4] - 0.0006   # m: the half-gap a gripper closed on the ring finger reads [EST: the
-#                                  lancet's grip read 0.2 to 1.1 mm under the housing's half-thickness in the sim trace,
-#                                  2026-11-17; to be checked against the film's trace (README Sim results)]
-HOLD_GAP = (HOLD_GAP_ON - 0.0015, HOLD_GAP_ON + 0.0015)   # m: a half-gap within 1.5 mm of that reading is closed on it
+HOLD_GAP_ON = 0.00793            # m: the half-gap the left reads closed on the ring finger [RUN: the PhysX t00 seed-0
+#                                  trace of e233a08, 2026-11-19: 7.89 to 7.94 mm (lf) from the touch until 0.5 s after
+#                                  the click, 7.93 in most steps; 0.13 mm over the finger's 7.8 mm radius, so the reading
+#                                  is not the pads' distance from the axis]
+HOLD_GAP = (HOLD_GAP_ON - 0.0015, HOLD_GAP_ON + 0.00015)   # m: from 1.5 mm closer (a squeeze, a thinner print) to
+#                                  0.15 mm wider than that reading. WHY the cap so near it: the reading closed on the
+#                                  finger is its widest; wider, the pads are off the skin (review of e233a08: 8.6 and
+#                                  8.7 mm used to pass with the pads up to 0.9 mm off). 0.15 mm covers the trace's 0.05 mm
+#                                  spread [CHOICE]
 # the slide (rig.scad; README Real trials): a miniature linear guide behind the ring finger's knuckle. Its rail is
 # screwed to the front of the palm block's post; its block carries a web printed with the finger; two springs on fixed
 # pins push the web's foot up against collars at the pins' tops (the top stop), and the foot lands on a stop post 10 mm
@@ -671,7 +679,8 @@ def advance(m, dt, l_pos, l_quat, q, tab, ring_q, ring_pos, ring_quat, right, le
         m["fired"], m["fire_t"] = True, m["t"]
         m["fire"] = {"site": None, "tilt": math.pi, "drop": 0.0, "slide": 0.0, "held": False}
         _latch(m, "fired in the stand (pressed down on the post after the twist)")
-    on_ring = f >= F_TOUCH and _on_ring(site_of(p_mech))
+    site = site_of(p_mech)
+    on_ring = _on_ring(site) and (site[4] <= TOUCH_D or f >= F_TOUCH)
     # WHY on the ring finger only: a touch on the table, the plate or another finger is not the fingerstick's start, and
     # a real trial reads the touch where the camera sees the shield meet the ring finger
     if m["out"] and m["tab_off"] and on_ring and m["touch_t"] is None:
@@ -689,8 +698,10 @@ def advance(m, dt, l_pos, l_quat, q, tab, ring_q, ring_pos, ring_quat, right, le
         if m["max_drop"] > DROP_MAX:
             when = "within 0.5 s of the click" if m["fired"] else "under the press"
             _latch(m, f"the ring finger was not held still: it gave {1000 * m['max_drop']:.1f} mm {when}")
-    others = [h for h in (right, left) if not held_by(h, l_pos, l_quat)]
-    held = any(finger_held(h, ring_pos, ring_quat) for h in others)
+    # WHY every hand, the one held_by calls the lancet's too: the two half-gap windows overlap, so a gripper closed on
+    # the finger near the press can read as holding the lancet as well; dropping it scored a real hold 0 (review of
+    # e233a08). A hand that holds the lancet and not the finger is not finger_held anyway
+    held = any(finger_held(h, ring_pos, ring_quat) for h in (right, left))
     if window and not held and m["unheld_t"] is None:
         m["unheld_t"] = m["t"]
     if m["out"] and m["tab_off"] and not m["fired"] and f >= F_TOUCH:
@@ -699,7 +710,6 @@ def advance(m, dt, l_pos, l_quat, q, tab, ring_q, ring_pos, ring_quat, right, le
         slide = float(np.linalg.norm(p_mech - m["press"]))
         if slide > SLIDE_MAX:
             _latch(m, f"the press slid {1000 * slide:.1f} mm on the skin")
-        site = site_of(p_mech)
         ok, why = site_ok(site)
         square = site is not None and tilt_of(l_quat, ring_quat, site[3]) <= TILT_MAX
         if ok and square and held and m["unheld_t"] is None and m["max_drop"] <= DROP_MAX:

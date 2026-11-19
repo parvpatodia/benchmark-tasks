@@ -14,6 +14,7 @@ from yam_arena.task_file import load  # noqa: E402
 M = load(HERE / "lancet_fingerstick.py").module
 CATEGORY = "Impact on jobs"      # WHY one constant: the G15 call (README Closest tasks) may move it to Societal relatability
 mm = lambda v: f"{v * 1000:.1f}".rstrip("0").rstrip(".")  # noqa: E731
+mm2 = lambda v: f"{v * 1000:.2f}".rstrip("0").rstrip(".")  # noqa: E731
 g = lambda v: f"{v:g}"  # noqa: E731
 deg = lambda v: f"{math.degrees(v):.0f}"  # noqa: E731
 import importlib.util  # noqa: E402
@@ -75,10 +76,11 @@ d = {
         f"the shield's face within {mm(M.ON_SKIN)} mm of the skin is on it. Square: the lancet's axis within "
         f"{deg(M.TILT_MAX)} deg of the skin's local normal where it touches. A slide: the face moving more than "
         f"{mm(M.SLIDE_MAX)} mm on the skin between first touch and firing; lifting off ends a placement. The touch: "
-        f"the shield pushed off its stop ({g(M.F_TOUCH)} N, which marks contact, not a press) with its face on the "
-        f"ring finger; a touch on the table or another finger does not count. Held: a gripper closed on the ring finger, its finger half-gap "
-        f"{mm(M.HOLD_GAP[0])} to {mm(M.HOLD_GAP[1])} mm (within {mm(M.HOLD_GAP_ON - M.HOLD_GAP[0])} mm of the "
-        f"{mm(M.HOLD_GAP_ON)} mm it reads closed on the finger), its TCP within {mm(M.HOLD_R)} mm of the finger's axis "
+        f"the shield's face within {mm(M.TOUCH_D)} mm of the ring finger's skin, or the shield off its stop with its "
+        f"face on the ring finger; a touch on the table or another finger does not count. Held: a gripper closed on the ring finger, its finger half-gap "
+        f"{mm2(M.HOLD_GAP[0])} to {mm2(M.HOLD_GAP[1])} mm (from {mm2(M.HOLD_GAP_ON - M.HOLD_GAP[0])} mm under to "
+        f"{mm2(M.HOLD_GAP[1] - M.HOLD_GAP_ON)} mm over the {mm2(M.HOLD_GAP_ON)} mm it reads closed on the finger; wider, "
+        f"the pads are off the skin), whether or not it also counts as holding the lancet, its TCP within {mm(M.HOLD_R)} mm of the finger's axis "
         f"between its distal joint and its base and at most {mm(M.HOLD_ACROSS)} mm off the axis along its closing "
         f"direction, its pad tips past the axis; it must hold at every step from the lancet's first touch until "
         f"{g(M.STEADY_AFTER)} s after the click. Still: the ring finger pushed at most {mm(M.DROP_MAX)} mm down, read at "
@@ -101,7 +103,7 @@ d = {
         f"{mm(M.BASE_MOVED)} mm or {deg(M.BASE_TURN)} deg off its layout pose (it is clamped; this checks that the sim "
         f"placed it); the lancet {mm(M.TOP - M.LOST_Z)} mm under the table top; the firing model not "
         f"running. Real trials (README) read the touch as the first 60 fps side-camera frame where the shield meets "
-        f"the ring finger, the stillness on steel rules beside the web and the fingertip, the hold on the cameras "
+        f"the ring finger, the stillness on the side camera, scaled by steel rules filmed beside the web and the fingertip before the arms go live, the hold on the cameras "
         f"and the arm's log, the click on audio, the discard on the overhead video and a 0.01 g scale."),
     "run_limit": f"{M.RUN_LIMIT_STEPS:,} steps ({M.RUN_LIMIT_STEPS / 20:g} s at 20 Hz)",
     "reset_notes": ("A new lancet in the cup each trial (a used one is spent; its tab stays in the post's slot and is "

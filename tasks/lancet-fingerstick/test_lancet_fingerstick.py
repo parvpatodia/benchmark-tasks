@@ -386,14 +386,68 @@ class Model(unittest.TestCase):
         self.assertFalse(m["positioned"])   # held now, but not from the first touch
 
     def test_touch_is_contact(self):
-        """The touch is the shield off its stop (F_TOUCH, 1.2 N) with its face on the ring finger: contact, not a
-        press threshold."""
+        """The touch is geometric, as a camera sees it: the shield's face within TOUCH_D (0.3 mm) of the ring finger's
+        skin, or the shield off its stop with its face on it. 0.5 mm off with no force is not a touch."""
         self.assertAlmostEqual(M.F_TOUCH, M.F_PRE + M.K_SHIELD * M.Q_TOUCH)
         self.assertEqual(M.shield_force(M.Q_TOUCH * 0.99), 0.0)
         self.assertGreaterEqual(M.shield_force(M.Q_TOUCH * 1.01), M.F_TOUCH)
+        out = out_normal(M.SITE_TURN)
+        m = fresh()
+        press_at(m, GOOD + 0.0005 * out, 0.0)
+        self.assertIsNone(m["touch_t"], "0.5 mm off the skin, no force")
+        press_at(m, GOOD + 0.0002 * out, 0.0)
+        self.assertIsNotNone(m["touch_t"], "0.2 mm off the skin, no force: the camera sees contact")
         m = fresh()
         press_at(m, GOOD, M.F_TOUCH + 0.01)
         self.assertIsNotNone(m["touch_t"])
+
+    def test_a_brush_before_the_hold_is_a_fault(self):
+        """The window runs from the first touch, so the shield brushing the finger before the left holds it is a fault
+        by design, even with no force."""
+        m = fresh()
+        press_at(m, GOOD, 0.0, held=False)
+        press_at(m, OFF, 0.0)
+        for f in (2.5, 5.0, 8.5):
+            press_at(m, GOOD, f)
+        self.assertTrue(m["fired"])
+        self.assertIn("not held from first touch", m["fault"])
+
+    def test_a_hold_near_the_press_that_also_reads_as_holding_the_lancet_counts(self):
+        """Review of e233a08: a hold at the distal joint (27 mm back, half-gap 6.5 mm, tilt 30 deg) with a press 15 mm
+        back, 60 deg round. That gripper is inside held_by's window for the lancet too; it must still count as holding
+        the finger, and it is not the left holding the lancet."""
+        seed = 0
+        hp, hq = ring_link(seed)
+        ang = -math.radians(59.5)   # WHY 59.5: 60 is SITE_ANG's bound, where rounding puts it either side
+        site_m = site_point("ring", 0.015, ang)
+        lq_ = q_from_R(M.hold_pose(seed, s=0.027)[2])
+        left = (M.hold_pose(seed, s=0.027)[0], -0.0065, lq_)
+        sq = square_quat(M._rot3(hq) @ M.site_of(site_m)[3])
+        m = fresh()
+        overlap = False
+        for f in (0.0, 2.5, 5.0, 8.5, 0.0, 0.0):
+            face = hp + M._rot3(hq) @ site_m
+            q = (f - M.F_PRE) / M.K_SHIELD if f > M.F_PRE else 0.0
+            l_pos = lancet_pos(face, q, sq)
+            overlap |= M.held_by(left, l_pos, sq)
+            self.assertTrue(M.finger_held(left, hp, hq))
+            M.advance(m, DT, l_pos, sq, q, M.TAB_BREAK + 0.1, 0.0, hp, hq, (M.grip_point(l_pos, sq), GRIP_READ), left)
+        self.assertTrue(overlap, "the case needs a hold that held_by also calls the lancet's")
+        self.assertTrue(m["fired"])
+        self.assertIsNone(m["fault"])
+
+    def test_either_gripper_may_carry_the_lancet(self):
+        """Review of e233a08 asked for one rule in both the sim and the real trial; the hand-off is legal in both. The
+        left holding the armed lancet is no fault (the instruction assigns no gripper, the #826 rejection), and the
+        real trial has no E-stop for it (README, Rig protection)."""
+        m = fresh()
+        l_pos = lancet_pos(GOOD + 0.020 * out_normal(M.SITE_TURN), 0.0, SQ)
+        hp, hq = ring_link(0)
+        grip = (M.grip_point(l_pos, SQ), GRIP_READ)
+        for _ in range(3):
+            M.advance(m, DT, l_pos, SQ, 0.0, M.TAB_BREAK + 0.1, 0.0, hp, hq, None, grip)
+        self.assertTrue(M.held_by(grip, l_pos, SQ))
+        self.assertIsNone(m["fault"])
 
     def test_a_touch_off_the_ring_finger_does_not_start_the_window(self):
         """Review F1: the shield pressed on the table (1.8 N, no hold), then on the index, then lifted, then a held
@@ -580,6 +634,14 @@ class Model(unittest.TestCase):
                               (on(M.HOLD_AT, back=M.TIP + 0.001), GRIP_R_READ, "short of it, pad tips before the axis"),
                               (on(M.HOLD_AT, 0.026), -0.005, "stem a00: on air above the finger")):
             self.assertFalse(M.finger_held((tcp, gap, q), hp, hq), why)
+        # the half-gap window: the trace's readings on the finger pass; wider, the pads are off the skin (review of
+        # e233a08: 8.0, 8.6 and 8.7 mm used to pass). 8.0 is 0.07 mm past the 7.93 mm the left read on the finger in
+        # PhysX, inside the trace's contact reading, so it still passes; 8.1 mm and up do not
+        for gap in (7.89, 7.94, 8.0):
+            self.assertTrue(M.finger_held((hold_grip(0), -gap / 1000, q), hp, hq), gap)
+        for gap in (8.1, 8.6, 8.7):
+            self.assertFalse(M.finger_held((hold_grip(0), -gap / 1000, q), hp, hq), gap)
+        self.assertLess(M.HOLD_GAP[1], M.HOLD_GAP_ON + 0.0002)
         # turned 90 deg (closing along the finger), the same TCP on the axis is still on it: across is 0 either way,
         # but the gap it reads closed along the finger would be its length, not the 7.8 mm radius
         self.assertTrue(M.finger_held((hold_grip(0), GRIP_R_READ, lq(0, math.pi / 2)), hp, hq))
@@ -1097,12 +1159,13 @@ class ReadmeNumbers(unittest.TestCase):
                   f"ring finger ({1000 * M.RING_KG:.0f} g:", f"A spring ({M.K_RING:g} N/m)",
                   f"with {M.RING_PRELOAD:g} N to spare over its weight; it stops {1000 * M.DROP_STOP:.0f} mm down",
                   f"gives {1000 * M.DROP_MAX:.0f} mm at {YS.give_force():.2f} N straight down",
-                  f"half-gap {1000 * M.HOLD_GAP[0]:.1f} to {1000 * M.HOLD_GAP[1]:.1f} mm and its TCP within "
+                  f"half-gap {1000 * M.HOLD_GAP[0]:.2f} to {1000 * M.HOLD_GAP[1]:.2f} mm and its TCP within "
                   f"{1000 * M.HOLD_R:.0f} mm of the ring finger's axis between its distal joint "
                   f"({1000 * M.HOLD_SEG[0]:.1f} mm back from the apex) and its base ({1000 * M.HOLD_SEG[1]:.1f} mm back)",
                   f"at most {1000 * M.HOLD_ACROSS:.0f} mm off the axis along the gripper's closing direction",
                   f"pad tips ({1000 * M.TIP:.0f} mm past the TCP along its approach) past the axis",
-                  f"1.5 mm either side of {1000 * M.HOLD_GAP_ON:.1f} mm",
+                  f"from 1.5 mm under to {1000 * (M.HOLD_GAP[1] - M.HOLD_GAP_ON):.2f} mm over {1000 * M.HOLD_GAP_ON:.2f} mm",
+                  f"within {1000 * M.TOUCH_D:.1f} mm of the ring finger's skin",
                   f"a fingertip mark {1000 * M.TIP_MARK:.1f} mm back from the apex",
                   f"may turn or tip {math.degrees(M.BASE_TURN):.0f} deg",
                   f"{1000 * M.BASE_MOVED:.0f} mm off its layout pose; more is a fault",
@@ -1168,7 +1231,10 @@ class ReadmeNumbers(unittest.TestCase):
         g = YS.give_force()
         k, _ = YS.sweep(0.0)
         self.assertIn(f"1.0 to 1.4 N (the sim's {g:.2f} N plus or minus 0.2 N)", t)
-        self.assertIn(f"by {M.F_FIRE * k - 1.4:.2f} N at 8 N ({k:.4f} x 8 - 1.4)", t)
+        self.assertIn(f"by {M.F_FIRE * k - 1.4:.3f} N at 8 N ({k:.5f} x 8 - 1.4)", t)
+        self.assertEqual(f"{M.F_FIRE * round(k, 5) - 1.4:.3f}", f"{M.F_FIRE * k - 1.4:.3f}")   # one number, either way
+        self.assertNotIn("1.09 N", t)
+        self.assertNotIn("1.08 N", t)
         self.assertNotIn("kitchen scale", t)   # review F2: no scale under the trainer; the touch is read on camera
 
     def test_rig_numbers(self):
@@ -1210,11 +1276,15 @@ class ReadmeNumbers(unittest.TestCase):
                   f"{g(sp['bottom'])} mm at the lower stop, solid {g(sp['solid'])} mm, peak stress {sp['tau']} MPa",
                   f"spring index is {sp['index']:.0f}", f"sit at z {g(n['seat_top'])}",
                   f"{g(n['cup_pocket'][0])} by {g(n['cup_pocket'][1])}, {g(n['cup_pocket'][2])} deep",
-                  f"stops it at +-{g(n['tab_stop_deg'])} deg"):
+                  f"stops it at +-{g(n['tab_stop_deg'])} deg",
+                  f"{n['hold_web_e']:.1f} mm ahead of the web's middle", f"{n['hold_web_MPa_15N']:.1f} MPa",
+                  f"{n['hold_moment_15N']:.2f} N m on the guide's block"):
             self.assertIn(s, t)
         self.assertAlmostEqual(2 * sp["force_rest_each"], M.RING_PRELOAD + M.RING_KG * M.GRAVITY, places=2)
         self.assertGreater(sp["bottom"], sp["solid"])                # the springs never go solid
         self.assertLessEqual(n["moment_15N"], M.RAIL["MP"])
+        self.assertLessEqual(n["hold_moment_15N"], M.RAIL["MP"] / 4)    # check H's 15 N hold bound
+        self.assertLessEqual(n["hold_web_MPa_15N"], 10.0)
         self.assertGreater(n["finger_clear"], 1.0)
         self.assertGreaterEqual(pin["top"], n["collar"][1])           # the collars sit on the pins
         self.assertLess(pin["bottom"], stp)                           # and the pins sit in the pillar

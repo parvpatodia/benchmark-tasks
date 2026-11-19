@@ -100,6 +100,9 @@ def numbers():
     bottom = round(rest - 1000 * F.DROP_STOP, 3)
     block_mid = (F.WEB_X[1] + F.RAIL["height"] / 2, 0.0, (F.BLOCK_Z[0] + F.BLOCK_Z[1]) / 2)
     lever = round(1000 * math.dist(block_mid, site_mech()), 1)   # the press (at the site) to the block's middle
+    hold_x = F.HOLD_AT * float(F.AXIS[0])                       # the hold's point on the ring's axis (mechanism x)
+    web_w, web_t = 1000 * 2 * F.WEB_HALF_Y, 1000 * (F.WEB_X[1] - F.WEB_X[0])
+    web_a, web_z = web_w * web_t, web_w * web_t ** 2 / 6          # mm^2, mm^3: its bending about y
     rp = F.FINGERS["ring"][4]
     end_x = F.RING_END_S * math.cos(F.PITCH) + rp * abs(math.sin(F.PITCH)) / math.cos(math.pi / FINGER_N)   # the ring's flat base end, its far edge
     collar_top = round(foot[1] + COLLAR_H, 3)
@@ -130,6 +133,11 @@ def numbers():
         "finger_clear": round(rail[0] - 1000 * end_x, 2),
         "lever": lever,
         "moment_15N": round(15.0 * lever / 1000, 2),
+        # the hold's lift (a vertical force at the hold's point on the ring's axis) on the web's narrow 10 by 6 mm
+        # section and on the guide's block, per 15 N, check H's bound [ARITH]
+        "hold_web_e": round(1000 * ((F.WEB_X[0] + F.WEB_X[1]) / 2 - hold_x), 1),
+        "hold_web_MPa_15N": round(15.0 / web_a + 15.0 * 1000 * ((F.WEB_X[0] + F.WEB_X[1]) / 2 - hold_x) / web_z, 1),
+        "hold_moment_15N": round(15.0 * (block_mid[0] - hold_x), 2),
         "board": tuple((mm(x0), mm(x1), mm(y0), mm(y1)) for (x0, x1), (y0, y1) in F.BOARD),
         "board_t": board_t,
         "clamp_x": mm(CLAMP_X),
