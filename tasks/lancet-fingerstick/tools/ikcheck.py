@@ -1,6 +1,6 @@
 """ikcheck.py [seed=N | cli=N | corners]: per-waypoint static IK error of both arms' demo plans (each pose alone) and
-each plan's interpolated worst, joint6 against its +-2.0944 rad limit, and the two TCPs' separation along x while both
-are low. seed=N is the run seed as the task sees it; cli=N the inspect-robots --seed N (its trial seed); corners the
+each plan's interpolated worst, and joint6 against its +-2.0944 rad limit (the arms' clearance from each other is
+tools/grippers.py's). seed=N is the run seed as the task sees it; cli=N the inspect-robots --seed N (its trial seed); corners the
 eight corners of the layout box; stems the sim stems (sim/stems.py) on --seed 0. With no argument: the eight corners,
 --seed 0, 2, 4 and the stems. No sim."""
 import math
@@ -11,23 +11,12 @@ import zlib
 
 warnings.simplefilter("ignore")
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
-import numpy as np  # noqa: E402
 import lancet_fingerstick as F  # noqa: E402
 from yam_arena import station  # noqa: E402
 from yam_arena.demo import ArmPlan, Waypoint  # noqa: E402
 
 J6 = 2.0944
-
-
-def tcp_at(ws, t, start):
-    """The TCP target at time t (linear between waypoints, enough for the separation check)."""
-    p0, t0 = np.asarray(start, float), 0.0
-    for w in ws:
-        if t <= t0 + w.duration:
-            a = (t - t0) / w.duration
-            return p0 + a * (np.asarray(w.pos) - p0)
-        p0, t0 = np.asarray(w.pos, float), t0 + w.duration
-    return p0
+STEMS = "ojxwfkci"               # the sim stems (sim/stems.py, sim/mk.sh)
 
 
 def stem_plan(stem, seed):
@@ -71,42 +60,14 @@ def check(seed, name, stem=None):
             t += 0.02
         print(f"  interpolated: dur {p.duration:.1f} s worst {p.worst_ik_mm:.2f} mm {p.worst_ik_deg:.2f} deg; max "
               f"|joint6| {j6:.2f} rad (limit {J6})")
-    if stem is not None:
-        return total_bad
-    worst, press = separation(seed)
-    print(f"  closest x separation of the two TCPs while both low and within 200 mm in y: {1000 * worst[0]:.0f} mm at "
-          f"t {worst[1]:.1f} s (right {worst[2]}, left {worst[3]}); at the press {1000 * press:.0f} mm")
     return total_bad
-
-
-def separation(seed):
-    """((closest x separation of the two TCPs while both are low and within 200 mm in y, t, right, left), the x
-    separation at the end of the press, "press until it fires"), from the plan's targets (no IK)."""
-    R, L = F.plan(0.0, seed)
-    dur = max(sum(w.duration for w in R), sum(w.duration for w in L))
-    worst, t = (9.0, None, None, None), 0.0
-    while t <= dur:
-        r, lf = tcp_at(R, t, (0.323, -0.305, 1.008)), tcp_at(L, t, F.PARK_L)
-        # WHY: G11 counts grippers that overlap in y (within 200 mm, two 96 mm wide bodies plus margin)
-        if max(r[2], lf[2]) < F.TOP + 0.20 and abs(lf[1] - r[1]) < 0.200:   # both low and side by side in y
-            dx = abs(lf[0] - r[0])
-            if dx < worst[0]:
-                worst = (dx, t, tuple(np.round(r, 3)), tuple(np.round(lf, 3)))
-        t += 0.05
-    t_press = 0.0
-    for w in R:
-        t_press += w.duration
-        if w.label == "press until it fires":
-            break
-    press = abs(tcp_at(L, t_press, F.PARK_L)[0] - tcp_at(R, t_press, (0.323, -0.305, 1.008))[0])
-    return worst, press
 
 
 def main():
     jobs = []
     for a in sys.argv[1:]:
         if a == "stems":   # the sim stems on --seed 0, as sim/run.sh runs them
-            jobs += [(zlib.crc32(b"0:None:0"), f"--seed 0", k) for k in "ojwfk"]
+            jobs += [(zlib.crc32(b"0:None:0"), f"--seed 0", k) for k in STEMS]
             continue
         if a == "corners":
             jobs += [(c, f"corner {c[0] * 1000:+.0f}, {c[1] * 1000:+.0f} mm, {math.degrees(c[2]):+.0f} deg", None)
@@ -118,7 +79,7 @@ def main():
     if not jobs:
         jobs = [(c, f"corner {c[0] * 1000:+.0f}, {c[1] * 1000:+.0f} mm, {math.degrees(c[2]):+.0f} deg", None)
                 for c in F.corners()] + [(zlib.crc32(f"{c}:None:0".encode()), f"--seed {c}", None) for c in (0, 2, 4)]
-        jobs += [(zlib.crc32(b"0:None:0"), "--seed 0", k) for k in "ojwfk"]
+        jobs += [(zlib.crc32(b"0:None:0"), "--seed 0", k) for k in STEMS]
     total = sum(check(s, n, k) for s, n, k in jobs)
     print("TOTAL BAD", total)
 

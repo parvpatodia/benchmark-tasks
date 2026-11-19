@@ -3,7 +3,7 @@
 # no frames. Refuses a copy older than ../lancet_fingerstick.py (rerun mk.sh).
 set -eu
 cd "$(dirname "$0")"
-source /data/IsaacLab-Arena/yam.env >/dev/null 2>&1 || true
+source "${YAM_ENV:-/data/IsaacLab-Arena/yam.env}" >/dev/null 2>&1 || true   # YAM_ENV: the sim host's env file
 J=$(cd arm && pwd); F=$1; M=$2; S=${4:-0}; O=${F}_s$S
 case $3 in a) L=${LOCKS:-$HOME/locks}/sim.lock;; b) L=${LOCKS:-$HOME/locks}/sim.lock.b;; c) L=${LOCKS:-$HOME/locks}/sim.lock.c;; *) echo "lock a|b|c"; exit 2;; esac
 [ "$J/$F.py" -nt ../lancet_fingerstick.py ] || { echo "STALE: $F.py older than lancet_fingerstick.py; rerun mk.sh"; exit 3; }

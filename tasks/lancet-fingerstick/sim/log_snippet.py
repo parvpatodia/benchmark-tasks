@@ -19,7 +19,7 @@ def _trace(env):
             _os.makedirs(out, exist_ok=True)
             path = _os.path.join(out, f"trace_{_os.path.basename(__file__)[:-3]}_{run_seed()}.csv")
             _TRACE["f"] = open(path, "w")
-            _TRACE["f"].write("step,q_mm,force,tab_deg,theta_deg,lift_mm,tab_off,out,positioned,fired,fire,free_t,"
+            _TRACE["f"].write("step,q_mm,force,tab_deg,ring_q_mm,drop_mm,tab_off,out,positioned,fired,fire,free_t,"
                               "rx,ry,rz,rf,lx,ly,lz,lf,stage,fail,model_err,"
                               "Lx,Ly,Lz,Lax,Lay,Laz,Hx,Hy,Hz,hx,hy,hz,fpx,fpy,fpz,site,sd_mm,"
                               "j1,j2,j3,j4,j5,j6,t1,t2,t3,t4,t5,t6,gyaw,gax,gay,gaz\n")
@@ -28,7 +28,7 @@ def _trace(env):
         origin = _np(base.scene.env_origins)[0]
         pl = _np(lan.data.root_link_pose_w)[0]
         pb = _np(hand.data.root_link_pose_w)[0]
-        ph = _np(hand.data.body_link_pose_w)[0][list(hand.body_names).index("hand")]
+        ph = _np(hand.data.body_link_pose_w)[0][list(hand.body_names).index("ring")]
         lp, ax = pl[:3] - origin, _rot3(pl[3:7])[:, 2]
         face = face_w(lp, pl[3:7], _M["q"])
         pm = _rot3(ph[3:7]).T @ (face - (ph[:3] - origin))
@@ -39,7 +39,7 @@ def _trace(env):
         lh = m["left"] if m["left"] else (np.full(3, np.nan), float("nan"))
         r4 = lambda v: round(float(v), 4)  # noqa: E731
         row = [_TRACE["n"], round(1000 * m["q"], 3), round(shield_force(m["q"]), 2), round(math.degrees(m["tab"]), 2),
-               round(math.degrees(m["theta"]), 3), round(1000 * wrist_lift(m["theta"]), 3), int(m["tab_off"]),
+               round(1000 * m["ring_q"], 3), round(1000 * ring_drop(m["ring_q"]), 3), int(m["tab_off"]),
                int(m["out"]), int(m["positioned"]), int(m["fired"]), str(m["fire"]).replace(",", ";"),
                round(m["free_t"], 2), *[r4(v) for v in r[0]], round(r[1], 5), *[r4(v) for v in lh[0]],
                round(lh[1], 5), st, str(mem.get("fail")).replace(",", ";"), str(m["error"]).replace(",", ";"),

@@ -23,7 +23,8 @@ MIN_MM = 10.0
 Y = pathlib.Path(yam_arena.__file__).parent / "assets" / "yam"
 URDF = (Y / "yam.urdf").read_text()
 LINKS = ("tip_left", "tip_right", "gripper", "link5", "link4", "link3", "link2", "link1")
-HELD = {"right": F.L_T / 2 - 0.0002, "left": F.STUB_R}   # m: the finger joint stops on the housing or the stub
+HELD = {"right": F.L_T / 2 - 0.0002, "left": F.FINGERS["ring"][4] - 0.0005}   # m: the finger joint stops on the
+#                                  housing or the ring finger
 
 
 def _offset(link):   # WHY: the collision meshes sit in the visual frame; this URDF has no <collision> origins

@@ -1,8 +1,9 @@
 #!/bin/bash
 # mk.sh: sim copies of the task in sim/arm/: lancet_fingerstick.py as is, plus traced copies (t00 = no delay, t05 = 0.05 s
 # start delay; t00b/t00c and t05b/t05c are copies for parallel runs) with log_snippet.py appended, and the traced stems
-# with stems.py appended (o00 one arm, j00 one-arm jab, w00 one-arm press near the apex driven toward the wrist, f00 a
-# press in the stand after the twist, k00 the lancet held in the container). Rerun after any task edit.
+# with stems.py appended (o00 one arm, j00 one-arm jab, x00 one-arm 30 mm jab in one control step, w00 one-arm press
+# near the apex driven toward the knuckle, f00 a press in the stand after the twist, k00 the lancet held in the
+# container, c00 the tab twisted the other way, i00 the left holding the index finger). Rerun after any task edit.
 set -eu
 cd "$(dirname "$0")"
 rm -rf arm && mkdir arm && cp ../lancet_fingerstick.py ../mechanism.py ../task.json arm/
@@ -12,7 +13,7 @@ for s in 00 05; do
   cat log_snippet.py >> arm/t$s.py
 done
 for c in b c; do cp arm/t00.py arm/t00$c.py; cp arm/t05.py arm/t05$c.py; done
-for k in o j w f k; do
+for k in o j x w f k c i; do
   cat arm/lancet_fingerstick.py log_snippet.py stems.py | sed "s/^_STEM = \"none\"$/_STEM = \"$k\"/" > arm/${k}00.py
   grep -q "^_STEM = \"$k\"$" arm/${k}00.py || { echo "${k}00 stem not set"; exit 3; }
 done
