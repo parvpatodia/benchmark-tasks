@@ -581,9 +581,11 @@ CARRY_Z = Z_LYING - TOP + 0.010  # rod centre while sliding the bag forward low:
 LIFT_Z = 0.322                   # rod centre over the hooks: its underside 12 mm over the lips [CHOICE: the demo's
 #                                  margin, not a requirement]
 SHORT = 0.055                    # the rod stops this far behind the slot before lifting [CHOICE: 34 mm off the lip]
-ONE_HOOK_DY = -0.065             # s_one_hook: the bag 65 mm right, so the rod's left end stops 3 mm into the left
-#                                  hook (the rod still crosses its inner side; the 5 mm margin past its far side is
-#                                  missing)
+ONE_HOOK_DY = -0.075             # s_one_hook: the bag 75 mm right, so the rod's left end stops 3 mm into the left
+#                                  hook (it crosses the hook's inner side but not its middle or far side) and the rod's
+#                                  left arm passes 2 mm inside the hook [ARITH, test]. WHY not 65 mm: the arm then sat
+#                                  over the hook and landed on its lip (PhysX, 6fe45f8: rod centre 310 mm up), so the
+#                                  stem never tested the finite rod
 NUDGE, SHOVE = 0.008, 0.070      # s_nudge / s_shove: how far the mower is rolled, by the bag, after the fit [CHOICE:
 #                                  the shove passes the 60 mm limit and stays short of the 80 mm stop]
 PUSH_LAG = 0.002                 # m the push stops short of its target against the mower's damping [EST]

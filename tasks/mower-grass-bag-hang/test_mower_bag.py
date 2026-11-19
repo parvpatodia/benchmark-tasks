@@ -213,6 +213,14 @@ class FiniteRod(unittest.TestCase):
         end = c[1] + M.ROD_L / 2
         self.assertTrue(M.HOOK_Y - M.HOOK_W / 2 < end < M.HOOK_Y + M.HOOK_W / 2)
 
+    def test_one_hook_rod_end_and_arm(self):
+        """s_one_hook: the rod's left end 3 mm inside the left hook, and the rod's left arm clear of the hook's side."""
+        y_end = M.ROD_L / 2 + M.ONE_HOOK_DY
+        self.assertAlmostEqual(y_end - (M.HOOK_Y - M.HOOK_W / 2), 0.003, places=6)
+        arm = next(sh for sh in M.BAG.shapes if sh.center[1] > 0.1 and abs(sh.center[2]) < 0.01)
+        arm_hi = arm.center[1] + arm.size[1] / 2 + M.ONE_HOOK_DY
+        self.assertGreaterEqual((M.HOOK_Y - M.HOOK_W / 2) - arm_hi, 0.002 - 1e-9)
+
     def test_extended_axis_would_have_passed(self):
         """The same bag, checked on the rod's axis without the |t| <= L/2 bound, passes: the bound is what fails it."""
         _, c, u = self._hooks(hung(d=(0.0, M.ONE_HOOK_DY, 0.0)))
@@ -486,8 +494,9 @@ class Stems(unittest.TestCase):
             self.assertAlmostEqual(mine[0].pos[0] - demo[0].pos[0], roll, places=9)
 
     def test_open_loop_grip_misses_some_seed(self):
-        """Q2: the bag's seeded start moves the rod's ends past the slot's play, so one fixed plan cannot fit every
-        seed. The bag is carried rigidly from where a seed-blind plan grips (the unseeded bar) to the seat."""
+        """The seeded start matters to the rigid score geometry: a seed-blind grip (at the unseeded bar), carried
+        rigidly and unturned to the seat, fails the hook check for some seeds. Rigid geometry only: in PhysX the rod
+        settles into the slots, and the demo seats at 2.2 to 2.6 deg of yaw (6fe45f8, seeds 0 to 2)."""
         Rm, pm = np.eye(3), np.array([M.X_M, 0.0, M.TOP])
         nominal = M.bar_tcp(M.BAG_START, 0.0, M.Z_LYING - M.TOP)
         fails = []

@@ -8,7 +8,7 @@ and take both hands away.
 
 Files: `mower_bag.py` (scene, measurement, scorer, scripted demo and stems), `mechanism.py` (third party, MIT: sprung
 fixed mechanisms, loose multi-shape bodies and the step hooks), `test_mower_bag.py` (offline tests), `tools/` (IK
-check, gripper clearance sweep), `sim/` (run scripts and the stem copies' maker).
+check, gripper clearance sweep, arm sag check), `sim/` (run scripts and the stem copies' maker).
 
 ## Why it matters
 
@@ -40,7 +40,9 @@ https://images.thdstatic.com/catalog/pdfImages/1d/1d3be808-6342-41d3-b7b3-edef0f
 
 Not sourced, all [EST] and measured on the real mower before trials (below): the hooks' size, height and spacing, the
 flap's size, mass, spring and hinge, the bag's shape, rod, handle and masses, all friction values, the mower's rolling
-resistance. No household-share figure for bagging mowers was found.
+resistance. No household-share figure for bagging mowers was found. These part estimates follow the earlier #2489
+estimates of the same product (flap, rod and arms, hooks, handle bar, bag and cover masses); they are not derived here,
+stay labelled [EST], and are kept because the PhysX runs below fit the bag with them.
 
 Fidelity against the manual's figures. The real support rod is bent and runs through holes in the bag's plastic cover,
 forming its frame (Fig. 4); the sim models only its straight cross-piece, 300 mm long, on two short arms 32 mm long.
@@ -66,8 +68,7 @@ the left hand's pinch beside its edge is out of reach (IK error 1.0 to 4.6 mm on
   Hung in both hooks, it turns 3.2 deg tail-down about the rod until its tail rests on the bench [ARITH, test], and
   the flap closes to 50 deg with its edge on the bag's cover [ARITH, test].
 - Start: the bag stands 85 mm short of the slots; by seed moved 0 to 10 mm back, +-15 mm sideways and turned +-3 deg
-  about the rod's centre. At 3 deg the rod's ends move 7.8 mm, past the slot's 5.5 mm play, so one fixed open-loop
-  plan cannot fit every seed (test).
+  about the rod's centre.
 
 ## Two hands, and the one-hand route
 
@@ -76,14 +77,13 @@ from below, and the rod's side arms pass outside the 240 mm flap (test). What bl
 the flap's lip lies inside the space the hung bag's front fills (test), and pushed from the robot's side the flap only
 presses on its shut stop. Carried straight in with the flap shut, the bag's front meets the flap (stem `s_one_arm`, 0).
 
-The manual's method holds the flap up with one hand. A one-hand route also exists in the geometry (stem `s_lift`):
-tip the bag 20 deg nose-down, take the rod in under the lip into the channel (1 mm off the hooks' lips, 4 mm off the
-plate), and rise, so the bag's cover lifts the lip while the bag levels, then lower the rod into the hooks. A 2D
-sweep of that path finds the flap riding up on the bag and resting on it at the end, never past its stop [RUN]; it
-needs a lift of roughly 10 to 50 N through the bag [EST: the flap's 0.20 to 0.37 N m closing torque over levers of
-7.5 to 23 mm read from the sweep's angle steps]. Whether PhysX lets it
-happen is what the stem's run shows. If it reaches 1.0, it is a correct fit, not a cheat: the score reads the end
-state only, and the task is then a manual-method task that one hand can also do.
+The manual's method holds the flap up with one hand. We also scripted a one-hand route (stem `s_lift`): tip the bag
+20 deg nose-down, take the rod in under the lip into the channel (1 mm off the hooks' lips, 4 mm off the plate), and
+rise, so the bag's cover lifts the lip while the bag levels, then lower the rod into the hooks. A 2D sweep of that
+path had the flap riding up on the bag [RUN]. In PhysX this scripted route failed (score 0 at 6fe45f8: the bag ended
+on the bench, rod centre 261 mm up, the flap shut at 0 deg, the mower rolled 8.6 mm). That shows only that our route
+fails, not that no one-hand route exists. If one does reach 1.0, it is a correct fit, not a cheat: the score reads
+the end state only.
 
 ## Scoring (`score()`, the last step only; `success()` must hold 1 s)
 
@@ -93,9 +93,11 @@ Rod seated in both hooks. For each hook, three stations across it: its two sides
 Each station must lie on the rod's actual 300 mm length (the rod is a segment, never its axis extended past an end),
 and the rod's centre there must be inside that hook's slot (between the lip and the rear face, 2 mm allowed on each
 wall for the colliders' contact offset) and resting on the floor: from 0.5 mm below to 1.5 mm above where a rod lying
-on the floor has its centre. A rod whose end stops inside or short of a hook fails that hook (stem `s_one_hook` and a
-test that shows the extended axis would have passed). A rod turned more than 60 deg from the hooks' line fails both,
-and the bag must be upright (its cover within 30 deg of level), so an upside-down bag never counts (test).
+on the floor has its centre. A rod whose end stops inside or short of a hook fails that hook: offline tests
+`test_one_hook_stem_fails_the_far_hook_only` (the rod's end 3 mm inside the left hook fails it, the right passes) and
+`test_extended_axis_would_have_passed` (the same rod on its axis extended past the end would pass). A rod turned more
+than 60 deg from the hooks' line fails both, and the bag must be upright (its cover within 30 deg of level), so an
+upside-down bag never counts (test).
 
 - 0: not seated in both hooks.
 - 0.25: seated.
@@ -107,6 +109,9 @@ and the bag must be upright (its cover within 30 deg of level), so an upside-dow
   bench: rolled no more than 60 mm forward from its start, so its front wheels stay 20 mm or more inside the bench
   edge [CHOICE: a safety margin; the slide's stop is at the edge itself].
 - 1.0: 0.9 held 1 s (yam_arena ends the episode with `success`).
+
+The instruction's "do not lift the mower or slide it sideways" cannot be broken in the sim, which only lets the mower
+roll fore and aft; that part is checked only in real trials.
 
 Small rolls cost nothing: any roll backward, and up to 60 mm forward, leaves the score as it is (a nudge while fitting
 the bag is normal). There is no history: a hand or a roll earlier in the run does not lower the end score (test). The
@@ -138,8 +143,13 @@ Real trial measurement:
   hinge at 355 mm with a torsion spring set to 0.20 N m shut (checked with a force gauge: 2.0 N at 100 mm), the deck
   weighted to 13.2 kg on four 140 mm wheels. Prices not verified: the product pages could not be fetched from this
   machine, so no cost is claimed.
-- Safety: no power cord connected, no blade fitted. The only stored energy is the flap's small spring. The front
-  wheels start 80 mm from the bench edge and the score's limit keeps them 20 mm inside it.
+- Roll stops: a wooden batten (or two wheel chocks) clamped across the bench in front of the front wheels, set so
+  the mower can roll at most 80 mm forward, its front wheels then at the bench edge (the sim's forward stop), and a
+  second behind the rear wheels at 150 mm of roll back (the sim's rear stop). Check both by rolling the mower against
+  them before each session.
+- Safety: no power cord connected, no blade fitted. The only stored energy is the flap's small spring. A score cannot
+  hold a mower back (`s_shove` rolled it 71.7 mm in PhysX); the forward stop does. The score's 60 mm limit leaves a
+  20 mm margin before that stop.
 
 ## Run
 
@@ -166,30 +176,33 @@ to yam_scripted's planner (it changes only the demo policy, never the scene or t
    correct the rod's pose, each at most 25 mm and 6 deg (the two behind the hooks up to 40 mm in height); one more
    aims the hand where it is before it opens.
 
+3. Left: lower the flap to 30 deg over its resting angle, let go (it closes the rest at about 4 rad/s), draw out
+   sideways, back off.
+
 Load compensation. The arm holds each joint on a PD spring (80 N m/rad at joints 1 to 3, 10 at 4 to 6, from
 yam_arena's constants) and its gravity compensation covers the arm alone, so the 1 kg bag bends the hand away from
 the plan. The traced PhysX run of commit 704ea7f measured the TCP 6.6 mm back, 11.9 mm left and 45.4 mm low at the
 line-up behind the hooks [RUN]; the spring model (`tools/sagcheck.py`, static balance with the full kinematics)
 gives 6.5, 11.4 and 45.4 mm [ARITH]. Without compensation the rod met the lips from the side and never went over
 them. The demo therefore commands each loaded waypoint (lift to the line-ups) at q - K^-1 J^T w, the joint angles
-the weight bends onto the planned pose; the model puts the hand within 1.22 mm and 0.68 deg of the plan on every
+the weight bends onto the planned pose; the model puts the hand within 1.36 mm and 0.73 deg of the plan on every
 loaded stretch (5 Hz) of seeds 0 to 9 and every stem. The lowering and what follows are commanded as planned, so the
 hooks take the bag. Plans, tests and the clearance sweep keep the planned poses; `tools/ikcheck.py` checks the
 commanded ones.
-3. Left: lower the flap to 30 deg over its resting angle, let go (it closes the rest at about 4 rad/s), draw out
-   sideways, back off.
 
-Demo length 35.7 s; success expected about 1 s later, inside the 60 s run limit (test).
+Demo length 35.7 s; success expected about 1 s later, inside the 60 s run limit (test). In PhysX the demo ended with
+success at steps 728, 723 and 723 (36.4, 36.15 and 36.15 s) for seeds 0 to 2. Runtime per trial: about 138 s of sim
+wall time for the traced demo at 320 x 176 cameras.
 
 Offline checks [RUN]: IK error at most 0.10 mm on every waypoint near a part and 1.7 mm in free air (the left wrist
-sits on its stop beside the flap), for seeds 0 to 9 and every stem. Gripper sweep (the scorer's finger and housing
-points along the planned paths; for `s_nudge` and `s_shove` the mower rolls with the push): least clearance 3.5 mm
-(right fingers sliding off the bar over the cover), 3.7 mm (left fingers over the bag's rod end while raising the
-flap), 9 mm (left fingertips to the hook), 7 mm (left hand to the flap after letting go); the bag clears the opening
-flap by 31.7 mm and the lips by 32.7 mm, also with the pinched flap 10 deg under its plan (the traced run held it
-at 101 to 103 deg of 110). At the demo's end the whole left gripper is 79 mm from the bag and 42 mm from
-the flap, the right 73 mm from the bag. Let go, the flap falls onto the left's lower finger and stays on it until the
-hand slides out sideways (a contact the sweep leaves out).
+sits on its stop beside the flap), for seeds 0 to 9 and every stem (PhysX was run on seeds 0 to 2, below). Gripper
+sweep (the scorer's finger and housing points along the planned paths; for `s_nudge` and `s_shove` the mower rolls
+with the push): least clearance 3.5 mm (right fingers sliding off the bar over the cover), 3.7 mm (left fingers over
+the bag's rod end while raising the flap), 9 mm (left fingertips to the hook), 7 mm (left hand to the flap after
+letting go); the bag clears the opening flap by 31.7 mm and the lips by 32.7 mm, also with the pinched flap 10 deg
+under its plan (the traced run held it at 101 to 103 deg of 110). At the demo's end the whole left gripper is 79 mm
+from the bag and 42 mm from the flap, the right 73 mm from the bag. Let go, the flap falls onto the left's lower
+finger and stays on it until the hand slides out sideways (a contact the sweep leaves out).
 
 Stems: `bash sim/mk.sh` writes traced copies to `sim/arm/` (traces to `sim/out/`); `bash sim/run.sh <stem> <steps>
 <lock> <seed>` runs one.
@@ -199,15 +212,15 @@ Stems: `bash sim/mk.sh` writes traced copies to `sim/arm/` (traces to `sim/out/`
 | `t00` | the demo | 1.0 |
 | `s_nothing` | both arms stay put | 0 |
 | `s_one_arm` | the right hand alone carries the bag in, flap shut | 0 |
-| `s_lift` | the right hand alone tips the bag under the flap's lip, lifts the flap with it and hangs it | the sim decides (1.0 if it works) |
-| `s_one_hook` | the bag 65 mm to the right: the rod's left end stops inside the left hook | 0 |
+| `s_lift` | the right hand alone tips the bag under the flap's lip, lifts the flap with it and hangs it | 0 in PhysX: the bag ended on the bench, rod centre 261 mm up, flap 0 deg, roll 8.6 mm |
+| `s_one_hook` | the bag 75 mm to the right: the rod's left end stops 3 mm inside the left hook, its left arm 2 mm clear of it | 0 (left hook fails, right passes) |
 | `s_tips` | the rod set on the lips' tops and held there | 0 |
 | `s_ground` | the bag let go short of the hooks, onto the bench | 0 |
 | `s_hold` | the demo, but the right hand keeps the bag | 0.25 |
 | `s_prop` | the demo, but the left hand keeps the flap up | 0.5 |
 | `s_pinch` | the right hand parks under the flap's path and the flap is let go onto it | 0.5 |
-| `s_slam` | the flap let go fully open, straight onto the bag | 1.0 if the rod stays seated [EST] |
-| `s_nudge` | before letting go, the bag rolls the mower 8 mm (the left hand moves with the flap) | 1.0 |
+| `s_slam` | the flap let go fully open, straight onto the bag | 1.0 |
+| `s_nudge` | before letting go, the bag rolls the mower about 10 mm (the left hand moves with the flap) | 1.0 |
 | `s_shove` | before letting go, the bag rolls the mower 70 mm (the left hand moves with the flap) | 0.75 |
 
 ## Closest tasks
@@ -229,17 +242,37 @@ This task's case rests on the combination, the flap closing onto the hung bag as
 
 ## Sim results
 
-Not yet run in the sim. The first traced run of the demo decides the open PhysX questions: the pinch on the 4 mm
-plate while the wrist rolls it to 110 deg, the bar grip under 1 kg, the rod settling into the slots, and the roll
-joint's friction (Isaac Lab takes it as an effort; if it acts as a coefficient instead, the mower will not roll in
-`s_nudge` and `s_shove`).
+PhysX (Isaac Lab, yam_arena, `sim/run.sh`), commit 6fe45f8, CLI seed 0 unless stated, traced [RUN]. Rod centre is
+its height over the bench; seated is 290 mm.
+
+| Stem | Score | Steps | End state |
+|---|---|---|---|
+| `t00` seed 0 | 1.0 | 728 | both hooks seated, rod 290 mm, yaw 2.6 deg, flap 49.8 deg on the cover, roll 0.2 mm |
+| `t00` seed 1 | 1.0 | 723 | the same, yaw 2.2 deg |
+| `t00` seed 2 | 1.0 | 723 | the same, yaw 2.3 deg |
+| `s_nothing` | 0 | 61 | the bag where it started |
+| `s_one_arm` | 0 | 442 | the rod 49 mm behind the rear face, short of the hooks, the flap shut, roll 33.6 mm |
+| `s_lift` | 0 | 650 | the bag back on the bench, rod 261 mm, flap shut, roll 8.6 mm |
+| `s_one_hook` | 0 | 775 | pending: at 6fe45f8 the rod's left arm landed on the left hook's lip (rod 310 mm), so the finite rod was not tested; the offset is now 75 mm and the stem is re-run |
+| `s_tips` | 0 | 803 | the rod on the lips' tops, 310 mm |
+| `s_ground` | 0 | 584 | the bag on the bench short of the hooks |
+| `s_hold` | 0.25 | 803 | seated, the right hand still on the bar |
+| `s_prop` | 0.5 | 813 | seated, the flap held at 103.6 deg |
+| `s_pinch` | 0.5 | 915 | seated, the flap at 93.9 deg, 72 mm off the cover |
+| `s_slam` | 1.0 | 664 | seated, the flap at 49.8 deg on the cover |
+| `s_nudge` | 1.0 | 775 | seated, the mower rolled 10.6 mm |
+| `s_shove` | 0.75 | 827 | seated, the flap on the cover, the mower rolled 71.7 mm (past the 60 mm limit) |
+
+The mower rolls under the arms' push, so the roll friction does not lock the slide (its units in Isaac Lab are not
+verified here).
 
 ## Reset
 
-Nothing consumed: lift the bag off the hooks, close the flap, roll the mower back to its mark (front wheels 80 mm from
-the bench edge), stand the bag on its taped outline. Then set the trial's seeded start: 0 to 10 mm back and up to 15 mm
-sideways from the outline (a steel rule), turned up to 3 deg about the rod's centre (a protractor on the outline's
-front edge); `bag_layout(seed)` in `mower_bag.py` gives the three values.
+The two roll stops (Building the real trial) stay clamped. Nothing consumed: lift the bag off the hooks, close the
+flap, roll the mower back to its mark (front wheels 80 mm from the bench edge), stand the bag on its taped outline.
+Then set the trial's seeded start: 0 to 10 mm back and up to 15 mm sideways from the outline (a steel rule), turned up
+to 3 deg about the rod's centre (a protractor on the outline's front edge); `bag_layout(seed)` in `mower_bag.py` gives
+the three values.
 
 ## Licence
 
