@@ -5,7 +5,7 @@
 import os as _os  # noqa: E402
 
 _TRACE = {"f": None, "n": 0}
-_TRACE_COLS = ("step,cx,cy,cz,cyaw,gap_max,outline_off,flat,placed,cleats,seated,dropped,latched,"
+_TRACE_COLS = ("step,cx,cy,cz,cyaw,gap_max,seat_off,flat,placed,cleats,seated,dropped,latched,"
                "wx,wy,wz,wyaw,low,in_tote,away,in_hole,d_cover,d_wrench,still,"
                "lx,ly,lz,lf,rx,ry,rz,rf,rung,held,lineups,err\n")
 
@@ -40,7 +40,7 @@ def _trace(env):
             _TRACE["f"].write(_TRACE_COLS)
         mm = lambda v: round(1000 * float(v), 2)  # noqa: E731
         row = [_TRACE["n"], mm(c_p[0]), mm(c_p[1]), mm(c_p[2] - TOP), round(math.degrees(_yaw_of(_rot3(c_q))), 3),
-               mm(c["gap_max"]), mm(c["outline_off"]), int(c["flat"]), int(c["placed"]), int(c["cleats"]),
+               mm(c["gap_max"]), mm(c["seat_off"]), int(c["flat"]), int(c["placed"]), int(c["cleats"]),
                int(c["seated"]), int(c["dropped"]), int(_MEM["latched"]),
                mm(w_p[0]), mm(w_p[1]), mm(w_p[2] - TOP), round(math.degrees(_yaw_of(_rot3(w_q))), 3),
                mm(w["low"]), int(w["in_tote"]), int(w["away"]), int(w["in_hole"]),

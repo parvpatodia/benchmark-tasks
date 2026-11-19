@@ -186,7 +186,7 @@ class Geometry(unittest.TestCase):
         self.assertGreater(M.TOTE_IN[0] - M.WRENCH_L, 0.040)
 
     def test_tote_clear_of_the_hole_and_the_cover(self):
-        self.assertLess(M.YT + M.TOTE_IN[1] / 2 + M.TOTE_WALL, M.YO - M.PLATE / 2 - 0.05)
+        self.assertLess(M.YT + M.TOTE_IN[1] / 2 + M.TOTE_WALL, M.YO - M.PLATE / 2 - 0.04)
         self.assertGreater(M.YT - M.TOTE_IN[1] / 2 - M.TOTE_WALL, M.DECK_Y[0])
 
     def test_seeds_cover_both_quarters(self):
@@ -204,8 +204,8 @@ class CoverCheck(unittest.TestCase):
         self.assertTrue(M.cover_check(seated(yaw=math.pi / 2).pos, qz(math.pi / 2))["seated"])
 
     def test_any_pose_the_play_allows_is_placed(self):
-        """Every pose the cleats' play allows (each foot's top ring inside the hole) is inside the outline tolerance;
-        the largest corner offset is the README's 14.8 mm."""
+        """Every pose the cleats' play allows (each foot's top ring inside the hole) is inside the seat tolerance;
+        the largest corner offset is the README's 12.8 mm."""
         top = np.array([p for s in M.CLEAT_FEET for p in s.points[4:]])
         worst = 0.0
         for dx in np.linspace(-M.PLAY, M.PLAY, 7):
@@ -216,9 +216,9 @@ class CoverCheck(unittest.TestCase):
                     if all(M.in_hole_xy(p) for p in ring):
                         c = M.cover_check((M.XO + dx, M.YO + dy, DECK), q)
                         self.assertTrue(c["seated"], (dx, dy, deg))
-                        worst = max(worst, c["outline_off"])
-        self.assertLess(worst, M.OUTLINE_TOL)
-        self.assertAlmostEqual(worst, 0.0148, delta=0.0005)
+                        worst = max(worst, c["seat_off"])
+        self.assertLess(worst, M.SEAT_TOL)
+        self.assertAlmostEqual(worst, 0.0128, delta=0.0005)
 
     def test_on_one_cleat_fails(self):
         """A cleat on the deck holds its side CLEAT_H up: the corners there fail the feeler."""
@@ -237,10 +237,10 @@ class CoverCheck(unittest.TestCase):
         self.assertTrue(M.cover_check(seated(dz=M.FLAT_TOL - 0.0005).pos, qz(0.0))["flat"])
         self.assertFalse(M.cover_check(seated(dz=M.FLAT_TOL + 0.0005).pos, qz(0.0))["flat"])
 
-    def test_off_the_outline_fails(self):
+    def test_off_its_seat_fails(self):
         """Read from the corners, not the centre: slid 21 mm (scorer only; the cleats would stop it at 6)."""
-        self.assertFalse(M.cover_check(seated(dx=M.OUTLINE_TOL + 0.001).pos, qz(0.0))["placed"])
-        self.assertTrue(M.cover_check(seated(dx=M.OUTLINE_TOL - 0.001).pos, qz(0.0))["placed"])
+        self.assertFalse(M.cover_check(seated(dx=M.SEAT_TOL + 0.001).pos, qz(0.0))["placed"])
+        self.assertTrue(M.cover_check(seated(dx=M.SEAT_TOL - 0.001).pos, qz(0.0))["placed"])
 
     def test_cleats_out_of_the_hole_fail(self):
         """A plate flat on the deck with its cleats not in the hole cannot happen (they would hold it 19 mm up), but
@@ -263,12 +263,21 @@ class Scoring(unittest.TestCase):
         self.assertEqual(score_held(objs), 1.0)
         self.assertEqual(score_held(objs, steps=19), 0.9)   # 20 steps of 0.05 s make the 1 s
 
-    def test_success_needs_the_hold(self):
+    def test_success_and_the_framework_hold_agree(self):
+        """success() is the 0.9 state; yam_arena ends the run once it has held SUCCESS_HOLD_S (20 steps at 20 Hz,
+        inspect_embodiment._task_step), and on that step score() reads 1.0: one hold, not two."""
         M.reset_memory()
         M._M["pads"], M._CLOCK["dt"] = FAR, 0.05
-        flags = [M.success(objs()) for _ in range(21)]
-        self.assertFalse(any(flags[:19]))
-        self.assertTrue(flags[19])
+        held, end = 0, None
+        for k in range(1, 60):
+            o = objs()
+            held = held + 1 if M.success(o) else 0
+            if held >= max(1, round(M.SUCCESS_HOLD_S * 20)):
+                end = (k, M.score(o))
+                break
+        self.assertEqual(end, (20, 1.0))
+        M.reset_memory()
+        self.assertFalse(M.success(objs(wrench=in_tote(up=0.02))))
 
     def test_held_above_the_tote_floor_is_not_full_credit(self):
         """The review's case: the wrench held 20 mm over the tote's floor, inside the tote, never earns 1.0; it is not
@@ -360,6 +369,24 @@ class Scoring(unittest.TestCase):
         to_wall = M.XT + M.TOTE_IN[0] / 2 - (M.XT + corners[:, 0].max())
         for into, want in ((M.WALL_TOL - 0.0005, 1.0), (M.WALL_TOL + 0.0005, 0.5)):
             self.assertEqual(score_held(lambda: objs(wrench=in_tote(dx=to_wall + into))), want, into)
+
+    def test_wrench_pressed_into_a_hole_wall_is_still_in_the_hole(self):
+        """Lying in the pocket with its lowest corner pressed 0.5 mm into any of the four hole walls: in the hole, not
+        off the deck, no latch; taken out and put away afterwards it still scores 1.0."""
+        half = M.WRENCH_L / 2
+        for axis, yaw in ((0, 0.0), (1, math.pi / 2)):
+            for side in (-1, 1):
+                d = side * (M.OPEN / 2 - half + 0.0005)
+                pos = (M.XO + (d if axis == 0 else 0.0), M.YO + (d if axis == 1 else 0.0), M.TOP)
+                tilt = qmul(qz(yaw), (0.0, math.sin(side * 0.0001), 0.0, math.cos(side * 0.0001)))
+                r = M.wrench_check(pos, tilt)
+                self.assertTrue(r["in_hole"], (axis, side))
+                self.assertFalse(r["dropped"], (axis, side))
+                M.reset_memory()
+                M._M["pads"], M._CLOCK["dt"] = FAR, 0.05
+                M.score(objs(cover=aside(), wrench=S(pos, tilt)))
+                self.assertFalse(M._MEM["latched"], (axis, side))
+                self.assertEqual(max(M.score(objs()) for _ in range(25)), 1.0)
 
     def test_wrench_off_the_deck_latches_zero(self):
         """Knocked off the deck onto the bench (or further): 0, even if later put away."""
@@ -613,7 +640,7 @@ class Text(unittest.TestCase):
     def test_scoring_text_numbers(self):
         s = self.task["scoring"]
         f = lambda v: f"{v * 1000:.0f} mm"  # noqa: E731
-        for n in (f(M.FLAT_TOL), f(M.OUTLINE_TOL), f(M.CLEAT_DOWN), f(M.REST_TOL), f(M.CLEAR), f(M.DROP),
+        for n in (f(M.FLAT_TOL), f(M.SEAT_TOL), f(M.CLEAT_DOWN), f(M.REST_TOL), f(M.CLEAR), f(M.DROP),
                   f"{M.CLEAT_H * 1000:.1f} mm", f"{M.STILL * 1000:.0f} mm/s", f"{M.SPIN:g} rad/s", "0.25", "0.5",
                   "0.75", "0.9", "1.0", f"{M.SUCCESS_HOLD_S:g} s", "held more than 3 mm above the floor",
                   f"{M.WALL_TOL * 1000:.0f} mm into a wall", "or the wrench did"):
@@ -622,8 +649,9 @@ class Text(unittest.TestCase):
     def test_setup_numbers(self):
         s = self.task["setup"]
         for n in ("GEARWRENCH 81671", "222 mm", "0.145 kg", f"{M.COVER_KG:.2f} kg", "250 x 250", "330 mm",
-                  "38.1 wide x 19.1 deep x 230 long", "6 mm inside", "270 (x) x 160 (y)", "65 tall",
-                  "(0.215, -0.31)", "(0.27, 0)", "56.4 mm", "1.5 mm", "1.5 deg", "10 mm", "10 deg"):
+                  "38.1 wide x 19.1 deep x 230 long", "by 5 mm at its side", "10 mm at each end", "270 (x) x 160 (y)",
+                  "65 tall", "(0.215, -0.31)", "(0.25, -0.015)", "56.4 mm", "1 mm", "1 deg", "10 mm", "10 deg",
+                  "round its perimeter", "boxed round the hole flush with its edges", "screwed and glued"):
             self.assertIn(n, s, n)
 
     def test_run_limit(self):
@@ -632,7 +660,7 @@ class Text(unittest.TestCase):
 
     def test_readme_matches_the_code(self):
         r = self.readme
-        for n in ("3 mm", "20 mm", "10 mm", "30 mm", "14.8 mm", "1 s", "1,200 steps", "s_held", "s_touch",
+        for n in ("3 mm", "20 mm", "10 mm", "35 mm", "12.8 mm", "1 s", "1,200 steps", "s_held", "s_touch",
                   "s_drop", "s_slid_off", "s_aside", "s_on_deck", "s_back", "s_nothing", "t00",
                   f"{M.COVER_KG:.2f} kg"):
             self.assertIn(n, r, n)
@@ -649,7 +677,7 @@ class Text(unittest.TestCase):
         # WHY built from pieces: the pattern itself must not trip the blind-review scan of this file
         bad = re.compile("|".join(("/Us" + "ers/", r"\bpa" + "rv", "north" + "eastern", "pato" + "dia")), re.I)
         for f in HERE.rglob("*"):
-            if f.is_file() and f.suffix in (".py", ".md", ".json", ".sh", ".txt") and "arm" not in f.parts[-2:-1]:
+            if f.is_file() and f.suffix in (".py", ".md", ".json", ".sh", ".txt", ".xml", ".html") and "arm" not in f.parts[-2:-1]:
                 t = f.read_text(encoding="utf-8")
                 self.assertNotIn(chr(0x2014), t, f.name)
                 self.assertNotIn(chr(0x2013), t, f.name)

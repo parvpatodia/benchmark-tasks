@@ -1,7 +1,7 @@
 """A section of plywood floor deck stands on the bench. A square hole is cut through it, closed by a yellow plywood
 cover whose two cleats sit down inside the hole. A combination wrench was dropped into the hole and lies on the floor
-of the pocket under the cover. An open tool tote stands on the deck to the right. Get the wrench out of the hole and
-put it in the tool tote.
+of the pocket under the cover. An open tool tote stands on the deck to the right. Fetch the dropped wrench and stow
+it in the tote.
 """
 import dataclasses
 import math
@@ -32,9 +32,10 @@ TOP = TABLE_TOP[SCENE]
 PLY_T = 0.0183                   # 23/32 in plywood, the usual floor sheathing panel [ARITH: 23/32 in = 18.26 mm]
 SLEEPER_T = 0.0381               # 2x4 sleepers laid flat, 1-1/2 in actual [ARITH: 1.5 in = 38.1 mm]
 DECK_Z = PLY_T + SLEEPER_T       # deck top over the bench (the pocket's depth) [ARITH: 56.4 mm]
-XO, YO = 0.270, 0.0              # the hole's centre (world x, y) [CHOICE: both arms reach it top-down]
+XO, YO = 0.250, -0.015           # the hole's centre (world x, y) [CHOICE: where both arms' top-down reach is highest,
+#                                  RUN: TOP+0.22 to 0.226 at x 0.22 to 0.26; a little toward the tote]
 OPEN = 0.250                     # the hole, square, side [CHOICE: a 222 mm wrench fits at every seeded pose]
-DECK_X = (0.075, 0.465)          # deck footprint, world x [CHOICE: 30 mm past the seated cover front and back]
+DECK_X = (XO - 0.195, XO + 0.195)   # deck footprint, world x [CHOICE: 30 mm past the seated cover front and back]
 DECK_Y = (-0.500, 0.460)         # ... world y [CHOICE: room for the tote and a spot right of it (right) and the
 #                                  set-aside cover (left); 190 mm inside the bench's edges]
 PLY, PINE, YELLOW, STEEL_C, TOTE_C = (0.62, 0.50, 0.34), (0.80, 0.67, 0.46), (0.95, 0.78, 0.08), (0.76, 0.77, 0.79), \
@@ -48,7 +49,7 @@ RHO_PLY, RHO_PINE = 530.0, 450.0  # kg/m3 [EST: softwood plywood and pine]
 PLATE = 0.330                    # square plate of PLY_T plywood [CHOICE: 40 mm onto the deck on every side]
 CLEAT_W, CLEAT_H = 0.0381, 0.0191   # cleats: 1x2 strips laid flat [ARITH: 1-1/2 x 3/4 in actual]
 CLEAT_L = 0.230                  # cleat length along C y [CHOICE: 10 mm of end play each end in the hole]
-PLAY = 0.006                     # side play: each cleat's outer face this far inside the hole's wall when centred
+PLAY = 0.005                     # side play: each cleat's outer face this far inside the hole's wall when centred
 #                                  [CHOICE]
 CLEAT_X = OPEN / 2 - PLAY - CLEAT_W / 2   # cleat centres at C x = +-CLEAT_X [ARITH: 100 mm]
 CHAMFER = 0.005                  # 45 deg chamfer planed on each cleat's bottom edges, a lead-in [CHOICE]
@@ -151,14 +152,14 @@ SPAWN_GAP = 0.0005               # loose parts start this far over what they res
 
 def layout(seed):
     """The start for a seed: the cover (centre dx, dy, yaw) seated in the hole, its handle along x or along y (a
-    quarter turn) and turned up to +-1.5 deg within the cleats' play; the wrench (centre x, y, yaw) on the pocket's
+    quarter turn) and turned up to +-1 deg within the cleats' play; the wrench (centre x, y, yaw) on the pocket's
     floor, within +-10 mm of the hole's centre and +-10 deg of lying along x [CHOICE]. Seed None: all nominal."""
     if seed is None:
         return {"cover": (XO, YO, 0.0), "wrench": (XO, YO, 0.0)}
     rng = np.random.default_rng(int(seed) % (2 ** 32))
     quarter = int(rng.integers(0, 2))
-    cdx, cdy = rng.uniform(-0.0015, 0.0015, 2)
-    cyaw = quarter * math.pi / 2 + math.radians(rng.uniform(-1.5, 1.5))
+    cdx, cdy = rng.uniform(-0.001, 0.001, 2)
+    cyaw = quarter * math.pi / 2 + math.radians(rng.uniform(-1.0, 1.0))
     wdx, wdy = rng.uniform(-0.010, 0.010, 2)
     wyaw = math.radians(rng.uniform(-10.0, 10.0))
     return {"cover": (XO + cdx, YO + cdy, cyaw), "wrench": (XO + wdx, YO + wdy, wyaw)}
@@ -234,17 +235,18 @@ def place_loose(env):
 FLAT_TOL = 0.003                 # each plate corner's underside within 3 mm of the deck top [CHOICE: a 3 mm feeler
 #                                  leaf (or a 3 mm hex key) must not go under any corner; a cleat on the deck lifts
 #                                  its side 19 mm]
-OUTLINE_TOL = 0.020              # each plate corner within 20 mm of a corner of the pencilled seated outline [CHOICE:
-#                                  above the 14.8 mm the cleats' play allows (tested), and 20 mm of the 40 mm overlap
-#                                  stays on the deck all round]
+SEAT_TOL = 0.020                 # each plate corner within 20 mm of a corner of the plate centred square on the hole,
+#                                  read with a rule from the deck's front and side edges [CHOICE: above what the cleats'
+#                                  play allows (tested), and 20 mm of the 40 mm overlap stays on the deck all round]
 CLEAT_DOWN = 0.010               # each cleat's foot at least 10 mm below the deck top, inside the hole [CHOICE]
 DROP = 0.020                     # a plate corner 20 mm or more below the deck top: the cover went off the deck (over
 #                                  its edge or into the hole) [CHOICE: a seated or set-aside cover never goes below it]
+REST_BELOW = 0.002               # ... and at most this far below it (contact pushes a resting part into the floor) [CHOICE]
 REST_TOL = 0.003                 # the wrench's lowest point within 3 mm of the tote's floor: resting on it [CHOICE: a
 #                                  3 mm feeler leaf must not pass under the wrench's lowest point]
 WALL_TOL = 0.002                 # the wrench may press this far into a tote wall (4 mm thick) and still be inside
 #                                  [CHOICE: contact pushes a resting part a fraction of a mm into what it touches]
-CLEAR = 0.030                    # every point of both grippers (fingers and housing) at least 30 mm from the cover
+CLEAR = 0.035                    # every point of both grippers (fingers and housing) at least 35 mm from the cover
 #                                  and the wrench [CHOICE: a hand that is off the parts, read with a tape]
 STILL = 0.005                    # m/s: the cover and the wrench still [CHOICE]
 SPIN = 0.05                      # rad/s [CHOICE]
@@ -256,7 +258,9 @@ def world_points(state_pos, state_quat, pts):
 
 
 PLATE_CORNERS_C = np.array([(sx * PLATE / 2, sy * PLATE / 2, 0.0) for sx in (-1, 1) for sy in (-1, 1)])
-OUTLINE = np.array([(XO + sx * PLATE / 2, YO + sy * PLATE / 2) for sx in (-1, 1) for sy in (-1, 1)])
+SEAT_CORNERS = np.array([(XO + sx * PLATE / 2, YO + sy * PLATE / 2) for sx in (-1, 1) for sy in (-1, 1)])
+HOLE_TOL = 0.005                 # the hole's footprint grown this much for "in the hole": a part pressed against its
+#                                  wall pushes a fraction of a mm into it [CHOICE]
 FEET_C = np.array([p for s in CLEAT_FEET for p in s.points[:4]])   # each foot's bottom ring
 
 
@@ -271,8 +275,13 @@ def _corners(shapes):
 WRENCH_CORNERS_W = _corners(WRENCH_SHAPES)
 
 
-def in_hole_xy(p):
-    return abs(p[0] - XO) <= OPEN / 2 and abs(p[1] - YO) <= OPEN / 2
+def in_hole_xy(p, grow=0.0):
+    return abs(p[0] - XO) <= OPEN / 2 + grow and abs(p[1] - YO) <= OPEN / 2 + grow
+
+
+def on_deck_xy(p):
+    """Over the deck's footprint (the hole included)."""
+    return DECK_X[0] <= p[0] <= DECK_X[1] and DECK_Y[0] <= p[1] <= DECK_Y[1]
 
 
 def cover_check(pos, quat):
@@ -281,12 +290,12 @@ def cover_check(pos, quat):
     corners = world_points(pos, quat, PLATE_CORNERS_C)
     gaps = corners[:, 2] - deck
     flat = bool(np.all(np.abs(gaps) <= FLAT_TOL))
-    off = [float(np.min(np.linalg.norm(OUTLINE - c[:2], axis=1))) for c in corners]
-    placed = max(off) <= OUTLINE_TOL
+    off = [float(np.min(np.linalg.norm(SEAT_CORNERS - c[:2], axis=1))) for c in corners]
+    placed = max(off) <= SEAT_TOL
     feet = world_points(pos, quat, FEET_C)
-    cleats = bool(all(in_hole_xy(f) and f[2] <= deck - CLEAT_DOWN for f in feet))
+    cleats = bool(all(in_hole_xy(f, HOLE_TOL) and f[2] <= deck - CLEAT_DOWN for f in feet))
     return {"flat": flat, "placed": placed, "cleats": cleats, "seated": flat and placed and cleats,
-            "gap_max": float(np.max(np.abs(gaps))), "outline_off": max(off), "dropped": bool(gaps.min() <= -DROP)}
+            "gap_max": float(np.max(np.abs(gaps))), "seat_off": max(off), "dropped": bool(gaps.min() <= -DROP)}
 
 
 def wrench_check(pos, quat):
@@ -294,12 +303,13 @@ def wrench_check(pos, quat):
     ix, iy = TOTE_IN[0] / 2 + WALL_TOL, TOTE_IN[1] / 2 + WALL_TOL
     inside = bool(np.all(np.abs(pts[:, 0] - XT) <= ix) and np.all(np.abs(pts[:, 1] - YT) <= iy))
     low = float(pts[:, 2].min() - (TOP + TOTE_FLOOR_Z))
-    resting = inside and -0.002 <= low <= REST_TOL
-    in_hole = bool(any(in_hole_xy(p) and p[2] < TOP + DECK_Z for p in pts))
-    # off the floor: its lowest point DROP or more below the deck's top anywhere but over the hole (fallen off the
-    # deck onto the bench, or further)
+    resting = inside and -REST_BELOW <= low <= REST_TOL
+    in_hole = bool(any(in_hole_xy(p, HOLE_TOL) and p[2] < TOP + DECK_Z for p in pts))
+    # off the floor: its lowest point DROP or more below the deck's top, outside the deck's footprint and outside the
+    # hole (grown HOLE_TOL): fallen off the deck onto the bench, or further
     k = int(np.argmin(pts[:, 2]))
-    dropped = bool(pts[k, 2] <= TOP + DECK_Z - DROP and not in_hole_xy(pts[k]))
+    p = pts[k]
+    dropped = bool(p[2] <= TOP + DECK_Z - DROP and not on_deck_xy(p) and not in_hole_xy(p, HOLE_TOL))
     return {"in_tote": inside, "low": low, "away": bool(resting), "in_hole": in_hole, "dropped": dropped}
 
 
@@ -442,9 +452,9 @@ def update(objects):
 
 
 def success(objects):
-    """Hole covered, wrench resting in the tote, hands off both, both still, held 1 s (ends the run)."""
-    n = update(objects)["now"]
-    return n["done"] and _MEM["held"] >= SUCCESS_HOLD_S - 1e-9
+    """Hole covered, wrench resting in the tote, hands off both, both still. WHY no hold here: yam_arena ends the run
+    once success() has held SUCCESS_HOLD_S (inspect_embodiment._task_step), and score() reads the same 1 s."""
+    return update(objects)["now"]["done"]
 
 
 def score(objects):
@@ -509,7 +519,7 @@ CLEAT_LIFT = 0.012               # the cleats' feet this far over the deck while
 SET_PUSH = 0.004                 # a part set down is commanded this far past resting, so what is under it takes it
 #                                  [CHOICE: about 1 N at the arm's stiffness, tools/sagcheck.py]
 WRENCH_CARRY = TOTE_H + 0.025    # the wrench's bottom this far over the deck while carried: 25 mm over the tote's rim
-PARK = (0.270, 0.280)            # where the cover is set aside, standing on its cleats on the deck [CHOICE: left arm]
+PARK = (XO, 0.280)              # where the cover is set aside, standing on its cleats on the deck [CHOICE: left arm]
 DECK_SPOT = (0.215, -0.462)      # s_on_deck: the wrench set down on the deck here, along x, right of the tote
 #                                  [CHOICE: the open fingers stay 18 mm off the tote's wall]
 HELD_UP = 0.020                  # s_held: the wrench held this far over the tote's floor [CHOICE: the verdict's case]
@@ -597,15 +607,18 @@ def left_plan(start, variant, t_resume):
           _w(0.8, gp, HANDLE_GRIP, "grip it again", yh),
           _w(1.2, cover_tcp(PARK[0], PARK[1], cyaw, lift_z), HANDLE_GRIP, "lift it again", yh)]
     sx, sy = XO, YO
-    W += [_w(2.5, cover_tcp(sx, sy, cyaw, lift_z), HANDLE_GRIP, "carry over the hole", yh),
-          _w(0.8, cover_tcp(sx, sy, cyaw, lift_z), HANDLE_GRIP, SEAT_LABELS[0], yh),
-          _w(1.2, cover_tcp(sx, sy, cyaw, DECK_Z + CHAMFER + 0.004), HANDLE_GRIP, "lower toward the hole", yh),
-          _w(0.5, cover_tcp(sx, sy, cyaw, DECK_Z + CHAMFER + 0.004), HANDLE_GRIP, SEAT_LABELS[1], yh)]
-    g_seat = cover_tcp(sx, sy, cyaw, seat_z)
-    W += [_w(1.5, g_seat - np.array([0.0, 0.0, SET_PUSH]), HANDLE_GRIP, "lower the cleats in", yh),
-          _w(0.6, g_seat - np.array([0.0, 0.0, SET_PUSH]), HANDLE_GRIP, "seat the cover", yh),
-          _w(0.6, g_seat, HANDLE_OPEN, "let go of the cover", yh),
-          _w(1.2, g_seat + np.array([0.0, 0.0, 0.07]), HANDLE_OPEN, "up off the cover", yh),
+    # WHY squared up: set back square to the hole, the cleats keep their whole play to each wall on the way in
+    qy = round(cyaw / (math.pi / 2)) * (math.pi / 2)
+    ys = yh + (qy - cyaw)
+    W += [_w(2.5, cover_tcp(sx, sy, qy, lift_z), HANDLE_GRIP, "carry over the hole", ys),
+          _w(0.8, cover_tcp(sx, sy, qy, lift_z), HANDLE_GRIP, SEAT_LABELS[0], ys),
+          _w(1.2, cover_tcp(sx, sy, qy, DECK_Z + CHAMFER + 0.004), HANDLE_GRIP, "lower toward the hole", ys),
+          _w(0.5, cover_tcp(sx, sy, qy, DECK_Z + CHAMFER + 0.004), HANDLE_GRIP, SEAT_LABELS[1], ys)]
+    g_seat = cover_tcp(sx, sy, qy, seat_z)
+    W += [_w(1.5, g_seat - np.array([0.0, 0.0, SET_PUSH]), HANDLE_GRIP, "lower the cleats in", ys),
+          _w(0.6, g_seat - np.array([0.0, 0.0, SET_PUSH]), HANDLE_GRIP, "seat the cover", ys),
+          _w(0.6, g_seat, HANDLE_OPEN, "let go of the cover", ys),
+          _w(1.2, g_seat + np.array([0.0, 0.0, 0.07]), HANDLE_OPEN, "up off the cover", ys),
           _w(1.5, np.array([0.18, 0.30, TOP + 0.15]), HANDLE_OPEN, "away", 0.0),
           _w(2.5, np.array([0.18, 0.30, TOP + 0.15]), HANDLE_OPEN, "rest away", 0.0)]
     return W
@@ -798,7 +811,7 @@ def commanded(plans):
 
 
 # -- the demo's line-up passes: privileged, from the parts' true poses (the score never reads them) -----------------------
-# WHY: the arm is compliant and the parts settle; the cleats leave 6 mm a side in the hole and the beam 17.5 mm either
+# WHY: the arm is compliant and the parts settle; the cleats leave 5 mm a side in the hole and the beam 17.5 mm either
 # side of the open fingers. A person looks; the script reads the poses instead. Each pass moves later waypoints only, so
 # the playing segment's goal stays put and the hand never jumps.
 _SERVO = {"on": False, "done": {}, "log": [], "events": {}}
