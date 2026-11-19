@@ -129,6 +129,8 @@ Offline (no simulator; `yam_arena` source on `PYTHONPATH`):
     python3 tools/ikcheck.py                    # IK on every waypoint: TOTAL BAD 0
     python3 tools/clearance.py                  # gripper and part clearance sweep: CLEARANCE BAD 0
     python3 tools/sagcheck.py                   # arm sag under the parts: SAG BAD 0
+    python3 tools/armgap.py                     # every arm link, arm to arm and to deck and tote: ARMGAP BAD 0
+                                                # (least 50 mm between the arms, 9.7 mm from a link to the deck)
     python3 tools/gen_taskjson.py               # rewrite task.json from the code
 
 In the simulator (Isaac Lab-Arena with `inspect-robots`; one run is 1,200 steps at most, 60 s of sim time):
