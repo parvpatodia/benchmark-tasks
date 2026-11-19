@@ -1,19 +1,25 @@
 # Fingerstick a trainer hand with a contact-activated lancet
 
-A trainer hand lies palm up on two foam rests, rolled 30 deg about its fingers so the little-finger side of the ring
-and middle fingertips faces up. A BD Microtainer contact-activated lancet (366577, 21 G x 1.8 mm) stands tip down in a
+A trainer hand lies palm up, hinged across its fingers and resting on a block under its wrist, rolled 30 deg about
+its fingers so the little-finger side of the ring and middle fingertips faces up. A BD Microtainer contact-activated lancet (366577, 21 G x 1.8 mm) stands tip down in a
 stand whose socket holds its protective tab. A BD 305635 sharps container stands beside. The robot does the fingerstick
 as BD's guide gives it: twist the tab off, hold the hand still with one gripper, place the lancet square on the side of
-the ring or middle fingertip with the other, press until it fires, and drop the used lancet into the container.
+the ring or middle fingertip that faces up with the other, press until it fires, and drop the used lancet into the
+container.
 
-The steadying hand is set by the model's physics, not by a rule. The hand turns on a hinge at the finger rest's back edge and rests
-on the wrist rest by its own weight, so a press of 3.5 N (3 mm from the apex) to 4.4 N (15 mm back, nearer the pivot) tips
-it, fingertips down. The lancet fires at 8 N. Without the other hand on the forearm stub the task scores 0, offline and
-in PhysX. Offline, in a quasi-static replay, the hand tips before the lancet fires and a press with the wrist risen
-more than 2 mm scores 0 (`test_no_steadying_hand`). In PhysX, two one-arm runs on `--seed` 0 kept the left arm parked
-and ran the demo's own right-arm path (`sim/one_arm.py`): the demo's 1.5 s press scored 0, and a 0.15 s jab, where
-the hand's inertia might have let it fire before the wrist rose, also scored 0 (Sim results). The same right-arm path
-with the left hand on the stub scores 1.0.
+The steadying hand is set by the model's physics, not by a rule. The hand turns on a hinge across its fingers, 62 mm
+behind the ring's apex and at the height of the ring finger's axis, and rests on the wrist block by its own weight, a
+moment of 0.137 N m about the hinge. A straight-down press on the site tips it, fingertips down, at 2.5 N (8 mm from
+the ring's apex) to 2.9 N (15 mm back, nearer the hinge), or 2.2 to 2.5 N on the middle fingertip. The lancet fires at
+8 N, and the placed rung needs 6 N. Tipping comes first for every press the scorer allows, not only a straight-down
+one: `tools/tipsweep.py` sweeps the whole site, every lancet direction the square rule allows (15 deg round the skin's
+normal) and the contact force's direction under friction up to 0.5, and the least-tipping of all those presses tips the
+hand by 5.0 N (friction 0.5; 3.4 N without friction). At 6 N every one of them tips the hand by at least 0.028 N m more
+than its weight holds, and at 8 N by at least 0.083 N m (`test_unsteadied_hand_tips_before_firm_and_fire`). The hinge
+sits at the contact's height so that a push toward the wrist has no lever to hold the wrist down; under the earlier
+low hinge it had up to 58 mm, and some presses near the apex then fired one-handed (`test_old_design_fails_the_sweep`).
+Offline, in a quasi-static replay, a press without the other hand on the forearm stub scores 0 ("pressed with the hand
+not steadied", `test_no_steadying_hand`). PhysX one-arm runs of the new design are listed under Sim results.
 
 The hand's place and turn are drawn from the seed (Seeds), so a replayed path misses the site: a plan made for one
 seed's layout, replayed on another's, failed in all 20 seed pairs tried, and the unshifted plan failed at all 8 corners
@@ -22,8 +28,8 @@ may share a plan; the test does not claim otherwise.
 
 Files: `lancet_fingerstick.py` (the task), `mechanism.py` (articulated objects, adapted from benchmark-tasks #223,
 MIT), `test_lancet_fingerstick.py` (offline tests), `task.json`, `rig.scad` (the printable real-trial rig: hand, base,
-stand), `tools/` (task.json generator, reach and clearance checks, `rig_scad.py` that writes `rig.scad` from the task's
-numbers), `sim/` (run scripts).
+stand), `tools/` (task.json generator, reach and clearance checks, `tipsweep.py` the tipping sweep, `rig_scad.py`
+that writes `rig.scad` from the task's numbers), `sim/` (run scripts and the sim stems).
 
 ## Sources
 
@@ -70,13 +76,16 @@ Saved copies were read; every quote here is from them.
 - NCCT, National Certified Medical Assistant detailed test plan (effective January 2024, from a national job analysis):
   "Perform capillary punctures (i.e., fingerstick, heelstick)."
 - benchmark-tasks #1837 (merged): the trainer hand's sizes, "ANSUR II median adult male (hand length 193 mm, breadth 88
-  mm)", its finger radii and spacing, and "0.300 kg (silicone skin over a foam core)".
+  mm)", its finger radii and spacing. Its "0.300 kg (silicone skin over a foam core)" is not used: this task's hand is
+  printed and ballasted to 0.200 kg.
 
 Not sourced, and set in the code with [EST] or [CHOICE]: the lancet's body size (13 x 10 x 37 mm) and mass (4 g); the
-fire force, 8 N, chosen inside Unistik's 4 to 15 N because BD publishes none; the tab's break torque, 3 N-cm, under
-Facet's 4.9 N-cm limit, and its break angle, 45 deg; the site's bounds, read from BD's shaded figure; the square, slide
-and steadied limits; the hand's centre of mass and the rests; the rig's printed parts and fits (`rig.scad`). None has been measured yet; each one the real trial
-depends on is to be measured before the trials (Real trials, checks 1 to 4).
+fire force, 8 N, chosen inside Unistik's 4 to 15 N because BD publishes none; the placed rung's 6 N; the tab's break
+torque, 3 N-cm, under Facet's 4.9 N-cm limit, and its break angle, 45 deg; the site's bounds, read from BD's shaded
+figure and narrowed to 8 mm and more from the apex, on the side that faces up; the square, slide and steadied limits;
+the hand's mass (0.200 kg), centre of mass, hinge and wrist block; the friction bound of the tipping sweep (0.5, the
+sim's skin friction); the rig's printed parts and fits (`rig.scad`). None has been measured yet; each one the real
+trial depends on is to be measured before the trials (Real trials, checks 1 to 4).
 
 ## The model
 
@@ -90,30 +99,51 @@ depends on is to be measured before the trials (Real trials, checks 1 to 4).
   turns on it, so the tab's own plastic gives the torque (Real trials, the stand). BD says to discard the tab; here it
   stays in the stand's slot and is taken out at reset, so it is not a step the robot does. Lifted out
   more than 10 mm before the break, the lancet still has its tab on: a fault.
-- The site: the pad of the middle or ring fingertip, 3 to 15 mm back from the apex and 15 to 45 deg round from the
-  pad's middle line, either side (BD shades both). The shield's face within 1.5 mm of the skin is on it. The roll of
-  30 deg turns the little-finger side of each pad straight up, so a downward lancet meets it square. Square: the
-  lancet's axis within 15 deg of the skin's normal. The demo aims 8 mm back from the ring's apex, the side facing up.
+- The site: the pad of the middle or ring fingertip, 8 to 15 mm back from the apex and 15 to 45 deg round from the
+  pad's middle line, on the side that faces up. The shield's face within 1.5 mm of the skin is on it. The roll of 30
+  deg turns the little-finger side of each pad straight up, so a downward lancet meets it square. BD shades both sides
+  of the pad; the task scores the one that faces up, because the roll turns the other 45 to 75 deg from up, where a
+  square press is mostly sideways and some never tip the hand (`test_the_side_facing_down_would_not_tip`). From 8 mm,
+  past both pads' radii (7.3 and 7.8 mm), the skin's normal has no lean along the finger. Square: the lancet's axis
+  within 15 deg of the skin's normal. The demo aims 11.5 mm back from the ring's apex, the side facing up.
 - The press: from first touch (2 N) to firing, the face moving more than 1.0 mm on the skin is a slide. Lifting off
   (under 2 N) ends a placement, so the lancet may be lifted and placed again.
-- Steadied: while the lancet presses on anything, the wrist rises more than 2 mm off its rest is a fault. The hand is
-  rigid, 0.300 kg, its centre of mass 70 mm behind the pivot, which is 62 mm behind the ring's apex; the forearm stub is
-  223 mm behind it. The demo's left hand grips the stub and aims 10 mm under it, about 5 N down [EST: the arm's 0.5
-  N/mm]; a 10 N press needs about 2.1 N there. The hand's support is a hinge: a revolute joint across the fingers at
-  the finger rest's back edge, its stop holding the wrist on its rest. The two foam rests are drawn and do not collide.
-  The real rig uses the same hinge and stop (Real trials).
+- Steadied: while the lancet presses on anything, the wrist rises more than 2 mm off its block is a fault. The hand is
+  rigid, 0.200 kg, its centre of mass 70 mm behind the hinge, which is 62 mm behind the ring's apex and 70.0 mm over
+  the table, on the ring finger's axis; the forearm stub is 223 mm behind the apex. The demo's left hand grips the stub
+  and aims 10 mm under it, about 5 N down [EST: the arm's 0.5 N/mm]; a 10 N press at the demo's site needs about 2.3
+  N there. The hand's support is a hinge: a revolute joint across the fingers, its upper stop holding the wrist on its
+  block. The hinge's cheeks and pin and the wrist block are drawn and do not collide; the joint carries the hand. The
+  real rig uses the same hinge and stop (Real trials).
+- The tipping sweep (`tools/tipsweep.py`): a press is allowed when the shield's face is on the site and the lancet's
+  axis d is within 15 deg of the skin's inward normal n. The shield's spring carries the axial load, so the contact
+  force C on the skin has C . d = F, the force on the shield. Friction (coefficient up to 0.5) lets C lean up to
+  atan 0.5 = 26.6 deg off d (the shield's flat face on the skin) or off n (its rim on the skin), so C = F c / (c . d)
+  for such a direction c. The hand tips when C's moment about the hinge passes the hand's 0.137 N m. Over the ring
+  and middle pads (every 0.5 mm and 2.5 deg), 73 lancet directions and 146 contact directions each, the least-tipping
+  press gives 0.0276 N m per newton on the shield, at the ring 15 mm back on the side 15 deg off up: so every allowed
+  press tips the hand by 0.137 / 0.0276 = 5.0 N. Most of that is the sideways lean: C may lean up to 15 + 15 + 26.6 =
+  56.6 deg from vertical across the finger, and 0.047 m x cos 56.6 / cos 26.6 = 0.029 N m per N; the rest is friction
+  pushing toward the wrist at the contact, 7 mm over the hinge. Directions four times finer give the same value to 5
+  places at the worst sites.
 - Where the other hand holds: BD's figure shows the collector's other hand on the patient's finger. Two top-down
   grippers' fingers each reach 52 mm from their TCP's axis (the note at `SHARPS` in the code), so the two TCPs need more
-  than about 104 mm between them. The ring finger ends at its knuckle 99 mm behind its apex, and the press is 8 mm
-  behind it, so a gripper anywhere on the finger would meet the one pressing the lancet. On `--seed` 0 the demo keeps about 215 mm between them (`tools/ikcheck.py` checks the TCPs'
-  separation along x). The scored outcome is BD's: the
-  hand does not move during the press. The task holds it at the forearm stub, 161 mm behind the hinge; any hold behind
-  the hinge that keeps the wrist down scores the same.
+  than about 104 mm between them. The ring finger ends at its knuckle 99 mm behind its apex, and the press is 11.5 mm
+  behind it, so a gripper anywhere on the finger would meet the one pressing the lancet. On `--seed` 0 the demo keeps
+  about 212 mm between the TCPs along x at the press, 167 mm at the closest (`tools/ikcheck.py cli=0`). The scored
+  outcome is BD's: the hand does not move during the press. The task holds it at the forearm stub, 161 mm behind the
+  hinge; any hold behind the hinge that keeps the wrist down scores the same.
 - Out of the stand: the lancet's frame more than 4 mm across or 10 mm up from where it stood. This latches: a lancet
   put back in the stand still counts as out.
-- Held: a gripper's TCP within 20 mm of the grip point and its finger half-gap 3.0 to 7.0 mm, from 2 mm inside the
-  housing's narrower side (10 mm) to 0.5 mm outside its wider side (13 mm). A grasp across either side counts; a
-  gripper closed on nothing does not.
+- Fired in the stand: with its tab off and still in the stand, the lancet pressed down to 8 N on its shield fires into
+  the stand's post, as the real one would. It is then spent, and the trial scores 0.
+- Held: a gripper's finger half-gap 3.0 to 7.0 mm, from 2 mm inside the housing's narrower side (10 mm) to 0.5 mm
+  outside its wider side (13 mm), and its TCP within 15 mm of the lancet's axis, anywhere from 10 mm beyond its face to
+  53 mm up it (the pad tips 13 mm under the TCP, at the lancet's rear). A grasp across either side counts, and so does
+  one slipped along the housing or taken deeper or higher (`test_slipped_or_deep_grasp_in_the_container_is_still_held`);
+  a gripper closed on nothing does not.
+- Let go: a gripper's half-gap over 7.0 mm, or its TCP more than 60 mm from the lancet's axis. The 0.8 and 1.0 rungs
+  need both grippers to have let go.
 - Dropped: the lancet out of the stand, held by neither gripper and not in the container: loose for 0.5 s. Letting go
   of it back in the stand is a drop. Its fall into the container from the release height takes about 0.2 s.
 - The hand's base may move 5 mm; more is a fault (dragged).
@@ -129,17 +159,17 @@ ring's apex is at (0.11, -0.01). The bounds are where both arms' reach (`tools/i
 
 | `--seed` | shift x, y, mm | turn, deg | |
 |---|---|---|---|
-| 0 | -7.0, 0.1 | -2.71 | filmed demo 1.0 in PhysX; one-arm runs 0; replayed offline |
+| 0 | -7.0, 0.1 | -2.71 | the filmed demo and the stems (Sim results); replayed offline |
 | 2 | -9.7, -5.5 | -4.11 | replayed offline |
 | 4 | -0.2, -2.2 | 2.67 | replayed offline |
-| 26385 | -11.9, -11.7 | -5.98 | corner -x, -y, -turn; PhysX demo 1.0 (0.05 s start delay) |
-| 84277 | -11.6, -11.9 | 5.93 | corner -x, -y, +turn; PhysX demo 1.0 |
-| 5410 | -12.0, 11.9 | -5.90 | corner -x, +y, -turn |
-| 55059 | -11.6, 11.6 | 5.85 | corner -x, +y, +turn |
-| 126748 | 11.8, -11.8 | -5.96 | corner +x, -y, -turn; PhysX demo 1.0 |
-| 5673 | 11.7, -11.7 | 5.83 | corner +x, -y, +turn |
-| 58369 | 11.7, 11.7 | -5.81 | corner +x, +y, -turn |
-| 100825 | 11.5, 11.7 | 5.98 | corner +x, +y, +turn; PhysX demo 1.0 |
+| 26385 | -11.9, -11.7 | -5.98 | corner -x, -y, -turn; PhysX demo with a 0.05 s start delay |
+| 84277 | -11.6, -11.9 | 5.93 | corner -x, -y, +turn; PhysX demo |
+| 5410 | -12.0, 11.9 | -5.90 | corner -x, +y, -turn; PhysX demo |
+| 55059 | -11.6, 11.6 | 5.85 | corner -x, +y, +turn; PhysX demo |
+| 126748 | 11.8, -11.8 | -5.96 | corner +x, -y, -turn; PhysX demo |
+| 5673 | 11.7, -11.7 | 5.83 | corner +x, -y, +turn; PhysX demo |
+| 58369 | 11.7, 11.7 | -5.81 | corner +x, +y, -turn; PhysX demo |
+| 100825 | 11.5, 11.7 | 5.98 | corner +x, +y, +turn; PhysX demo |
 
 The scripted demo reads the seed's layout and plans from it, as a privileged script may. It shows the task can be done.
 
@@ -148,29 +178,34 @@ The scripted demo reads the seed's layout and plans from it, as a privileged scr
 Never on a person. The trial uses the trainer hand only, with nobody in the arms' reach while they move.
 
 Parts and instruments (the printed parts are in `rig.scad`, which `tools/rig_scad.py` writes from the task's own
-numbers, so the print and the sim are the same object; `test_rig_scad_is_current` checks it is current):
+numbers, so the print takes its sizes from the model; `test_rig_scad_is_current` checks it is current):
 
 - BD Microtainer contact-activated lancets 366577 (21 G x 1.8 mm), one per trial; a BD 305635 sharps collector.
 - Wallcur Lance fingerstick trainer fingers (REM-LANCE-KIT-01D, "3/PK"), one fitted over the trainer hand's ring
-  finger and one over its middle finger, a fresh one each trial. The Lance finger takes the puncture; check 6b shows
-  the blade does not reach the printed finger under it.
+  finger and one over its middle finger, a fresh one each trial, each taped round its base to the printed finger so it
+  cannot turn or slide. The Lance finger takes the puncture; check 6b shows where the blade stops.
 - The trainer hand (`rig.scad`, parts `hand_front` and `hand_back`): the model's hand, printed rigid in PETG at its
   sizes and its 30 deg roll (fingers, palm, thumb and a 44 mm forearm stub, 272 mm from the middle fingertip to the
   stub's end). The ring and middle distal pads are printed thinner by the Lance finger's wall (`lance_wall`, measured in
   check 3b), so with the Lance fingers on their radii are the model's. It prints in two parts cut across the stub at 200
-  mm, epoxied on two 3 mm pins. No saved product page gives a life-size hand trainer's size and mass, so the hand is
-  printed rather than bought; the model's hand is rigid, and so is the print.
-- The hinge (`rig.scad`, part `base`): in the model the hand turns on a revolute joint across the fingers, and the rig
-  uses one. A keel under the proximal phalanges carries a 3 mm steel rod, the pin, 62 mm behind the ring's apex and
-  17.1 mm over the table, in two cheeks on the base (the finger rest). The wrist block, 50 by 40 mm, its top 40.5 mm over
-  the table, centred 223 mm behind the apex and 13 mm to the thumb side of the ring's axis in plan, is the hinge's stop:
-  the stub rests on it, 161 mm behind the pin. Both stand on a 231 by 60 by 5 mm base plate (32 to 263 mm behind the
-  apex), ballasted to 3 kg and taped to the table.
-- Ballast: the model's hand is 0.300 kg with its centre of mass 70 mm behind the pivot, a moment of 0.206 N m about
-  it, which sets the 3.5 to 4.4 N tipping force. The hand is printed at an infill that keeps it under 0.300 kg, and lead
-  shot goes into the 16 mm bore in the stub's end until check 4 passes; tape closes the bore. [EST, not yet printed:
-  the hand is about 445 cm3 of solid, so a print of about 0.2 kg with its centre of mass near the palm's needs about 45
-  g of shot, and the bore holds about 80 g.]
+  mm, epoxied on two 3 mm alignment pins 14 mm either side of the stub's axis (clear of the ballast bore). No saved
+  product page gives a life-size hand trainer's size and mass, so the hand is printed rather than bought; the model's
+  hand is rigid, and so is the print. Print layout (a choice, not yet trialled): the hand parts on their palm side with
+  tree supports under the fingers and thumb; the base on its plate and the stand on its bottom, no supports; the cup rim
+  up.
+- The hinge (`rig.scad`, part `base`, and the hand's keel): in the model the hand turns on a revolute joint across the
+  fingers, and the rig uses one. A 3 mm steel pin, 87 mm long, runs across the fingers 62 mm behind the ring's apex
+  and 70.0 mm over the table, on the ring finger's axis. It passes through a 14 mm thick keel web printed inside the
+  fingers (5.3 mm of wall round its 3.4 mm hole) and through two cheeks on the base, 16 by 4 mm and 74 mm high, standing
+  1 mm outside the little and index fingers. A 3 mm push-on retaining washer outside each cheek holds the pin. The wrist
+  block, 50 by 40 mm, its top 40.5 mm over the table, centred 223 mm behind the apex and 13 mm to the thumb side of the
+  ring's axis in plan, is the hinge's stop: the stub rests on it, 161 mm behind the pin. Both stand on a 231 by 60 by 5
+  mm base plate (32 to 263 mm behind the apex), ballasted to 3 kg and taped to the table.
+- Ballast: the model's hand is 0.200 kg with its centre of mass 70 mm behind the hinge, a moment of 0.137 N m about it,
+  which sets the tipping forces. The hand is printed at an infill that keeps it, bore empty, under 0.200 kg and its
+  tipping force under check 4's; lead shot then goes into the 16 mm bore in the stub's end until check 4 passes, and
+  tape closes the bore. [EST, not yet printed: the bore holds about 80 g of shot, about 0.135 N m about the pin; a
+  print that tips above check 4's force with the bore empty is reprinted at a lower infill.]
 - The stand (`rig.scad`, parts `stand` and `cup`), fixed to the table: a 40 mm square block 25 mm high. A fixed 10 mm
   post in its middle holds the tab cap in a slot cut to the cap's measured size (`tab_w`, `tab_t`, `tab_h`, check 3);
   the post's top, 27 mm over the table, is where the shield's face rests, as in the model. A 24 mm cup turns on the
@@ -179,21 +214,27 @@ numbers, so the print and the sim are the same object; `test_rig_scad_is_current
   still, so the tab's own plastic gives the twist's resistance.
 - A push-pull force gauge (0.1 N readability) with a flat tip; a cap torque gauge (0.1 N-cm readability); digital
   calipers (0.01 mm); a digital angle gauge (0.1 deg); a 0.01 g scale; a protractor; a 10x loupe; washable ink and a
-  paper template of the site zone (1 mm and 5 deg lines); a side camera with a mm scale beside the wrist rest; a
+  paper template of the site zone (1 mm and 5 deg lines); a side camera with a mm scale beside the wrist block; a
   second side camera at 90 deg to it; an overhead camera and a microphone.
 
-The rig file has not been rendered or printed yet: no OpenSCAD run is part of this submission, and the offline test
-checks only that the file is current and its numbers are the model's.
+The rig file has not been rendered or printed yet: OpenSCAD is not installed where it was written, and the offline
+test checks only that the file is current, its brackets balance and its numbers are the model's. Rendering each part
+(OpenSCAD, F6) would add what the test cannot: that each part is one closed solid a slicer accepts; that the keel's web
+is whole round the pin's hole from cheek to cheek; that the cheeks miss the little and index fingers and the thumb
+over the hand's whole tip (to 0.30 rad); that the alignment pins' holes miss the bore; each part's size against a
+printer's bed (`hand_front` is about 210 mm long); and STL files a reader could print without OpenSCAD.
 
 Checks before any trial, each with its pass criterion (no trial runs until all pass):
 
 1. Fire force: five lancets pressed by hand, shield first, onto the gauge's tip through a 3 mm silicone pad; the peak
-   at the click. Pass: every one at or under 15 N (the top of Unistik's 4 - 15 N), and the lowest at least 1 N over the
-   largest tipping force on the site (the sim's 4.4 N, 15 mm back from the apex), so a one-handed press tips the hand
-   before the lancet fires. If the lowest is under that, shot is taken out of the stub's bore until check 4's force,
-   scaled to 15 mm back, sits 1 N under it, and the sim's centre of mass is set from check 4's new reading. The sim's 8
-   N is replaced by the mean, the placed rung's 5 N is set between the largest tipping force and the lowest fire force,
-   and the offline tests are re-run.
+   at the click. Pass: every one at or under 15 N (the top of Unistik's 4 to 15 N), and the lowest at least 6.8 N: at
+   that force every press the scorer allows tips the hand by 0.05 N m (the sweep's 0.0276 N m per N times 6.8 N, less
+   the hand's 0.137 N m), so a one-handed press tips the hand before the lancet fires. If the lowest, F_min, is under
+   6.8 N, the hand's moment is lowered to F_min x 0.0276 - 0.05 N m (shot taken out, or a lighter print), check 4's
+   forces are scaled by the same ratio, and the sim is set to the readings (`F_FIRE` the mean, `HAND_KG` or `COM_U` to
+   check 4's moment, `F_FIRM` 1 N under F_min), then the offline tests are re-run; `test_unsteadied_hand_tips_before_
+   firm_and_fire` fails if the margins no longer hold. If no print can get that light, the trials are not run with that
+   lancet.
 2. Tab: five tabs twisted off in the stand by the torque gauge on the housing. Pass: every peak at or under 4.9 N-cm
    (Facet's limit) and every break at or under 60 deg (protractor), under the demo's 70 deg twist.
 3. Body size and tab cap: five lancets with calipers. Pass: each side within 1 mm of the sim's 13 x 10 x 37 mm, or the
@@ -201,19 +242,32 @@ Checks before any trial, each with its pass criterion (no trial runs until all p
    before the stand is printed.
 3b. Hand: the Lance finger's wall, read with calipers on a cut spare, sets `lance_wall` before the hand is printed.
    After printing, the ring and middle fingertips' radii with the Lance fingers on are read with calipers. Pass: each
-   within 0.3 mm of the sim's 7.3 and 7.8 mm, else the hand is reprinted; and the print, its bore empty, weighs under
-   0.300 kg (0.01 g scale).
-4. Tipping force: the force gauge pressed down on the ring's site, 8 mm from the apex, until the wrist lifts off its
-   rest. Pass: 3.3 to 4.3 N (the sim's 3.8 N there, plus or minus 0.5 N); shot is added to or taken from the stub's bore
-   until it passes.
-5. Square: a 2 mm rod held square to the skin at the ring's site, 8 mm from the apex on the side facing up, is within
+   within 0.3 mm of the sim's 7.3 and 7.8 mm; else the hand is reprinted, or the sim's distal radii in `FINGERS` are
+   set to the measured ones and the offline tests re-run (the sweep among them). And the print, its bore empty, weighs
+   under 0.200 kg (0.01 g scale).
+4. Tipping force, two presses, each until the wrist lifts off its block (side camera): (a) the gauge straight down on
+   the ring's top 11.5 mm from the apex, the demo's site; (b) the gauge along the skin's inward normal at the site's
+   worst place, the ring 15 mm from the apex and 45 deg round (15 deg off vertical, set with the angle gauge). Pass:
+   (a) 2.5 to 2.9 N (the sim's 2.7 N plus or minus 0.2 N) and (b) 2.8 to 3.2 N (the sim's 3.0 N plus or minus 0.2 N);
+   shot is added to or taken from the stub's bore until both pass. Within these bounds the hand's moment is within 7%
+   of the sim's, and every allowed press still tips the hand by at least 0.073 N m at 8 N (the sweep's numbers with the
+   moment 7% higher).
+5. Square: a 2 mm rod held square to the skin at the ring's site, 11.5 mm from the apex on the side facing up, is within
    3 deg of vertical (angle gauge).
 6. Patch: the site zone of a spare Lance finger, on the hand, is coated with washable ink and left to dry. Five
    lancets are fired by hand, square and without sliding, each on a fresh inked spot; where the shield's face pressed,
    the ink lifts and leaves a bare patch. Pass: a patch is seen under the loupe every time. Its longest length
    (calipers), largest of the five, is L6, the no-slide patch.
 6b. Blade: a spare Lance finger over a dowel of the ring fingertip's radius wrapped in carbon paper on white paper;
-   five lancets fired by hand through it. Pass: no mark on the paper under the loupe every time.
+   five lancets fired by hand through it. Pass: no mark on the paper under the loupe every time. This is expected to
+   fail on the estimates (the blade's 1.8 mm against the Lance wall's 1.0 mm [EST]). If it fails, the ring and middle
+   pads are printed thinner by a further 1.0 mm and wrapped in 1.0 mm self-adhesive silicone tape [CHOICE] under the
+   Lance finger, so the radius stays the model's and the blade ends in the tape; the dowel is wrapped the same way and
+   check 6b is re-run until it passes, then check 3b.
+6c. Slide: five lancets fired by hand on fresh inked spots, each slid 2 mm along the finger on the skin before the
+   click, the slide set by a stop on a guide. Pass: every patch is at least L6 + 1.0 mm long, so the trial's slide
+   rule can see a slide over 1 mm. The real patch also records any motion after the click, which the sim's slide (first
+   touch to firing) does not count, so the real slide check is the stricter of the two.
 7. Grip: with the pad covers on, the lancet held in the gripper at the demo's target and pressed on the gauge to 15 N
    does not slip in the grip (no change in the camera over 2 s).
 8. Covers: five lancets fired by hand, shield on a spare pad cover laid over carbon paper on white card. Pass: no
@@ -223,25 +277,32 @@ Scoring a trial, each threshold with its instrument (before the trial the site z
 in check 6):
 
 - Tab off before the lift: the overhead video shows the lancet turned in the cup before it rises 10 mm (the mm scale
-  on the stand), and the tab is left in the post's slot.
+  on the stand), and the tab is left in the post's slot. A click while the lancet is still in the cup scores 0 (fired
+  in the stand).
 - Fired: the click on the audio track. Spent: after the trial the lancet is pressed on the gauge to 15 N with no second
   click (BD: auto-disabled).
-- Site: the bare patch's centre lies inside the zone on the template laid on the ring or middle fingertip (3 to 15 mm
-  back from the apex, 15 to 45 deg round from the pad's middle line), checked with the loupe. The template reads its s
-  (mm back from the apex) and its theta (deg round from the pad's middle line, toward the side facing up).
+- The patch scored: where the lancet was placed more than once, the inked finger shows a patch for each placement;
+  the one scored is the patch under the press that gave the click, picked on the overhead video.
+- Site: that patch's centre lies inside the zone on the template laid on the ring or middle fingertip (8 to 15 mm back
+  from the apex, 15 to 45 deg round from the pad's middle line on the side that faces up), checked with the loupe. The
+  template reads its s (mm back from the apex) and its theta (deg round from the pad's middle line, toward the side
+  facing up; a patch on the other side is off the site).
 - Slide: the patch's longest length is at most L6 plus 1.0 mm (calipers). A press that slides drags the face over the
-  ink, so the patch grows by the slide's length.
+  ink, so the patch grows by the slide's length (check 6c).
 - Square: from the two side cameras, set to the trial's turn of the base (from its seed) with a protractor against the
   base plate's edge, one looking across the fingers and one along them: at the click, the housing top's lean a toward
-  the apex (the across-the-fingers view) and m toward the pad's middle line (the along view), protractor overlay. The
-  skin's normal at the patch leans b = asin((r - s) / r) toward the apex where s is under the fingertip's radius r
-  (check 3b; 0 farther back), and g = 30 - theta deg toward the pad's middle line. Then n = (tan b / cos g, tan g, 1),
-  d = (tan a, tan m, 1), and the lancet's angle off the normal is acos(n . d / (|n| |d|)). Pass: at most 15 deg. These
-  are the scorer's own quantities: `test_real_square_check_matches_the_scorer` checks this reading against
-  `tilt_of` at 400 random sites and leans.
-- Steadied: from the side camera, the wrist rises no more than 2 mm off its rest (mm scale) while the lancet touches.
+  the apex (the across-the-fingers view) and m toward the pad's middle line (the along view), protractor overlay, each
+  signed (negative away). The skin's normal at the patch leans b = asin((r - s) / r) toward the apex where s is under
+  the fingertip's radius r (check 3b; 0 farther back, so 0 over the whole site), and g = 30 - theta deg toward the
+  pad's middle line, which is signed: negative for theta over 30 deg, where the normal leans away from the middle line.
+  Then n = (tan b / cos g, tan g, 1), d = (tan a, tan m, 1), and the lancet's angle off the normal is
+  acos(n . d / (|n| |d|)). Pass: at most 15 deg. These are the scorer's own quantities:
+  `test_real_square_check_matches_the_scorer` checks this reading against `tilt_of` at 400 random sites and leans and
+  at both ends of theta with leans of both signs.
+- Steadied: from the side camera, the wrist rises no more than 2 mm off its block (mm scale) while the lancet touches.
 - In the container: the container weighed before and after on the 0.01 g scale gains the lancet's mass (weighed in
-  check 3) within 0.1 g; the video shows both grippers open and away; no lancet loose elsewhere for 0.5 s.
+  check 3) within 0.1 g; the video shows each gripper open (fingers more than 14 mm apart) or its TCP more than 60 mm
+  from the lancet; no lancet loose elsewhere for 0.5 s.
 - The base: within 5 mm of its taped outline.
 
 Rig protection and sharps handling (for the trial, not part of the task):
@@ -276,36 +337,48 @@ The run limit is 2,400 steps (120 s); the demo takes 28 s of plan.
 
 ## Sim results
 
-yam_arena, `--seed 0` (the first row under Seeds), `object_jitter=0`, 20 Hz, 2,400-step limit. The filmed demo scored 1.0 and ended on success at step 541 (27.05 s); it took 110 s of wall time on a shared GPU.
-The one Dream-1 run scored 0 over 2,400 steps. Both runs hashed
-`lancet_fingerstick.py`, `mechanism.py` and `task.json` before starting; the hashes match the files here (`task.json`
-as it was before its `scores` line was filled in).
+The hinge, site, hand mass and placed-rung force changed in this revision (tipping sweep, above), so every PhysX run
+of the earlier files no longer applies and none is quoted. The runs below are planned on the files here; each result
+is filled in from its run's log once it has run.
+
+yam_arena, `--seed 0` (the first row under Seeds), `object_jitter=0`, 20 Hz, 2,400-step limit. FILM_PENDING
+DREAM_PENDING Both runs hash `lancet_fingerstick.py`, `mechanism.py` and `task.json` before starting (`sim/film.sh`,
+`sim/dream.sh`), to be checked against the files here (`task.json` as it was before its `scores` line was filled in).
 
 More PhysX runs of the scripted policy, each on a copy that `sim/mk.sh` makes of this `lancet_fingerstick.py` with a
-per-step trace appended (`sim/log_snippet.py`), and for the one-arm runs `sim/one_arm.py` too; the environment revision
-inspect-robots logs for each is the SHA-256 prefix of that copy, rebuilt from the files here:
+per-step trace appended (`sim/log_snippet.py`, which writes `sim/out/trace_<copy>_<seed>.csv`), and for the stems
+`sim/stems.py` too; the environment revision inspect-robots logs for each is the SHA-256 prefix of that copy. Each
+stem's offline replay gives the expected score (`test_sim_stems`):
 
-| Run | `--seed` | Copy (revision) | Score | Steps |
+| Run | `--seed` | Copy | Expected | PhysX score, steps, fault |
 |---|---|---|---|---|
-| demo, layout corner +x, -y, -turn | 126748 | t00 (35acef1c2c2c) | 1.0, success | 541 |
-| demo, layout corner -x, -y, +turn | 84277 | t00 (35acef1c2c2c) | 1.0, success | 541 |
-| demo, layout corner +x, +y, +turn | 100825 | t00 (35acef1c2c2c) | 1.0, success | 541 |
-| demo with a 0.05 s start delay, corner -x, -y, -turn | 26385 | t05 (8a4821311472) | 1.0, success | 542 |
-| one arm: left parked, the demo's 1.5 s press | 0 | o00 (10abc42e149b) | 0 | 620 |
-| one arm: left parked, a 0.15 s jab | 0 | j00 (5de0410029c4) | 0 | 593 |
+| demo at the 7 other layout corners | 126748, 84277, 100825, 5410, 55059, 5673, 58369 | t00 | 1.0, success | STEMS_PENDING |
+| demo with a 0.05 s start delay, corner -x, -y, -turn | 26385 | t05 | 1.0, success | |
+| one arm: left parked, the demo's 1.5 s press | 0 | o00 | 0, not steadied | |
+| one arm: left parked, a 0.15 s jab | 0 | j00 | 0, not steadied | |
+| one arm: left parked, a press 8.5 mm from the apex driven 20 deg toward the wrist | 0 | w00 | 0, not steadied (or slid) | |
+| both arms: the lancet pressed down in the stand after the twist | 0 | f00 | 0, fired in the stand | |
+| both arms: after firing, the lancet held inside the container, never let go | 0 | k00 | 0.6 | |
 
-The one-arm runs' logs give the score, not which fault latched; their per-step traces stayed on the run host and have
-not been read. Their right-arm path is the demo's, which scores 1.0 with the left hand on the stub, and the offline
-replay of both stems latches "pressed with the hand not steadied" (`test_one_arm_sim_stems`).
+The stems' plans pass the same reach check as the demo's (`tools/ikcheck.py stems`). What the stems cannot show: a
+grasp slipped more than 20 mm along the housing, the case the old held rule misread, is not reachable by a scripted
+path from the stand (the socket's rim keeps the pad tips 18 mm up the lancet, and a slip stops when the tips reach
+the face); `test_slipped_or_deep_grasp_in_the_container_is_still_held` covers it offline.
 
 ## Sim against real
 
 - The needle, the skin's puncture and the blood are not simulated; the shield's spring stands in for the drive and
-  fires at a set force. The real lancet's click and its spent state are read from audio and a re-press.
+  fires at a set force. The real lancet's click and its spent state are read from audio and a re-press. Pressed down
+  in the stand after the twist, the sim's lancet fires into the post as the real one would, and scores 0.
 - The trainer is rigid on a hinge, in the sim and in the printed rig; a live fingertip yields under the press, and the
   Lance finger's silicone a little.
-- The instruction's two foam rests are, in the rig, the hinge's cheeks under the fingers and the wrist block; in the sim
-  they are drawn only, and the joint and its stop carry the hand.
+- The hinge's cheeks and pin and the wrist block are, in the rig, printed parts the hand turns on and rests on; in the
+  sim they are drawn only, and the joint and its stop carry the hand.
+- The tipping sweep is quasi-static and assumes friction at the skin of at most 0.5 (the sim's); a real Lance finger's
+  silicone on the shield's polyethylene has not been measured, and a higher friction lowers the margin (check 4
+  measures the tipping force, not the friction).
+- The real slide check reads a patch that also records motion after the click (check 6c); the sim stops counting at
+  the fire.
 - BD has the patient's hand held downward for blood flow; the trainer lies palm up so its fingertips are in reach of a
   top-down gripper, and the blood flow is out of scope.
 - Out of scope, from BD's guide: warming the site, the alcohol wipe and air dry, wiping the first drop, collecting the
@@ -316,30 +389,35 @@ replay of both stems latches "pressed with the hand not steadied" (`test_one_arm
 ## Tests
 
 `python3 test_lancet_fingerstick.py` (with yam_arena on PYTHONPATH) runs the offline tests: the shield and the site
-(the demo's site faces up; the pad's middle, too far round, past the pad, the little finger, the index), the tab, a
-good press, no fire under 8 N, a firm press for the placed rung, a slide, a small creep and a fresh placement, a tilted
-lancet, an unsteadied wrist, fires on the little finger and off the hand, a drop and the container, the tipping force
-over the whole site, the scorer (a model that stops, the base dragged, the ladder in order along the demo), both arms'
-demo replayed at the 8 corners of the layout box, on `--seed` 0 to 19 and on every seed in the table, the layout's
-draw (inside its bounds, filling them, repeatable), a plan replayed on another seed's layout failing, the base plate
-clear of the stand and the container, the lazy routes below (and the one-arm sim stems), the geometry, these
-numbers against the code, the real trial's two-camera squareness reading against the scorer's tilt, and `rig.scad`
-current and at the model's sizes. `tools/ikcheck.py` (no argument: the 8 corners and `--seed` 0, 2, 4; or `cli=N`, `seed=N`,
-`corners`) checks both arms' reach, joint6 against its limit and the two TCPs' separation along x;
-`tools/clearance.py` checks every arm link and fingertip against the sharps container at the same layouts.
+(the demo's site faces up; the pad's middle, too far round, past the pad or short of 8 mm, the side facing down, the
+little finger, the index), the tab, a good press, no fire under 8 N, a firm press for the placed rung, a slide, a small
+creep and a fresh placement, a tilted lancet, an unsteadied wrist, fires on the little finger, off the hand and in the
+stand, a drop and the container, a slipped or deep grasp still held, the tipping sweep against the placed rung and the
+fire (and the old design failing it), the scorer (a model that stops, the base dragged, the ladder in order along the
+demo), both arms' demo replayed at the 8 corners of the layout box, on `--seed` 0 to 19 and on every seed in the
+table, the layout's draw (inside its bounds, filling them, repeatable), a plan replayed on another seed's layout
+failing, the base plate clear of the stand and the container, the lazy routes below and the sim stems, the geometry,
+these numbers against the code, the real trial's two-camera squareness reading against the scorer's tilt, and
+`rig.scad` current and at the model's sizes. `tools/tipsweep.py` prints the tipping table. `tools/ikcheck.py` (no
+argument: the 8 corners, `--seed` 0, 2, 4 and the stems; or `cli=N`, `seed=N`, `corners`, `stems`) checks both arms'
+reach, joint6 against its limit and the two TCPs' separation along x; `tools/clearance.py` checks every arm link and
+fingertip against the sharps container at the same layouts.
 
 ### Lazy routes
 
 | Shortcut | Score | Why |
 |---|---|---|
-| Press without holding the wrist | 0 | the hand tips at 3.5 to 4.4 N, before the 8 N fire; "pressed with the hand not steadied" |
+| Press without holding the wrist | 0 | every allowed press tips the hand by 5.0 N, before the 6 N placed rung and the 8 N fire; "pressed with the hand not steadied" |
 | Pull the lancet straight out, no twist | 0 | "lifted out of the stand with its tab still on" |
+| Twist, then press the lancet down in the stand | 0 | "fired in the stand" |
 | Press on the little finger | 0 | "on the little finger (BD: the fifth finger must not be punctured)" |
 | Press on the pad's middle line | 0 | "on the middle of the ring's pad, not its side", and 30 deg off square |
+| Press on the side of the pad that faces down | 0 | "not the side that faces up" |
 | Press 30 mm back, past the pad | 0 | "not the fingertip" |
 | Slide the lancet while pressing | 0 | "the press slid" |
 | Drop the used lancet on the table | 0 | "lancet dropped outside the sharps container" |
 | Fire, then keep holding it over the container | 0.6 | never let go into the container |
+| Fire, then hold it inside the container, at any grasp | 0.6 | held: never let go |
 | Do nothing | 0 | no rung |
 
 ## Closest tasks

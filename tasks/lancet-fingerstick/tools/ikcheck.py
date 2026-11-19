@@ -1,7 +1,8 @@
 """ikcheck.py [seed=N | cli=N | corners]: per-waypoint static IK error of both arms' demo plans (each pose alone) and
 each plan's interpolated worst, joint6 against its +-2.0944 rad limit, and the two TCPs' separation along x while both
 are low. seed=N is the run seed as the task sees it; cli=N the inspect-robots --seed N (its trial seed); corners the
-eight corners of the layout box. With no argument: the eight corners and --seed 0, 2, 4. No sim."""
+eight corners of the layout box; stems the sim stems (sim/stems.py) on --seed 0. With no argument: the eight corners,
+--seed 0, 2, 4 and the stems. No sim."""
 import math
 import pathlib
 import sys
@@ -29,11 +30,21 @@ def tcp_at(ws, t, start):
     return p0
 
 
-def check(seed, name):
-    """Print one layout's reach report; return its count of bad waypoints."""
+def stem_plan(stem, seed):
+    """A sim stem's (right, left) plan: sim/stems.py run in a copy of the task's namespace (as sim/mk.sh appends it)."""
+    src = (pathlib.Path(__file__).resolve().parents[1] / "sim" / "stems.py").read_text()
+    ns = dict(vars(F))
+    ns["run_seed"] = lambda: seed
+    exec(compile(src.replace('_STEM = "none"', f'_STEM = "{stem}"'), "stems.py", "exec"), ns)
+    d = ns["demo"]()
+    return d["right"], d["left"]
+
+
+def check(seed, name, stem=None):
+    """Print one layout's reach report (the demo's plan, or a sim stem's); return its count of bad waypoints."""
     print(f"== {name}: shift {tuple(round(1000 * v, 1) for v in F.shift_turn(seed)[:2])} mm, turn "
-          f"{math.degrees(F.shift_turn(seed)[2]):.1f} deg")
-    plans = dict(zip(("right", "left"), F.plan(0.0, seed)))
+          f"{math.degrees(F.shift_turn(seed)[2]):.1f} deg" + (f", stem {stem}00" if stem else ""))
+    plans = dict(zip(("right", "left"), F.plan(0.0, seed) if stem is None else stem_plan(stem, seed)))
     total_bad = 0
     for side, ws in plans.items():
         bad = []
@@ -60,7 +71,18 @@ def check(seed, name):
             t += 0.02
         print(f"  interpolated: dur {p.duration:.1f} s worst {p.worst_ik_mm:.2f} mm {p.worst_ik_deg:.2f} deg; max "
               f"|joint6| {j6:.2f} rad (limit {J6})")
-    R, L = plans["right"], plans["left"]
+    if stem is not None:
+        return total_bad
+    worst, press = separation(seed)
+    print(f"  closest x separation of the two TCPs while both low and within 200 mm in y: {1000 * worst[0]:.0f} mm at "
+          f"t {worst[1]:.1f} s (right {worst[2]}, left {worst[3]}); at the press {1000 * press:.0f} mm")
+    return total_bad
+
+
+def separation(seed):
+    """((closest x separation of the two TCPs while both are low and within 200 mm in y, t, right, left), the x
+    separation at the end of the press, "press until it fires"), from the plan's targets (no IK)."""
+    R, L = F.plan(0.0, seed)
     dur = max(sum(w.duration for w in R), sum(w.duration for w in L))
     worst, t = (9.0, None, None, None), 0.0
     while t <= dur:
@@ -71,21 +93,35 @@ def check(seed, name):
             if dx < worst[0]:
                 worst = (dx, t, tuple(np.round(r, 3)), tuple(np.round(lf, 3)))
         t += 0.05
-    print(f"  closest x separation of the two TCPs while both low and within 200 mm in y: {1000 * worst[0]:.0f} mm at "
-          f"t {worst[1]:.1f} s (right {worst[2]}, left {worst[3]})")
-    return total_bad
+    t_press = 0.0
+    for w in R:
+        t_press += w.duration
+        if w.label == "press until it fires":
+            break
+    press = abs(tcp_at(L, t_press, F.PARK_L)[0] - tcp_at(R, t_press, (0.323, -0.305, 1.008))[0])
+    return worst, press
 
 
-jobs = []
-for a in sys.argv[1:]:
-    if a == "corners":
-        jobs += [(c, f"corner {c[0] * 1000:+.0f}, {c[1] * 1000:+.0f} mm, {math.degrees(c[2]):+.0f} deg")
-                 for c in F.corners()]
-    else:
-        k, v = a.split("=")
-        jobs.append((int(v), f"run seed {v}") if k == "seed" else (zlib.crc32(f"{v}:None:0".encode()), f"--seed {v}"))
-if not jobs:
-    jobs = [(c, f"corner {c[0] * 1000:+.0f}, {c[1] * 1000:+.0f} mm, {math.degrees(c[2]):+.0f} deg")
-            for c in F.corners()] + [(zlib.crc32(f"{c}:None:0".encode()), f"--seed {c}") for c in (0, 2, 4)]
-total = sum(check(s, n) for s, n in jobs)
-print("TOTAL BAD", total)
+def main():
+    jobs = []
+    for a in sys.argv[1:]:
+        if a == "stems":   # the sim stems on --seed 0, as sim/run.sh runs them
+            jobs += [(zlib.crc32(b"0:None:0"), f"--seed 0", k) for k in "ojwfk"]
+            continue
+        if a == "corners":
+            jobs += [(c, f"corner {c[0] * 1000:+.0f}, {c[1] * 1000:+.0f} mm, {math.degrees(c[2]):+.0f} deg", None)
+                     for c in F.corners()]
+        else:
+            k, v = a.split("=")
+            jobs.append((int(v), f"run seed {v}", None) if k == "seed" else (zlib.crc32(f"{v}:None:0".encode()),
+                                                                              f"--seed {v}", None))
+    if not jobs:
+        jobs = [(c, f"corner {c[0] * 1000:+.0f}, {c[1] * 1000:+.0f} mm, {math.degrees(c[2]):+.0f} deg", None)
+                for c in F.corners()] + [(zlib.crc32(f"{c}:None:0".encode()), f"--seed {c}", None) for c in (0, 2, 4)]
+        jobs += [(zlib.crc32(b"0:None:0"), "--seed 0", k) for k in "ojwfk"]
+    total = sum(check(s, n, k) for s, n, k in jobs)
+    print("TOTAL BAD", total)
+
+
+if __name__ == "__main__":
+    main()

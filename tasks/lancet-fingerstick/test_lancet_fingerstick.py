@@ -17,13 +17,26 @@ HERE = pathlib.Path(__file__).resolve().parent
 from yam_arena.task_file import load  # noqa: E402
 
 M = load(HERE / "lancet_fingerstick.py").module
+
+
+def _tool(name):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(name, HERE / "tools" / f"{name}.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+TS = _tool("tipsweep")
+FIRM_MARGIN = 0.020              # N m: every allowed unsteadied press at F_FIRM tips the hand by at least this
+FIRE_MARGIN = 0.050              # N m: and at F_FIRE by at least this
 CLI = (0, 2, 4)
 N_SEEDS = 20                     # inspect-robots --seed 0..19 for the many-seed replay
 N_PAIRS = 20                     # seed pairs (a, a + 20) for the open-loop replay
 SIM_SEEDS = (26385, 84277, 5410, 55059, 126748, 5673, 58369, 100825)   # --seed nearest each layout corner (README)
 DT = 0.05
 K_ARM = 500.0                    # N/m at the TCP in z [EST, as the task's PRESS_DZ comment]
-W = M.HAND_KG * 9.81
+G = M.hold_moment()               # N m: the hand's weight about the hinge
 GRIP_READ = -(M.L_T / 2 - 0.0003)   # the finger's reading closed on the 10 mm side: 0.3 mm in [RUN, sim trace]
 
 
@@ -59,7 +72,7 @@ def hand_link(seed, theta=0.0):
     """The hand link's frame (world pos, quat): the mechanism's frame turned theta about the pivot's axis."""
     hx, hy, hz, yaw = M.layout(seed)["hand"]
     Ry = ry(theta)
-    piv = np.array([M.PIVOT_X, 0.0, M.REST_F_Z])
+    piv = np.array([M.PIVOT_X, 0.0, M.HINGE_Z])
     Rw = rz(yaw)
     pos = np.array([hx, hy, hz]) + Rw @ (piv - Ry @ piv)
     return pos, q_from_R(Rw @ Ry)
@@ -103,8 +116,7 @@ class Kin:
             if f < M.F_PRE:
                 q = 0.0
             lever = M.PIVOT_X - float(pm[0])
-            if theta == 0.0 and not self._left_holds() and lever > 0 and M.shield_force(q) * lever > W * (
-                    M.COM_X - M.PIVOT_X):
+            if theta == 0.0 and not self._left_holds() and lever > 0 and M.shield_force(q) * lever > G:
                 continue   # it tips: try again with the hand on its stop
             self.theta = theta
             return q, depth - q
@@ -143,8 +155,16 @@ class Kin:
             self.lyaw = yaw + self.off
             if M.in_socket(cmd) and self.tab < math.radians(100):
                 self.tab = min(math.radians(100), max(self.tab, self.lyaw))
-            self.q, back = self._press(cmd.copy()) if not M.in_socket(cmd) else (0.0, 0.0)
-            self.l = cmd + [0, 0, back]
+            if not M.in_socket(cmd):
+                self.q, back = self._press(cmd.copy())
+                self.l = cmd + [0, 0, back]
+            else:
+                # in the stand the shield rests on the tab cap: a TCP commanded under where the lancet stands
+                # compresses the shield (the arm's compliance in series), the housing stays where it stood
+                depth = max(0.0, M.L_START[2] - cmd[2])
+                f = (depth + M.F_PRE / M.K_SHIELD) / (1 / M.K_SHIELD + 1 / K_ARM) if depth > 0 else 0.0
+                self.q = min(M.SHIELD_TRAVEL, max(0.0, (f - M.F_PRE) / M.K_SHIELD)) if f > M.F_PRE else 0.0
+                self.l = np.array([cmd[0], cmd[1], max(cmd[2], M.L_START[2])])
         elif not M.in_socket(self.l) and not M.in_sharps(self.l) and self.l[2] > M.TOP + 0.0005:
             ox, oy = M.SH_OPEN[0] / 2, M.SH_OPEN[1] / 2
             if abs(self.l[0] - M.SHARPS[0]) <= ox and abs(self.l[1] - M.SHARPS[1]) <= oy:
@@ -243,13 +263,16 @@ class Model(unittest.TestCase):
         self.assertAlmostEqual(float(s[3] @ np.array([0.0, 0.0, -1.0])), 1.0, places=9)   # inward normal is down
 
     def test_site_rules(self):
-        cases = [(("ring", 0.008, 0.0), "middle of the ring's pad"),
-                 (("ring", 0.008, math.radians(70)), "too far round"),
+        cases = [(("ring", 0.010, 0.0), "middle of the ring's pad"),
+                 (("ring", 0.010, -math.radians(70)), "too far round"),
                  (("ring", 0.020, -0.5), "off the pad"),
-                 (("little", 0.008, -0.5), "little finger"),
-                 (("index", 0.008, -0.5), "not the side of a middle or ring"),
-                 (("middle", 0.008, -0.5), None),
-                 (("ring", 0.008, 0.5), None)]   # the other side of the pad is a site too (BD shades both)
+                 (("ring", 0.006, -0.5), "off the pad"),          # under 8 mm: on the cap, not scored
+                 (("little", 0.010, -0.5), "little finger"),
+                 (("index", 0.010, -0.5), "not the side of a middle or ring"),
+                 (("middle", 0.010, -0.5), None),
+                 (("ring", 0.010, -0.5), None),
+                 (("ring", 0.010, 0.5), "faces down"),          # BD shades it, but the task scores the side facing up
+                 (("middle", 0.010, math.radians(30)), "faces down")]
         for (name, s, ang), why in cases:
             ok, msg = M.site_ok(M.site_of(site_point(name, s, ang)))
             if why is None:
@@ -288,13 +311,14 @@ class Model(unittest.TestCase):
         self.assertIsNone(m["fault"])
 
     def test_placed_needs_a_firm_press(self):
-        """A light touch on a good site is not "placed": the rung needs a press over the hand's tipping force."""
+        """A light touch on a good site is not "placed": the rung needs F_FIRM, over the hand's worst tipping force."""
         m = fresh()
         press_at(m, GOOD, M.F_FIRM - 0.5)
         self.assertFalse(m["positioned"])
         press_at(m, GOOD, M.F_FIRM + 0.1)
         self.assertTrue(m["positioned"])
-        self.assertGreater(M.F_FIRM, W * (M.COM_X - M.PIVOT_X) / (M.PIVOT_X - M.SITE_S[0]))
+        k, _ = TS.sweep(0.5)
+        self.assertGreater(M.F_FIRM, G / k + 0.5)
 
     def test_no_fire_under_the_fire_force(self):
         m = fresh()
@@ -393,14 +417,78 @@ class Model(unittest.TestCase):
             M.advance(m, DT, lp, (0, 0, 0, 1), 0.0, 1.0, 0.0, hp, hq, (np.array([0.2, -0.2, 1.0]), M.OPEN_F))
         self.assertIn("dropped", m["fault"])
 
-    def test_press_needs_the_wrist_held(self):
-        """Over the whole site the hand tips under less than the fire force: a press that fires needs the other hand."""
-        for s in M.SITE_S:
-            tip = W * (M.COM_X - M.PIVOT_X) / (M.PIVOT_X - s)
-            self.assertLess(tip, 0.6 * M.F_FIRE)
-        # and the demo's hold covers what the press needs at its peak (10 N [EST]) with margin
-        need = (10.0 * (M.PIVOT_X - M.SITE_AIM) - W * (M.COM_X - M.PIVOT_X)) / (M.STUB_X - M.PIVOT_X)
+    def test_unsteadied_hand_tips_before_firm_and_fire(self):
+        """tools/tipsweep.py over the whole site (ring and middle, 8 to 15 mm, 15 to 45 deg round on the side facing
+        up), every lancet direction within the square rule's 15 deg, and the contact force's direction set by friction
+        0, 0.25 or 0.5 in either the shield's face or its rim contact: the hand tips at F_FIRM and at F_FIRE by at
+        least the margins, so neither the placed rung nor the fire is reached one-handed."""
+        for mu in (0.0, 0.25, 0.5):
+            k, where = TS.sweep(mu)
+            self.assertGreaterEqual(M.F_FIRM * k - G, FIRM_MARGIN, f"mu {mu} at {where}")
+            self.assertGreaterEqual(M.F_FIRE * k - G, FIRE_MARGIN, f"mu {mu} at {where}")
+        # and the demo's hold covers what its press needs at its peak (10 N [EST]) with margin
+        need = (10.0 * (M.PIVOT_X - M.SITE_AIM) - G) / (M.STUB_X - M.PIVOT_X)
         self.assertLess(need, 0.5 * K_ARM * M.HOLD_DZ)
+
+    def test_old_design_fails_the_sweep(self):
+        """The check can fail: with the old hinge (the hand's lowest point, 52.9 mm under the ring's axis), the old
+        weight (0.300 kg) and the old site (from 3 mm), a press on the cap 3 mm back pointing 15 deg toward the wrist
+        holds the wrist down at 8 N, as the review found."""
+        p = TS.site_point("ring", 0.003, -math.radians(30))
+        n = M.site_of(p)[3]
+        old_g = 0.300 * M.GRAVITY * (M.COM_X - M.PIVOT_X)
+        self.assertAlmostEqual(1000 * (M.HZ + M.REST_F_Z), 17.067, places=2)
+        k = TS.k_site(p, n, 0.0, hinge=(M.PIVOT_X, M.REST_F_Z))
+        self.assertLess(M.F_FIRE * k - old_g, 0.0)
+        self.assertGreater(M.F_FIRE * TS.k_site(p, n, 0.0) - G, 0.0)   # the new hinge tips the hand there too
+
+    def test_the_side_facing_down_would_not_tip(self):
+        """WHY the site is the side facing up only: on the other side a square press is mostly sideways, and some
+        square presses there never tip the hand at any force."""
+        k, _ = TS.sweep(0.0, side=1)
+        self.assertLessEqual(k, 0.0)
+
+    def test_fired_in_the_stand_latches(self):
+        """Tab off and still in the stand, a press of F_FIRE on the shield fires it into the post: 0."""
+        M.reset_memory(0)
+        lp = np.array(M.L_START)
+        hp, hq = hand_link(0)
+        q = (M.F_FIRE + 0.1 - M.F_PRE) / M.K_SHIELD
+        M.advance(M._M, DT, lp, (0, 0, 0, 1), q, M.TAB_BREAK + 0.1, 0.0, hp, hq, (M.grip_point(lp, (0, 0, 0, 1)),
+                                                                                   GRIP_READ))
+        self.assertTrue(M._M["fired"])
+        self.assertIn("fired in the stand", M._M["fault"])
+        M.reset_memory(0)   # tab still on: it does not fire
+        M.advance(M._M, DT, lp, (0, 0, 0, 1), q, 0.1, 0.0, hp, hq, (M.grip_point(lp, (0, 0, 0, 1)), GRIP_READ))
+        self.assertFalse(M._M["fired"])
+        self.assertIsNone(M._M["fault"])
+
+    def test_slipped_or_deep_grasp_in_the_container_is_still_held(self):
+        """A gripper closed on the housing with its TCP 25 mm off the demo's grip point (slipped along the pads, or
+        taken deep or high) still holds it: lowered into the container and kept there it scores 0.6, not 0.8. The
+        old rule (TCP within 20 mm of the grip point) read it as let go."""
+        inside = np.array([M.SHARPS[0], M.SHARPS[1], M.TOP + 0.150])
+        q0 = (0.0, 0.0, 0.0, 1.0)
+        g = M.grip_point(inside, q0)
+        for off in (np.array([0.0, 0.0, -0.025]), np.array([0.0, 0.0, 0.020]), np.array([0.009, 0.0, -0.018])):
+            tcp = g + off
+            self.assertGreater(np.linalg.norm(tcp - g), 0.020)   # the old rule: let go
+            m = fresh()
+            m["fired"] = True
+            hp, hq = hand_link(0)
+            for _ in range(int(2.0 / DT)):
+                M.advance(m, DT, inside, q0, 0.0, 1.0, 0.0, hp, hq, (tcp, GRIP_READ), None)
+                M._CLOCK["dt"] = DT
+                M._CLOCK["steps"] += 1
+                m["steps"] += 1
+            objs = Kin(0).objects()
+            objs["lancet"] = st(inside, q0)
+            self.assertTrue(M.held_by((tcp, GRIP_READ), inside, q0))
+            self.assertEqual(M.stage(objs, m), 3, off)
+        # closed tight on nothing, beside the lancet: not let go either; open, it is
+        self.assertFalse(M.let_go((g + [0.0, 0.0, -0.030], -0.001), inside, q0))
+        self.assertTrue(M.let_go((g, M.OPEN_F), inside, q0))
+        self.assertTrue(M.let_go((g + [0.0, 0.0, 0.10], -0.001), inside, q0))
 
 
 class Scoring(unittest.TestCase):
@@ -611,21 +699,39 @@ class LazyRoutes(unittest.TestCase):
         self.assertEqual(sc, 0.6)
         self.assertIsNone(why)
 
-    def test_one_arm_sim_stems(self):
-        """sim/one_arm.py, appended by sim/mk.sh to the one-arm copies (o00, j00; both scored 0 in PhysX, README Sim
-        results), keeps the left arm parked: in the replay both its press and its jab score 0, the hand not steadied."""
-        src = (HERE / "sim" / "one_arm.py").read_text()
-        for jab in (False, True):
+    def test_sim_stems(self):
+        """sim/stems.py, appended by sim/mk.sh to the stem copies (README Sim results), replayed offline on --seed 0's
+        layout: each scores what the README expects, for the reason it gives."""
+        src = (HERE / "sim" / "stems.py").read_text()
+        want = {"o": (0.0, ("not steadied",)), "j": (0.0, ("not steadied",)), "w": (0.0, ("not steadied", "slid")),
+                "f": (0.0, ("fired in the stand",)), "k": (0.6, (None,))}
+        seed = trial_seed(0)
+        for stem, (score, why) in want.items():
             ns = dict(vars(M))
-            exec(compile(src.replace("_JAB = False", f"_JAB = {jab}"), "one_arm.py", "exec"), ns)
+            ns["run_seed"] = lambda: seed
+            exec(compile(src.replace('_STEM = "none"', f'_STEM = "{stem}"'), "stems.py", "exec"), ns)
             d = ns["demo"]()
-            self.assertTrue(all(w.pos == M.PARK_L for w in d["left"]))
-            press = [w for w in d["right"] if w.label == "press until it fires"][0]
-            self.assertEqual(press.duration, ns["_JAB_S"] if jab else 1.5)
-            M.reset_memory(None)
-            k = Kin(None)
-            self.assertEqual(k.run(d["right"], d["left"]), 0.0)
-            self.assertIn("not steadied", M._MEM["fail"])
+            if stem in "ojw":
+                self.assertTrue(all(w.pos == M.PARK_L for w in d["left"]))
+            if stem == "j":
+                press = [w for w in d["right"] if w.label == "press until it fires"][0]
+                self.assertEqual(press.duration, ns["_JAB_S"])
+            M.reset_memory(seed)
+            k = Kin(seed)
+            got = k.run(d["right"], d["left"])
+            self.assertEqual(got, score, f"stem {stem}: {M._MEM['fail']}")
+            fail = M._MEM["fail"]
+            self.assertTrue(any((w is None and fail is None) or (w and fail and w in fail) for w in why),
+                            f"stem {stem}: {fail}")
+            if stem == "w":   # pressed 8.5 mm back, on the site, driven toward the wrist
+                f = [w for w in d["right"] if w.label == "press until it fires"][0]
+                t = [w for w in d["right"] if w.label == "tip on the site"][0]
+                yaw = M.layout(seed)["hand"][3]
+                along = (np.asarray(f.pos) - np.asarray(t.pos))[:2] @ np.array([math.cos(yaw), math.sin(yaw)])
+                self.assertAlmostEqual(along, M.PRESS_DZ * math.tan(ns["_TILT"]), places=6)
+            if stem == "k":
+                self.assertTrue(M.in_sharps(k.l))
+                self.assertTrue(M.held_by(M._M["right"], k.l, k._lancet_quat()))
 
     def test_do_nothing(self):
         M.reset_memory(self.S)
@@ -699,9 +805,15 @@ class ReadmeNumbers(unittest.TestCase):
                   f"{math.degrees(M.SITE_ANG[0]):.0f} to {math.degrees(M.SITE_ANG[1]):.0f} deg",
                   f"within {math.degrees(M.TILT_MAX):.0f} deg", f"more than {1000 * M.SLIDE_MAX:.1f} mm",
                   f"wrist rises more than {1000 * M.WRIST_LIFT_MAX:.0f} mm", f"loose for {M.DROP_S:g} s",
-                  f"{abs(math.degrees(M.ROLL)):.0f} deg", f"{M.HAND_KG:.3f} kg",
-                  f"{W * (M.COM_X - M.PIVOT_X) / (M.PIVOT_X - M.SITE_S[1]):.1f} N",
-                  f"{W * (M.COM_X - M.PIVOT_X) / (M.PIVOT_X - M.SITE_S[0]):.1f} N",
+                  f"{abs(math.degrees(M.ROLL)):.0f} deg", f"rigid, {M.HAND_KG:.3f} kg",
+                  f"{1000 * M.SITE_AIM:g} mm back from the ring's apex", f"placed rung needs {M.F_FIRM:g} N",
+                  f"{1000 * M.SITE_S[0]:.0f} to {1000 * M.SITE_S[1]:.0f} mm back from the apex and "
+                  f"{math.degrees(M.SITE_ANG[0]):.0f} to {math.degrees(M.SITE_ANG[1]):.0f} deg round from the pad's "
+                  f"middle line, on the side that faces up",
+                  f"within {1000 * M.HELD_R:.0f} mm of the lancet's axis, anywhere from {-1000 * M.HELD_AX[0]:.0f} mm "
+                  f"beyond its face to {1000 * M.HELD_AX[1]:.0f} mm up it",
+                  f"half-gap over {1000 * M.HELD_GAP[1]:.1f} mm, or its TCP more than {1000 * M.RELEASE_R:.0f} mm",
+                  f"{1000 * M.PIVOT_X:.0f} mm behind the ring's apex and {1000 * (M.HZ + M.HINGE_Z):.1f} mm over the table",
                   f"{1000 * M.BASE_MOVED:.0f} mm", f"{M.RUN_LIMIT_STEPS:,} steps",
                   f"more than {1000 * M.OUT_XY:.0f} mm across or {1000 * M.LIFT_OUT:.0f} mm up",
                   f"half-gap {1000 * M.HELD_GAP[0]:.1f} to {1000 * M.HELD_GAP[1]:.1f} mm",
@@ -712,16 +824,24 @@ class ReadmeNumbers(unittest.TestCase):
             self.assertIn(s, t)
 
     def test_cradle_numbers(self):
-        """The rig's sizes under Real trials are the model's: the hinge pin at the pivot, the wrist block as the stop."""
+        """The rig's sizes under Real trials are the model's: the hinge pin at the hinge, the wrist block as the stop."""
         t = self.TXT
-        pin, top_w = M.HZ + M.REST_F_Z, M.HZ + M.REST_W_Z
+        rs = _tool("rig_scad")
+        n = rs.numbers()
+        pin, top_w = M.HZ + M.HINGE_Z, M.HZ + M.REST_W_Z
+        c0, ci0, ci1, c1 = n["cheeks"]
         for s in (f"{1000 * M.PIVOT_X:.0f} mm behind the ring's apex and {1000 * pin:.1f} mm over the table",
+                  f"{rs.KEEL_T:g} mm thick keel web", f"({(rs.KEEL_T - rs.PIN_D - 2 * rs.PIN_CLEAR) / 2:.1f} mm of wall "
+                  f"round its {rs.PIN_D + 2 * rs.PIN_CLEAR:g} mm hole)",
+                  f"cheeks on the base, {1000 * M.CHEEK_L:.0f} by {1000 * M.CHEEK_T:.0f} mm and {n['pin'][1] + 4:.0f} mm "
+                  f"high, standing {1000 * M.CHEEK_GAP:.0f} mm outside the little and index fingers",
+                  f"3 mm steel pin, {c1 - c0 + 6:.0f} mm long", f"alignment pins {rs.ALIGN_Y:g} mm either side",
                   f"its top {1000 * top_w:.1f} mm over the table, centred {1000 * M.STUB_X:.0f} mm behind the apex",
                   f"{1000 * M.STUB_YZ[0]:.0f} mm to the thumb side", f"{1000 * (M.STUB_X - M.PIVOT_X):.0f} mm behind the pin",
                   f"{1000 * (M.STUB_X + 0.040 - M.PIVOT_X + 0.030):.0f} by 60 by 5 mm base plate ({1000 * (M.PIVOT_X - 0.030):.0f} "
                   f"to", f"{1000 * (M.STUB_X + 0.040):.0f} mm behind the apex), ballasted to {M.BASE_KG:g} kg",
-                  f"centre of mass {1000 * (M.COM_X - M.PIVOT_X):.0f} mm behind the pivot, a moment of "
-                  f"{W * (M.COM_X - M.PIVOT_X):.3f} N m", f"{1000 * 2 * M.STUB_R:.0f} mm forearm stub",
+                  f"{M.HAND_KG:.3f} kg with its centre of mass {1000 * (M.COM_X - M.PIVOT_X):.0f} mm behind the hinge, "
+                  f"a moment of {G:.3f} N m", f"{1000 * 2 * M.STUB_R:.0f} mm forearm stub",
                   f"{1000 * (M.L_W + 2 * M.CUP_CLEAR):.1f} by {1000 * (M.L_T + 2 * M.CUP_CLEAR):.1f} mm, "
                   f"{1000 * M.CUP_D:.0f} mm deep, {1000 * M.CUP_CLEAR:.1f} mm each side",
                   f"{1000 * (M.STAND_H + M.TAB_H):.0f} mm over the table, is where the shield's face rests",
@@ -731,12 +851,54 @@ class ReadmeNumbers(unittest.TestCase):
         self.assertGreater(M.STUB_YZ[0], 0.0)   # +y in the rolled frame is the thumb side
 
     def test_tipping_force_sits_with_its_place(self):
-        """The README pairs each tipping force with where on the site it acts (smallest near the apex)."""
-        near = W * (M.COM_X - M.PIVOT_X) / (M.PIVOT_X - M.SITE_S[0])
-        far = W * (M.COM_X - M.PIVOT_X) / (M.PIVOT_X - M.SITE_S[1])
+        """The README pairs each straight-down tipping force with where on the site it acts (smallest near the apex),
+        for the ring and the middle fingertip, and gives the sweep's numbers."""
+        t = self.TXT
+        near, far = (TS.vertical_tip_force("ring", s) for s in M.SITE_S)
         self.assertLess(near, far)
-        self.assertIn(f"{near:.1f} N ({1000 * M.SITE_S[0]:.0f} mm from the apex) to {far:.1f} N "
-                      f"({1000 * M.SITE_S[1]:.0f} mm back", self.TXT)
+        self.assertIn(f"at {near:.1f} N ({1000 * M.SITE_S[0]:.0f} mm from the ring's apex) to {far:.1f} N "
+                      f"({1000 * M.SITE_S[1]:.0f} mm back", t)
+        mn, mf = (TS.vertical_tip_force("middle", s) for s in M.SITE_S)
+        self.assertLess(mn, near)   # the middle's apex is 8 mm farther from the hinge
+        self.assertIn(f"or {mn:.1f} to {mf:.1f} N on the middle fingertip", t)
+        self.assertIn(f"moment of {G:.3f} N m about the hinge", t)
+        k5, w5 = TS.sweep(0.5)
+        k0, _ = TS.sweep(0.0)
+        self.assertEqual(w5, ("ring", 15.0, -15.0))
+        for s in (f"tips the hand by {G / k5:.1f} N (friction 0.5; {G / k0:.1f} N without friction)",
+                  f"At {M.F_FIRM:g} N every one of them tips the hand by at least {M.F_FIRM * k5 - G:.3f} N m",
+                  f"at {M.F_FIRE:g} N by at least {M.F_FIRE * k5 - G:.3f} N m",
+                  f"gives {k5:.4f} N m per newton on the shield", f"{G:.3f} / {k5:.4f} = {G / k5:.1f} N",
+                  f"0.047 m x cos 56.6 / cos 26.6 = {0.047 * math.cos(math.radians(56.6)) / math.cos(math.radians(26.6)):.3f}",
+                  f"needs about {(10.0 * (M.PIVOT_X - M.SITE_AIM) - G) / (M.STUB_X - M.PIVOT_X):.1f} N there"):
+            self.assertIn(s, t)
+        self.assertAlmostEqual(math.degrees(math.atan(0.5)), 26.6, places=1)
+        self.assertAlmostEqual(M.PIVOT_X - M.SITE_S[1], 0.047, places=9)
+
+    def test_real_check_numbers(self):
+        """Real trials checks 1 and 4 come from the sweep: the lowest fire force for a 0.05 N m margin, and the two
+        tipping forces with their bounds and what the bounds leave of the margin."""
+        t = self.TXT
+        k5, _ = TS.sweep(0.5)
+        f_min = (G + FIRE_MARGIN) / k5
+        self.assertIn(f"the lowest at least {f_min:.1f} N", t)
+        self.assertIn(f"lowered to F_min x {k5:.4f} - {FIRE_MARGIN:g} N m", t)
+        a = TS.vertical_tip_force("ring", M.SITE_AIM)
+        b = TS.normal_tip_force("ring", M.SITE_S[1], -M.SITE_ANG[1])
+        self.assertIn(f"(a) {a - 0.2:.1f} to {a + 0.2:.1f} N (the sim's {a:.1f} N plus or minus 0.2 N)", t)
+        self.assertIn(f"(b) {b - 0.2:.1f} to {b + 0.2:.1f} N (the sim's {b:.1f} N plus or minus 0.2 N)", t)
+        hi = max((a + 0.2) / a, (b + 0.2) / b)
+        self.assertIn(f"within {100 * (hi - 1):.0f}% of the sim's", t)
+        self.assertIn(f"at least {M.F_FIRE * k5 - G * hi:.3f} N m at {M.F_FIRE:g} N", t)
+        self.assertGreaterEqual(M.F_FIRE * k5 - G * hi, FIRE_MARGIN)
+
+    def test_tcp_separation(self):
+        """README: the TCPs' separation along x on --seed 0, at the press and at the closest (tools/ikcheck.py)."""
+        ik = _tool("ikcheck")
+        worst, press = ik.separation(trial_seed(0))
+        self.assertIn(f"about {1000 * press:.0f} mm between the TCPs along x at the press, {1000 * worst[0]:.0f} mm at "
+                      f"the closest (`tools/ikcheck.py cli=0`)", self.TXT)
+        self.assertGreater(worst[0], 0.104)
 
     def test_instruction_is_outcomes_not_choreography(self):
         """Under 1000 characters, and no gripper assignment or grasp (the #826 rejection)."""
@@ -750,8 +912,9 @@ class ReadmeNumbers(unittest.TestCase):
 def real_square_tilt(s, theta, r, lean_apex, lean_middle):
     """README Real trials, Square: the lancet's angle off the skin's normal (deg) from what the trial reads. s (mm back
     from the apex) and theta (deg round from the pad's middle line toward the side facing up) from the ink patch on the
-    template; r the fingertip's radius (check 3b); lean_apex and lean_middle the housing top's lean (deg) toward the
-    apex in the along-finger view and toward the pad's middle line in the across-finger view."""
+    template; r the fingertip's radius (check 3b); lean_apex and lean_middle the housing top's lean (deg, signed)
+    toward the apex, seen by the camera looking across the fingers, and toward the pad's middle line, seen by the
+    camera looking along them."""
     beta = math.asin((r - s) / r) if s < r else 0.0
     gamma = math.radians(30.0) - math.radians(theta)
     n = np.array([math.tan(beta) / math.cos(gamma), math.tan(gamma), 1.0])
@@ -787,6 +950,28 @@ class RealTrial(unittest.TestCase):
             lean_middle = math.degrees(math.atan2(d[1], d[2]))     # the pad's middle line lies toward +y
             self.assertAlmostEqual(real_square_tilt(1000 * s, theta, 1000 * r, lean_apex, lean_middle), code, places=6)
 
+    def test_real_square_check_both_sides_of_theta(self):
+        """g = 30 - theta is signed: near theta 15 and 45 deg (the normal leaning toward, then away from, the pad's
+        middle line) and with leans of both signs, the reading equals the scorer's tilt; a vertical lancet reads
+        |30 - theta| at both."""
+        for name in ("ring", "middle"):
+            v, u0, _, r, _ = M.FINGERS[name]
+            for theta in (15.5, 44.5):   # WHY not 15 and 45 exactly: rounding puts a site on the bound either way
+                p = M.hand_to_mech((u0 + 0.011, v + r * math.sin(-math.radians(theta)), r * math.cos(math.radians(theta))))
+                site = M.site_of(p)
+                self.assertEqual(M.site_ok(site), (True, ""))
+                for la, lm in ((0.0, 0.0), (8.0, -12.0), (-8.0, 12.0), (0.0, 15.0), (0.0, -15.0)):
+                    d = np.array([-math.tan(math.radians(la)), math.tan(math.radians(lm)), 1.0])
+                    d /= np.linalg.norm(d)
+                    k = np.cross([0.0, 0.0, 1.0], d)
+                    ang = math.asin(min(1.0, float(np.linalg.norm(k))))
+                    q = (0.0, 0.0, 0.0, 1.0) if ang < 1e-12 else tuple(
+                        list(k / np.linalg.norm(k) * math.sin(ang / 2)) + [math.cos(ang / 2)])
+                    code = math.degrees(M.tilt_of(q, (0.0, 0.0, 0.0, 1.0), site[3]))
+                    self.assertAlmostEqual(real_square_tilt(11.0, theta, 1000 * r, la, lm), code, places=6)
+                    if la == lm == 0.0:
+                        self.assertAlmostEqual(code, abs(30.0 - theta), places=6)
+
     def test_rig_scad_is_current(self):
         """rig.scad is what tools/rig_scad.py writes from the task's numbers now."""
         import importlib.util
@@ -798,7 +983,19 @@ class RealTrial(unittest.TestCase):
         for a, b in ("{}", "()", "[]"):
             self.assertEqual(txt.count(a), txt.count(b))
         n = rs.numbers()
-        self.assertEqual(n["pin"], (round(1000 * M.PIVOT_X, 3), round(1000 * (M.HZ + M.REST_F_Z), 3)))
+        self.assertEqual(n["pin"], (round(1000 * M.PIVOT_X, 3), round(1000 * (M.HZ + M.HINGE_Z), 3)))
+        self.assertIn(f"pin_x = {n['pin'][0]}; pin_z = {n['pin'][1]};", txt)
+        # the cheeks stand outside every finger at the hinge, and the thumb clears the index-side cheek
+        ys = [M._axis_yz(v)[0] + sg * rp for v, _, _, _, rp in M.FINGERS.values() for sg in (-1, 1)]
+        c0, ci0, ci1, c1 = n["cheeks"]
+        self.assertLess(ci0, 1000 * min(ys) - 0.5)
+        self.assertGreater(ci1, 1000 * max(ys) + 0.5)
+        thumb = M.hand_to_mech((M.THUMB[0][1], M.THUMB[0][0], 0.0))
+        self.assertGreater(1000 * (thumb[1] - M.THUMB[0][2]), c1 + 5.0)
+        # the alignment pins' holes (d 3.2) miss the ballast bore (d 16) and stay inside the stub
+        self.assertGreater(rs.ALIGN_Y - 1.6 - rs.BORE_D / 2, 3.0)
+        self.assertLess(rs.ALIGN_Y + 1.6, 1000 * M.STUB_R - 3.0)
+        self.assertGreaterEqual((rs.KEEL_T - rs.PIN_D - 2 * rs.PIN_CLEAR) / 2, 4.0)
         self.assertEqual(n["wrist_top"], round(1000 * (M.HZ + M.REST_W_Z), 3))
         self.assertEqual(n["stub_lever"], round(1000 * (M.STUB_X - M.PIVOT_X), 3))
         # the shield's face rests on the post at the model's height, and the cup's rim is the model's socket wall

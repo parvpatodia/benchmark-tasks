@@ -13,7 +13,11 @@ def _trace(env):
         if _TRACE["n"] % 2:
             return
         if _TRACE["f"] is None:
-            path = _os.path.join(_os.path.dirname(__file__), "trace_" + _os.path.basename(__file__)[:-3] + ".csv")
+            # WHY in ../out and named by the trial's seed: rr.sh pulls sim/out only, and runs of one copy on several
+            # seeds must not overwrite each other's trace
+            out = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "out")
+            _os.makedirs(out, exist_ok=True)
+            path = _os.path.join(out, f"trace_{_os.path.basename(__file__)[:-3]}_{run_seed()}.csv")
             _TRACE["f"] = open(path, "w")
             _TRACE["f"].write("step,q_mm,force,tab_deg,theta_deg,lift_mm,tab_off,out,positioned,fired,fire,free_t,"
                               "rx,ry,rz,rf,lx,ly,lz,lf,stage,fail,model_err,"

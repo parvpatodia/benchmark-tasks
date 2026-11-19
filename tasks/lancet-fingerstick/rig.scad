@@ -3,7 +3,11 @@
 // Render each part on its own: part = "hand_front", "hand_back", "base", "stand" or "cup" ("all" views the set).
 // The hand is 272 mm long, so it prints in two parts cut at x = 200 mm (across the stub),
 // joined with epoxy on the two 3 mm alignment pins. Print PETG at the infill that keeps it under the model's mass
-// (0.300 kg) with the bore empty; lead shot in the bore then sets the tipping force (README check 4).
+// (0.200 kg) with the bore empty; lead shot in the bore then sets the tipping force (README check 4).
+// Print (CHOICE, not trialled): hand parts lying on their palm side with tree supports under the fingers and the
+// thumb; base on its plate, no supports (the 3.4 mm pin holes bridge); stand on its bottom; cup rim up, no supports.
+// The hinge pin: a 3 mm steel rod 87.025 mm long through both cheeks and the keel, held by a 3 mm push-on
+// retaining washer outside each cheek (CHOICE). It turns in the keel's 3.4 mm hole and in the cheeks'.
 part = "all";
 lance_wall = 1.0;   // the Lance trainer finger's wall, measured with calipers (README check 3b) [EST until measured]
 tab_w = 6.0; tab_t = 3.0; tab_h = 4.0;   // the lancet's tab cap, measured with calipers (README check 3) [EST]
@@ -29,16 +33,17 @@ module stub() { translate([182.0, 12.99, 62.5]) rotate([0, 90, 0]) cylinder(r = 
 // the wrist: the model's palm and stub are one rigid link with a 4 mm gap between them; the print bridges it
 module wrist() { hull() { intersection() { palm(); translate([172.0, -100, -10]) cube([6, 200, 200]); } intersection() { stub(); translate([182.0, -100, -10]) cube([6, 200, 200]); } } }
 module stub_bore() { translate([204.0, 12.99, 62.5]) rotate([0, 90, 0]) cylinder(d = 16.0, h = 61.0); }
-pin_x = 62.0; pin_z = 17.067;   // the hinge's axis: the model's pivot (PIVOT_X, REST_F_Z)
-module pin_hole() { translate([pin_x, -40, pin_z]) rotate([-90, 0, 0]) cylinder(d = 3.4, h = 80); }
-module keel_box() { translate([pin_x - 4.0, -20.0, pin_z - 4.5]) cube([8.0, 44.0, 57.433]); }
-// the keel: from under the pin up into the fingers, clipped to the fingers' hull so nothing stands above them
-module keel() { intersection() { keel_box(); hull() { fingers(0); translate([pin_x - 4.0, -20.0, pin_z - 4.5]) cube([8.0, 44.0, 1]); } } }
+pin_x = 62.0; pin_z = 70.0;   // the hinge's axis: the model's (PIVOT_X, HINGE_Z), on the ring finger's axis
+module pin_hole() { translate([pin_x, -31.254, pin_z]) rotate([-90, 0, 0]) cylinder(d = 3.4, h = 87.025); }
+module keel_box() { translate([pin_x - 7.0, -23.254, pin_z - 6.0]) cube([14.0, 71.025, 40]); }
+// the keel: a web between the cheeks from under the pin up into the fingers, clipped to the fingers' hull so
+// nothing stands above them; the pin's hole runs through it
+module keel() { intersection() { keel_box(); hull() { fingers(0); translate([pin_x - 7.0, -23.254, pin_z - 6.0]) cube([14.0, 71.025, 1]); } } }
 module hand() { difference() { union() { fingers(lance_wall); palm(); wrist(); thumb(); stub(); keel(); }
   pin_hole(); stub_bore(); } }
 module base() { difference() { union() {
   translate([32.0, -30.0, 0]) cube([231.0, 60.0, 5.0]);   // the plate, ballasted to 3 kg and taped down
-  for (y = [-24.5, 24.5]) translate([pin_x - 6, y, 0]) cube([12, 4.0, pin_z + 5]);   // the hinge cheeks
+  for (y = [-28.254, 48.771]) translate([pin_x - 8.0, y, 0]) cube([16.0, 4.0, pin_z + 4]);   // the hinge cheeks, outside the fingers
   translate([198.0, -7.01, 0]) cube([50.0, 40.0, 40.5]);   // the wrist block: the stub rests on it (the hinge's upper stop)
   } pin_hole(); } }
 module stand() { difference() { translate([-20.0, -20.0, 0]) cube([40.0, 40.0, 25.0]);
@@ -51,7 +56,7 @@ module cup() { difference() { translate([0, 0, 19.0]) cylinder(d = 24.0, h = 16.
   translate([0, 0, 18.0]) cylinder(d = 10.4, h = 9.01);   // turns on the post
 } }
 module hand_cut(keep_front) { difference() { intersection() { hand(); translate([keep_front ? -50 : 200.0, -100, -10]) cube([keep_front ? 200.0 + 50 : 200, 200, 200]); }
-  for (y = [4.99, 20.99]) translate([200.0 - 6, y, 62.5]) rotate([0, 90, 0]) cylinder(d = 3.2, h = 12); } }   // the alignment pins' holes
+  for (y = [-1.01, 26.99]) translate([200.0 - 6, y, 62.5]) rotate([0, 90, 0]) cylinder(d = 3.2, h = 12); } }   // the alignment pins' holes
 if (part == "hand_front" || part == "all") hand_cut(true);
 if (part == "hand_back" || part == "all") hand_cut(false);
 if (part == "base" || part == "all") color("grey") base();
