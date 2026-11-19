@@ -1,5 +1,5 @@
-"""flame_axis.py [cli=0|2|4 or seed=..] [band=1 | rest=1 | cradle=1 | box=1 | turn=1 | grip=1 | hose=1]: the real
-trial's flame-axis check, offline along the scripted demo. No sim.
+"""flame_axis.py [cli=0|2|4 or seed=..] [band=1 | rest=1 | cradle=1 | box=1 | turn=1 | grip=1 | hose=1 | rig=1 |
+simhandle=1]: the real trial's flame-axis check, offline along the scripted demo. No sim.
 
 Default (off rest): the live check's placement (``live_axes``): the grip point from the left arm's forward kinematics,
 moved along the gripper's approach axis to the depth the distance sensor reads, and two flame directions, the
@@ -22,7 +22,8 @@ fitting) against every link of the left arm, its base included, on the rest and 
 of the nozzle's end and of every checked point. ``turn=1``: joint6 and joint5 jogged 10 degrees at the lift's pose.
 ``grip=1``: the pads' width along the handle and the play it leaves. ``hose=1``: the taut hose (the line from the
 fitting to the hole in the rest it runs down through, grown by its radius and bow) against every link of both arms
-and the segments.
+and the segments. ``rig=1``: the coil holder and the rest's switch and sensor faces against the off-rest and on-rest
+segments. ``simhandle=1``: how deep the sim's own handle, carried rigid, lies inside the left arm's link hulls.
 
 Speeds are the fastest move of any hull vertex or of the segment's ends over one control step. The margin is
 gap - c (T_C + T_S) - 2 V_CAP T_C, c the gap's closing speed over the last step; the near zone trips under TRIP.
@@ -585,6 +586,70 @@ def _pts_dist(A, B):
     return best
 
 
+REST_FACES = (("front switch", -0.008, 0.005), ("rear switch", 0.052, 0.005), ("proximity sensor", 0.041, 0.004))
+# the faces in the rest's top under the handle (torch-y on the rest, radius): the plungers' caps and the sensor's face
+
+
+def _rig_parts():
+    """{name: world surface samples} of the fixed rig parts near the flame's lines that the sim does not check: the
+    coil holder (solder_joint.bench_base: a steel block HOLDER_W square, HOLDER_H tall, at HOLD_XY) and the rest's
+    switch and sensor faces (REST_FACES, flush in the rest's top)."""
+    o = F.HOLDER_W / 2
+    hx, hy = F.HOLD_XY
+    out = {"coil holder": _box_pts(hx - o, hx + o, hy - o, hy + o, F.TOP, F.TOP + F.HOLDER_H)}
+    g_rest, r_rest = np.asarray(F.G_REST, float), rz(F.TORCH_YAW)
+    for name, y, rad in REST_FACES:
+        c = g_rest + r_rest @ np.array([0.0, y, 0.0])
+        rr, th = np.meshgrid(np.arange(0.0, rad + 1e-9, GRID), np.arange(0.0, 2 * math.pi, GRID / rad), indexing="ij")
+        out[name] = np.stack([c[0] + (rr * np.cos(th)).ravel(), c[1] + (rr * np.sin(th)).ravel(),
+                              np.full(rr.size, F.TOP + F.REST_TOP)], -1)
+    return out
+
+
+def rig(seed=None):
+    """The fixed rig parts (_rig_parts) against the off-rest segment (the lift to the end, the handle rigid) and the
+    on-rest one. Returns {(part, "off"/"rest"): (gap m, t s, distance past the nozzle's end m)}."""
+    parts = _rig_parts()
+    res = {}
+
+    def upd(key, P, A, t):
+        for i in range(0, len(P), 50):
+            d = np.sqrt(((P[i:i + 50, None, :] - parts[key[0]][None, :, :]) ** 2).sum(-1))
+            j = int(d.min(1).argmin())
+            if d.min() < res.get(key, (math.inf,))[0]:
+                res[key] = (float(d.min()), t, float(A[i + j]))
+
+    P, A = axis_points(*rest_axis(rz(F.TORCH_YAW)), near=REST_SLIDE)
+    for name in parts:
+        upd((name, "rest"), P, A, 0.0)
+    for t, acts, p, r, grip0 in _walk(seed):
+        P, A = _segments(p, r, grip0, 0)
+        for name in parts:
+            upd((name, "off"), P, A, t)
+    return res
+
+
+def simhandle(seed=None):
+    """The sim's handle box (HANDLE, rigid in the grip as in the other modes) against the left arm's links other than
+    the hand, along the whole demo: {link: (deepest sample inside the link's hull m, its t, first t inside)}."""
+    hp = _torch_points(sim=True)
+    g_rest, r_rest = np.asarray(F.G_REST, float), rz(F.TORCH_YAW)
+    res = {}
+    for t, acts, p, r, grip0 in _walk_all(seed):
+        g, rt = (g_rest, r_rest) if grip0 is None else _torch_pose(p, r, grip0, g_rest)
+        W = g + hp @ rt.T
+        poses = poses_q(acts["left"], "left")
+        for name, frame, V, h in _pieces("left"):
+            if name in HAND:
+                continue
+            Pl = (W - poses[frame][:3, 3]) @ poses[frame][:3, :3]
+            depth = float(-(Pl @ h.equations[:, :3].T + h.equations[:, 3]).max(1).min())
+            if depth > 0:
+                d0, t0, first = res.get(name, (0.0, None, t))
+                res[name] = (depth, t, first) if depth > d0 else (d0, t0, first)
+    return res
+
+
 def box(seed=None):
     """Extents (world, m) of the nozzle's end and of every checked point, off rest and on rest."""
     nz, pts = [], []
@@ -674,6 +739,15 @@ if __name__ == "__main__":
               f"from the rails (t {res['rails_torch'][1]:.2f} s)")
         for (arm, grp), (d, t, name) in sorted(res["rails_arm"].items()):
             print(f"{arm:5s} {grp:6s} {q(d):7.1f} mm from the rails at t {t:6.2f} s ({name})")
+    elif kw.get("rig"):
+        for (part, state), (d, t, a) in sorted(rig(seed).items()):
+            zone = "near" if a <= R_NEAR + PLAY_FAR + 1e-9 else "far"
+            when = "on the rest" if state == "rest" else f"off rest, t {t:.2f} s"
+            print(f"{part:16s} {mm(max(0.0, d - STEP)):6.1f} mm from the {state:4s} segment ({when}), "
+                  f"{mm(a):.0f} mm past the nozzle, {zone} zone")
+    elif kw.get("simhandle"):
+        for name, (d, t, first) in sorted(simhandle(seed).items()):
+            print(f"sim handle inside left {name}'s hull from t {first:.2f} s, deepest {mm(d):.1f} mm at t {t:.2f} s")
     elif kw.get("hose"):
         res = hose(seed)
         # WHY: gaps are to the hose grown by its radius, its bow and half the 2 mm sample spacing
