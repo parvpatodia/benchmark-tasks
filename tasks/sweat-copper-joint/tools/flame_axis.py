@@ -631,22 +631,33 @@ def rig(seed=None):
 
 def simhandle(seed=None):
     """The sim's handle box (HANDLE, rigid in the grip as in the other modes) against the left arm's links other than
-    the hand, along the whole demo: {link: (deepest sample inside the link's hull m, its t, first t inside)}."""
+    the hand, along the whole demo: {link: [[first t inside, last t inside, deepest sample inside the link's hull m,
+    its t], ...]}, one entry per run of consecutive control steps with the handle inside."""
     hp = _torch_points(sim=True)
     g_rest, r_rest = np.asarray(F.G_REST, float), rz(F.TORCH_YAW)
-    res = {}
+    res, prev_t = {}, None
     for t, acts, p, r, grip0 in _walk_all(seed):
         g, rt = (g_rest, r_rest) if grip0 is None else _torch_pose(p, r, grip0, g_rest)
         W = g + hp @ rt.T
         poses = poses_q(acts["left"], "left")
+        depth = {}
         for name, frame, V, h in _pieces("left"):
             if name in HAND:
                 continue
             Pl = (W - poses[frame][:3, 3]) @ poses[frame][:3, :3]
-            depth = float(-(Pl @ h.equations[:, :3].T + h.equations[:, 3]).max(1).min())
-            if depth > 0:
-                d0, t0, first = res.get(name, (0.0, None, t))
-                res[name] = (depth, t, first) if depth > d0 else (d0, t0, first)
+            depth[name] = max(depth.get(name, -math.inf),
+                              float(-(Pl @ h.equations[:, :3].T + h.equations[:, 3]).max(1).min()))
+        for name, d in depth.items():
+            if d <= 0:
+                continue
+            runs = res.setdefault(name, [])
+            if runs and prev_t is not None and abs(runs[-1][1] - prev_t) < 1e-9:
+                runs[-1][1] = t
+                if d > runs[-1][2]:
+                    runs[-1][2:] = [d, t]
+            else:
+                runs.append([t, t, d, t])
+        prev_t = t
     return res
 
 
@@ -746,8 +757,13 @@ if __name__ == "__main__":
             print(f"{part:16s} {mm(max(0.0, d - STEP)):6.1f} mm from the {state:4s} segment ({when}), "
                   f"{mm(a):.0f} mm past the nozzle, {zone} zone")
     elif kw.get("simhandle"):
-        for name, (d, t, first) in sorted(simhandle(seed).items()):
-            print(f"sim handle inside left {name}'s hull from t {first:.2f} s, deepest {mm(d):.1f} mm at t {t:.2f} s")
+        res = simhandle(seed)
+        for name, runs in sorted(res.items()):
+            for t0, t1, d, t in runs:
+                print(f"sim handle inside left {name}'s hull t {t0:.2f} to {t1:.2f} s, deepest {mm(d):.1f} mm at "
+                      f"t {t:.2f} s")
+        if not res:
+            print("sim handle inside no left-arm link's hull (the hand excepted)")
     elif kw.get("hose"):
         res = hose(seed)
         # WHY: gaps are to the hose grown by its radius, its bow and half the 2 mm sample spacing

@@ -491,13 +491,18 @@ the runs only `task.json`'s `context` (the runs do not read it) and `scores` lin
   (on the rest its last 5.2 mm lie inside the left base's collision hull), and it carries a sensor case on top, a
   hose fitting underneath and about 2 N of pull from the hose's counterweight, which the sim does not have. The
   sim's rest block also overlaps the left base's mounting plate; the real one is cut away there (Protection).
-- The sim's 90 mm handle, carried rigid by forward kinematics from the demo's commanded joints, lies inside the left
-  arm's link2 collision hull from t 4.80 s to the demo's end on every seed, so inside the filmed run, its surface up
-  to 22.0 mm deep [RUN: `simhandle=1`, `cli=0`, `2` and `4`]. Arm to torch contact is enabled in the sim: the torch is
-  a free rigid body with a box collider that nothing filters from the arm (`_spawn_body` in `mechanism.py`; the arm
-  config turns off only the arm's self-collision). So in the filmed run link2 presses on the handle and the torch must
-  shift in the grip, or the arm lag its command; the film's 320 x 176 top view does not show which, and the run's
-  state log was not checked. The real torch's shorter rear stays 7.1 mm clear (Protection).
+- The sim's 90 mm handle, carried rigid by forward kinematics from the demo's commanded joints, enters the left arm's
+  link2 collision hull twice: at the lift (t 4.80 to 5.35 s, 3.9 mm at most) and in the final retreat (from t 30.25,
+  25.55 and 35.95 s on `--seed` 0, 2 and 4, 22.0 mm at most), before the score's moment (steps 675, 619 and 768) [RUN:
+  `simhandle=1`, `cli=0`, `2` and `4`]. That hull is the convex hull of the URDF's link2 collision mesh, which PhysX
+  also collides as a convex hull (`yam_arena` USD conversion), and arm to torch contact is enabled in the sim
+  (`_spawn_body` in `mechanism.py` filters nothing; only the arm's self-collision is off). So the torch is pushed, not
+  passed through: in the traced copies of the demo (11-14 code, same motion), as the retreat starts, the sim torch's
+  flame tip moves about 24 mm off its steady offset from the rigid placement (to 25.5 mm from it, from 6.5 mm) and its
+  pitch changes about 4.5 degrees, on all three seeds, and stays so to the end; across the lift the offset settles
+  within about 4 mm [scratch comparison of the traces' torch pose with `flame_axis.py`'s rigid placement, not a repo
+  tool]. The scores are unchanged. The film's own state log was not read. The real torch's 58 mm rear stays 7.1 mm
+  clear (Protection).
 
 ## Tests
 
