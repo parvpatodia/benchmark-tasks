@@ -30,7 +30,7 @@ Files: `solder_joint.py` (the task), `mechanism.py` (the scene builder), `task.j
 | Heat and time vary | "Experience will indicate the amount of heat and the time needed." | same |
 | Solder needed | 0.320 in of 1/8 in wire for a 1/2 in joint at 0.004 in clearance; tube OD .625 in, cup depth .500 in | same, Table 1 ("Using 1/8-inch diameter (No. 9) Wire Solder") |
 | Solder | 95-5 tin-antimony: "Solidus 452° F (233° C)", "Liquidus 464 °F (240° C)" | Harris 95-5 technical information sheet |
-| Flux | "Soldering Temperature Range 95°C – 315°C /200°F– 600°F" | Superior No. 142-5 data sheet |
+| Flux | "Soldering Temperature Range 95°C - 315°C /200°F- 600°F" | Superior No. 142-5 data sheet |
 | Workers | Plumbers, pipefitters and steamfitters, 510,600 (2025); core task "Assemble pipe sections, tubing, or fittings, using ... soldering, brazing, or welding equipment" | O*NET 47-2152.00 |
 
 Our rules and estimates (in `solder_joint.py` and `task.json` `setup`):
