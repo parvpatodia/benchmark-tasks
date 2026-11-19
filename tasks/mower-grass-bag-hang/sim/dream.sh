@@ -2,9 +2,12 @@
 # dream.sh <lock: a|b|c>: the ONE Dream-1 run (1,200 steps) on the final task file. Guarded: refuses if its output folder exists, made before the run starts so a crash or a second call cannot spend a second credit run.
 set -eu
 cd "$(dirname "$0")"
-source /data/IsaacLab-Arena/yam.env >/dev/null 2>&1 || true
+# WHY env vars: ARENA_ENV (the simulator environment file) and LOCKS/LOCK_BASE (the shared GPU lock files) differ per
+# machine; the defaults are the shared instance's.
+source "${ARENA_ENV:-/data/IsaacLab-Arena/yam.env}" >/dev/null 2>&1 || true
 TASK=$(cd .. && pwd); O=$PWD/out/dream
-case $1 in a) L=${LOCKS:-$HOME/locks}/sim.lock;; b) L=${LOCKS:-$HOME/locks}/sim.lock.b;; c) L=${LOCKS:-$HOME/locks}/sim.lock.c;; *) echo "lock a|b|c"; exit 2;; esac
+B=${LOCKS:-$HOME/locks}/${LOCK_BASE:-sim.lock}
+case $1 in a) L=$B;; b) L=$B.b;; c) L=$B.c;; *) echo "lock a|b|c"; exit 2;; esac
 [ -e "$O" ] && { echo "REFUSED: $O exists: Dream-1 already ran (or started) for this revision"; exit 4; }
 [ -f ~/.dreamlabs/credentials ] || { echo "no ~/.dreamlabs/credentials"; exit 2; }
 mkdir -p "$O"

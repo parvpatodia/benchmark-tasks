@@ -26,7 +26,7 @@ def _trace(env):
         bag_p, bag_q = pb[:3] - origin, pb[3:7]
         c, u = rod_in_mower(bag_p, bag_q, Rm, pm)
         hk = {s: hook_check(c, u, s)["ok"] for s in (1, -1)}
-        gap, on = flap_edge_gap(theta, bag_p, bag_q, Rm, pm)
+        gap, _, on = flap_edge_gap(theta, bag_p, bag_q, Rm, pm)
         Rb = _rot3(bag_q)
         tilt = math.degrees(math.asin(max(-1.0, min(1.0, float(Rb[2, 0])))))
         yaw = math.degrees(math.atan2(Rb[1, 0], Rb[0, 0]))

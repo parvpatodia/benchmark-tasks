@@ -49,6 +49,6 @@ if __name__ == "__main__":
     total = 0
     for s in range(10):
         total += check(f"demo seed {s}", M.plan(s, "demo"), M.FREE_AIR)
-    for v in ("one_arm", "one_hook", "tips", "ground", "hold", "prop", "pinch", "slam", "nudge", "shove"):
+    for v in ("one_arm", "lift", "one_hook", "tips", "ground", "hold", "prop", "pinch", "slam", "nudge", "shove"):
         total += check(f"s_{v}", M.plan(0, v), M.FREE_AIR)
     print("TOTAL BAD", total)

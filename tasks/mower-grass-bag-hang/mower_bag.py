@@ -38,11 +38,19 @@ HOOK_W = 0.016                   # each hook's width along y [EST]
 FLOOR_Z = 0.285                  # top of each hook's floor plate above the bench [EST]
 SLOT_X = (-0.021, 0.0)           # the open slot between the hook's lip and the rear face, M x [EST: 21 mm]
 LIP_T, LIP_H = 0.004, 0.020      # each hook's lip: thickness along x, height over the floor [EST]
-ROLL_DAMP = 40.0                 # N s/m: the mower's fore-aft roll, viscous [EST: ~4 N at 0.1 m/s, a rolling
-#                                  resistance of 0.03 x 129 N; measured in the real trial]
-ROLL_STOP = 0.15                 # the slide's stops either way (m) [CHOICE: past any push the arms can make]
-# WHY a slide: the arms cannot slide 13.2 kg sideways (about 65 N at a bench friction of 0.5 [EST]) or lift it; they can
-# roll it fore and aft on its wheels. The sim keeps only that, as a damped prismatic joint (the wheels clear the bench).
+ROLL_FRICTION = 3.9              # N: the mower's rolling resistance on its slide [EST: 0.03 x 129 N; measured in the
+#                                  real trial with a force gauge]
+ROLL_DAMP = 10.0                 # N s/m: a little viscous damping on top [CHOICE: 1 N at 0.1 m/s]
+FRONT_WHEEL_X = 0.30             # M x of the front axle (the wheels' bench contact) [EST]
+BENCH_EDGE = 0.36 + 1.10 / 2     # world x of the bench's far edge (yam_arena station table) [ARITH: 0.91]
+ROLL_FWD = BENCH_EDGE - (X_M + FRONT_WHEEL_X)   # the slide's forward stop: the front wheels at the bench edge [ARITH:
+#                                  80 mm]
+ROLL_BACK = 0.15                 # the slide's rear stop, toward the arms (m) [CHOICE: past any pull the arms can make]
+ROLL_SAFE = ROLL_FWD - 0.020     # the score's limit: front wheels at least 20 mm inside the bench edge [CHOICE: a safety
+#                                  margin, so the mower cannot roll off the bench; 60 mm]
+# WHY a slide: the arms cannot slide 13.2 kg sideways (about 84 N at a rubber-on-bench friction of 0.65 [EST]) or lift
+# it; they can roll it fore and aft on its wheels. The sim keeps only that, as a prismatic joint with friction (the
+# wheels clear the bench).
 
 # -- the ejector flap ------------------------------------------------------------------------------------------------------
 HINGE = (-0.040, 0.355)          # hinge axis (M x, z), along y, behind the hooks [EST]
@@ -102,7 +110,7 @@ def mower_shapes():
            _box((HINGE[0] - 0.005, 0.119, HINGE[1] - 0.010), (0.0, 0.131, HINGE[1] + 0.010), DARKP, "plastic"),
            _box((HINGE[0] - 0.005, -0.131, HINGE[1] - 0.010), (0.0, -0.119, HINGE[1] + 0.010), DARKP, "plastic"),
            _box((-0.0005, -0.10, 0.11), (0.0, 0.10, 0.27), BLACK, "plastic", collide=False)]   # opening, drawn
-    for x in (0.10, 0.30):
+    for x in (0.10, FRONT_WHEEL_X):
         for s in (-1.0, 1.0):
             out.append(_cyl((x, s * 0.200, wz), WHEEL_R, 0.040, "Y", BLACK, "rubber"))
     for s in (-1.0, 1.0):        # the handle, folded forward over the deck (drawn only)
@@ -125,7 +133,8 @@ def _mower():
     # WHY a base inside the deck: a fixed-base articulation needs a root body; its box sits inside the deck, filtered
     # against the moving links, where nothing else reaches
     links = (Link("mower", MOWER_KG - FLAP_KG, tuple(mower_shapes())), Link("flap", FLAP_KG, tuple(flap_shapes())))
-    joints = (Joint("roll", "prismatic", "mower", (0.0, 0.0, 0.0), "X", -ROLL_STOP, ROLL_STOP, damping=ROLL_DAMP),
+    joints = (Joint("roll", "prismatic", "mower", (0.0, 0.0, 0.0), "X", -ROLL_BACK, ROLL_FWD, damping=ROLL_DAMP,
+                    friction=ROLL_FRICTION, dynamic_friction=ROLL_FRICTION),
               Joint("flap", "revolute", "flap", (HINGE[0], 0.0, HINGE[1]), "Y", 0.0, FLAP_MAX, stiffness=FLAP_K,
                     damping=FLAP_DAMP, target=-FLAP_PRE, parent="mower"))
     return mechanism("mower", (X_M, 0.0, TOP), base, links, joints, MATS, color=GREEN, self_collide=False)
@@ -239,11 +248,15 @@ SEAT_BELOW, SEAT_ABOVE = 0.0005, 0.0015   # the rod's centre within -0.5 / +1.5 
 #                                  a 1.5 mm feeler stack (1.0 + 0.5 leaves) must not pass under the rod]
 FLAP_GAP = 0.005                 # the flap's free edge within 5 mm over the bag's cover [CHOICE: a 5 mm stack of
 #                                  feeler leaves must not pass under it]
-FLAP_DIG = -0.003                # an edge "under" the cover by more than this is not a resting edge [CHOICE]
-PAD_CLEAR = 0.030                # every pad point at least this far from the bag (and, for 0.9, the flap) [CHOICE]
+FLAP_DIG = -0.003                # an edge point "under" the cover by more than this is not a resting edge [CHOICE: the
+#                                  colliders' contact offset and the cover's give]
+PAD_CLEAR = 0.030                # every point of either gripper (fingers and housing) at least this far from the bag
+#                                  (and, for 0.9, the flap) [CHOICE: read with a tape]
 STILL = 0.005                    # m/s: the bag still [CHOICE]
+BAG_SPIN = 0.05                  # rad/s: the bag not turning [CHOICE]
 FLAP_STILL = 0.05                # rad/s: the flap still [CHOICE]
-MARK = 0.025                     # the mower within 25 mm of its taped mark for 0.9 and 1.0 [CHOICE]
+UPRIGHT = math.radians(30.0)     # the bag's cover within 30 deg of level, so an upside-down bag never counts [CHOICE]
+MAX_TURN = math.radians(60.0)    # a rod turned more than 60 deg from the hooks' line fails both hooks [CHOICE]
 
 
 def mower_frame(mower):
@@ -266,7 +279,7 @@ def hook_check(c, u, s):
     inside the slot and resting on the floor. Returns (ok, details)."""
     yh = s * HOOK_Y
     out = {"ok": True, "t": [], "x": [], "z": []}
-    if abs(u[1]) < 0.5:
+    if abs(u[1]) < math.cos(MAX_TURN):
         out["ok"] = False
         return out
     for ys in (yh - HOOK_W / 2 - SPAN_MARGIN, yh, yh + HOOK_W / 2 + SPAN_MARGIN):
@@ -290,14 +303,15 @@ def flap_edge_points(theta):
 
 
 def flap_edge_gap(theta, bag_pos, bag_quat, Rm, pm):
-    """(min gap over the cover, all three on the cover's footprint) of the flap's free edge, in the bag's frame."""
+    """(least gap, greatest gap, all three over the cover's footprint) of the flap's free edge over the bag's cover, in
+    the bag's frame."""
     Rb, pb = _rot3(bag_quat), np.asarray(bag_pos, float)
     gaps, on = [], True
     for p in flap_edge_points(theta):
         q = Rb.T @ (Rm @ p + pm - pb)
         on = on and (FRONT - BAG_L <= q[0] <= FRONT) and abs(q[1]) <= BAG_W / 2
         gaps.append(float(q[2] - TOP_Z))
-    return min(gaps), on
+    return min(gaps), max(gaps), on
 
 
 def _box_dist(pt, lo, hi):
@@ -311,6 +325,18 @@ def dist_to_shapes(pt_world, R, p, shapes):
     return min(_box_dist(q, *s.bounds()) for s in shapes if s.collide)
 
 
+def points_to_shapes(pts_world, R, p, shapes):
+    """Least distance from any of the world points (rows) to the shape boxes (bounds) of a body posed (R, p)."""
+    q = (np.asarray(pts_world, float) - p) @ R          # rows: R^T (pt - p)
+    best = np.inf
+    for s in shapes:
+        if s.collide:
+            lo, hi = s.bounds()
+            d = np.linalg.norm(np.maximum(np.maximum(lo - q, q - hi), 0.0), axis=1)
+            best = min(best, float(d.min()))
+    return best
+
+
 BAG_SHAPES = BAG.shapes
 FLAP_SHAPES = MOWER.links[1].shapes
 
@@ -322,30 +348,33 @@ def measure(objects, pads):
     c, u = rod_in_mower(bag.pos, bag.quat_xyzw, Rm, pm)
     hooks = {s: hook_check(c, u, s) for s in (1, -1)}
     theta = float(mower.joints["flap"])
-    gap, on = flap_edge_gap(theta, bag.pos, bag.quat_xyzw, Rm, pm)
+    gap, gap_hi, on = flap_edge_gap(theta, bag.pos, bag.quat_xyzw, Rm, pm)
     flap = mower.links["flap"]
     Rf, pf = _rot3(flap.quat_xyzw), np.asarray(flap.pos, float)
     Rb, pb = _rot3(bag.quat_xyzw), np.asarray(bag.pos, float)
-    if pads:
-        d_bag = min(dist_to_shapes(pt, Rb, pb, BAG_SHAPES) for pt in pads)
-        d_flap = min(dist_to_shapes(pt, Rf, pf, FLAP_SHAPES) for pt in pads)
+    if pads is not None and len(pads):
+        d_bag = points_to_shapes(pads, Rb, pb, BAG_SHAPES)
+        d_flap = points_to_shapes(pads, Rf, pf, FLAP_SHAPES)
     else:
         d_bag = d_flap = 0.0  # WHY: unread hands count as touching, so no credit past the seat
-    return {"hooks": hooks, "seated": all(h["ok"] for h in hooks.values()), "theta": theta, "flap_gap": gap,
-            "flap_over_bag": on, "d_bag": d_bag, "d_flap": d_flap, "roll": float(mower.joints["roll"]),
-            "bag_speed": float(np.linalg.norm(bag.lin_vel)), "flap_spin": float(np.linalg.norm(flap.ang_vel))}
+    upright = float((Rm @ np.array([0.0, 0.0, 1.0])) @ (Rb @ np.array([0.0, 0.0, 1.0]))) >= math.cos(UPRIGHT)
+    return {"hooks": hooks, "seated": all(h["ok"] for h in hooks.values()) and upright, "upright": upright,
+            "theta": theta, "flap_gap": gap, "flap_gap_hi": gap_hi, "flap_over_bag": on, "d_bag": d_bag,
+            "d_flap": d_flap, "roll": float(mower.joints["roll"]), "bag_speed": float(np.linalg.norm(bag.lin_vel)),
+            "bag_spin": float(np.linalg.norm(bag.ang_vel)), "flap_spin": float(np.linalg.norm(flap.ang_vel))}
 
 
 def rung(m):
-    """0 to 4: 1 the rod seated in both hooks; 2 and the bag let go and still; 3 and the flap resting on the bag;
-    4 and both hands clear of the flap, the flap still, the mower on its mark."""
+    """0 to 4: 1 the rod seated in both hooks, the bag upright; 2 and the bag let go and still; 3 and the flap resting
+    on the bag; 4 and both hands clear of the flap, the flap still, the mower's front wheels 20 mm or more inside the
+    bench edge."""
     if not m["seated"]:
         return 0
-    if not (m["d_bag"] >= PAD_CLEAR and m["bag_speed"] < STILL):
+    if not (m["d_bag"] >= PAD_CLEAR and m["bag_speed"] < STILL and m["bag_spin"] < BAG_SPIN):
         return 1
-    if not (m["flap_over_bag"] and FLAP_DIG <= m["flap_gap"] <= FLAP_GAP):
+    if not (m["flap_over_bag"] and m["flap_gap"] >= FLAP_DIG and m["flap_gap_hi"] <= FLAP_GAP):
         return 2
-    if not (m["d_flap"] >= PAD_CLEAR and m["flap_spin"] < FLAP_STILL and abs(m["roll"]) <= MARK):
+    if not (m["d_flap"] >= PAD_CLEAR and m["flap_spin"] < FLAP_STILL and m["roll"] <= ROLL_SAFE):
         return 3
     return 4
 
@@ -370,12 +399,37 @@ def _reset():
     reset_memory()
 
 
-def pad_points(g_pos, g_quat, finger):
-    """Four points on one hand's two pads (world): tip and upper end of each, |finger| either side of the gripper's
-    axis along its x (the fingers close along the gripper's x)."""
+# The gripper as points (mm back from the pad tips along the approach axis): finger slices (from, to, thickness outward
+# of the pad face, half width along the pad axis) and the housing beyond 83.5 mm, 51 x 33 mm half sizes [EST from the
+# YAM gripper mesh].
+HAND_SLICES = ((0, 10, 5.4, 11), (10, 20, 7.1, 14.8), (20, 40, 12.6, 22.6), (40, 60, 20.2, 30.4), (60, 83.5, 26, 36))
+HAND_HOUSING = (83.5, 200.0, 51.0, 33.0)
+
+
+def gripper_points(finger):
+    """Points of one gripper in its TCP frame (x closing, y pad axis, z approach), its fingers |finger| either side."""
+    f = abs(float(finger))
+    tip = PAD_TIP - TCP_OFFSET[2]
+    pts = []
+    for h0, h1, out, hw in HAND_SLICES:
+        for h in np.linspace(h0, h1, 3) / 1000:
+            for s in (-1.0, 1.0):
+                for dx in np.linspace(0.0, out / 1000, 3):
+                    for y in np.linspace(-hw / 1000, hw / 1000, 5):
+                        pts.append((s * (f + dx), y, tip - h))
+    h0, h1, hx, hy = HAND_HOUSING
+    for h in np.linspace(h0, h1, 7) / 1000:
+        for x in np.linspace(-hx / 1000, hx / 1000, 7):
+            for y in np.linspace(-hy / 1000, hy / 1000, 5):
+                pts.append((x, y, tip - h))
+    return np.array(pts)
+
+
+def hand_points(g_pos, g_quat, finger):
+    """One hand's gripper points in the world (rows), from the gripper link's pose and its finger joint."""
     R, g = _rot3(g_quat), np.asarray(g_pos, float)
-    s = abs(float(finger))
-    return [g + R @ np.array([sx * s, 0.0, z]) for sx in (-1.0, 1.0) for z in (PAD_TIP, PAD_TOP)]
+    tcp = g + R @ np.array(TCP_OFFSET)
+    return tcp + gripper_points(finger) @ R.T
 
 
 @on_step
@@ -390,9 +444,9 @@ def read_hands(env):
             rob = base.scene[f"{side}_robot"]
             g = _np(rob.data.body_link_pose_w)[0][list(rob.body_names).index("gripper")]
             q = _np(rob.data.joint_pos)[0]
-            pads += pad_points(g[:3] - origin, g[3:7], q[list(rob.joint_names).index("joint7")])
+            pads.append(hand_points(g[:3] - origin, g[3:7], q[list(rob.joint_names).index("joint7")]))
             tcps[side] = g[:3] - origin + _rot3(g[3:7]) @ np.array(TCP_OFFSET)
-        _M["pads"], _M["tcps"] = pads, tcps
+        _M["pads"], _M["tcps"] = np.vstack(pads), tcps
         _CLOCK["dt"] = float(base.step_dt)
     except Exception as e:  # noqa: BLE001  WHY: never stop the run; unread hands count as touching
         _M["error"], _M["pads"] = repr(e), None
@@ -420,7 +474,7 @@ def update(objects):
 
 
 def success(objects):
-    """Rod in both hooks, bag let go, flap resting on it, hands clear, mower on its mark (ends the run after 1 s)."""
+    """Rod in both hooks, bag let go, flap resting on it, hands clear, mower on the bench (ends the run after 1 s)."""
     return update(objects)["now"]["done"]
 
 
@@ -489,7 +543,8 @@ def flap_rot(theta):
     return Rot(tcp_frame((0.0, -1.0, 0.0), -(_ry(theta) @ np.array([1.0, 0.0, 0.0]))))
 
 
-BAR_PITCH = math.radians(70.0)   # right hand's approach, from straight down toward +x [CHOICE: reach, RUN ik4.py]
+BAR_PITCH = math.radians(70.0)   # right hand's approach, from straight down toward +x [CHOICE: reach, RUN
+#                                  tools/ikcheck.py]
 
 
 def bar_rot(yaw=0.0):
@@ -518,43 +573,46 @@ LET_FLAP = math.radians(30.0)    # the flap is lowered to this over its resting 
 #                                  fingers stay clear of the bag's cover, tools/clearance.py]
 STEADY = 0.8                     # s over a part before a touch-down [CHOICE]
 SEAT_PUSH = 0.020                # the bar is lowered this far past the seat so the hooks take the bag [CHOICE: more
-#                                  than the arm's sag under the 1 kg bag, about 20 mm at 0.5 N/mm (LESSONS)]
+#                                  than the arm's sag under the 1 kg bag, about 20 mm, EST: TCP stiffness about 0.5 N/mm]
 CARRY_Z = Z_LYING - TOP + 0.010  # rod centre while sliding the bag forward low: 10 mm over its lying height [CHOICE]
-LIFT_Z = 0.322                   # rod centre over the hooks: its underside 12 mm over the lips [ARITH]
+LIFT_Z = 0.322                   # rod centre over the hooks: its underside 12 mm over the lips [CHOICE: the demo's
+#                                  margin, not a requirement]
 SHORT = 0.055                    # the rod stops this far behind the slot before lifting [CHOICE: 34 mm off the lip]
 ONE_HOOK_DY = -0.065             # s_one_hook: the bag 65 mm right, so the rod's left end stops 3 mm into the left
 #                                  hook (the rod still crosses its inner side; the 5 mm margin past its far side is
 #                                  missing)
-NUDGE, SHOVE = 0.008, 0.060      # s_nudge / s_shove: how far the mower is rolled, by the bag, after the fit [CHOICE]
+NUDGE, SHOVE = 0.008, 0.070      # s_nudge / s_shove: how far the mower is rolled, by the bag, after the fit [CHOICE:
+#                                  the shove passes the 60 mm limit and stays short of the 80 mm stop]
 PUSH_LAG = 0.002                 # m the push stops short of its target against the mower's damping [EST]
 VARIANT = "demo"                 # sim/mk.sh sets this in stem copies: see _plan()
 SERVO_LABELS = ("line up behind the hooks", "line up over the slots", "line up again")
 PUSH_LABEL = "line up the push"
 UNLOAD_LABEL = "rest on the hooks"
+FOLLOW_LABEL = "follow the roll"
 
 
 def slot_x_world(roll=0.0):
     return X_M + roll + 0.5 * sum(SLOT_X)
 
 
-def pinch_point(theta):
-    """World TCP of the left pinch at flap angle theta (the plate's middle, PINCH_R from the hinge)."""
+def pinch_point(theta, roll=0.0):
+    """World TCP of the left pinch at flap angle theta (the plate's middle, PINCH_R from the hinge), the mower rolled."""
     hx, hz = HINGE
     p = np.array([hx, 0.0, hz]) + _ry(theta) @ np.array([-FLAP_T / 2, 0.0, -PINCH_R])
-    return np.array([X_M + p[0], PINCH_Y, TOP + p[2]])
+    return np.array([X_M + roll + p[0], PINCH_Y, TOP + p[2]])
 
 
 def _w(t, p, f, label, rot):
     return Waypoint(float(t), (float(p[0]), float(p[1]), float(p[2])), float(f), label, rot)
 
 
-def flap_arc(t0, t1, total, finger, label):
+def flap_arc(t0, t1, total, finger, label, roll=0.0):
     """Waypoints that swing the pinched flap from angle t0 to t1 in 'total' s, in chords of at most 10 deg."""
     n = max(1, int(math.ceil(abs(t1 - t0) / math.radians(10.0) - 1e-9)))
     out = []
     for k in range(n):
         th = t0 + (t1 - t0) * (k + 1) / n
-        out.append(_w(total / n, pinch_point(th), finger, label, flap_rot(th)))
+        out.append(_w(total / n, pinch_point(th, roll), finger, label, flap_rot(th)))
     return out
 
 
@@ -590,7 +648,7 @@ def flap_rest_angle(bag_pos, bag_quat, roll=0.0):
     Rm, pm = np.eye(3), np.array([X_M + roll, 0.0, TOP])
     th = FLAP_MAX
     while th > 0.0:
-        g, on = flap_edge_gap(th, bag_pos, bag_quat, Rm, pm)
+        g, _, on = flap_edge_gap(th, bag_pos, bag_quat, Rm, pm)
         if on and g <= 0.0:
             return th
         th -= math.radians(0.05)
@@ -600,23 +658,33 @@ def flap_rest_angle(bag_pos, bag_quat, roll=0.0):
 REST = flap_rest_angle(*hung_pose()[:2])   # the flap's resting angle on the hung bag [ARITH]
 
 
-def left_plan(t_hold, variant):
-    """The flap hand: pinch, swing up, hold for t_hold s, lower, let go, draw out along +y."""
+def left_plan(t_hold, variant, push=None):
+    """The flap hand: pinch, swing up, hold for t_hold s, lower, let go, draw out along +y. push: (s after the hold
+    starts, roll) when the right hand rolls the mower during the hold; the pinch then moves with the flap."""
     p0 = pinch_point(0.0)
     out = np.array([p0[0], Y_BESIDE, p0[2]])
     W = [_w(3.0, out, PINCH_OPEN, "beside the flap", flap_rot(0.0)),
          _w(STEADY, out, PINCH_OPEN, "steady", flap_rot(0.0)),
          _w(1.5, p0, PINCH_OPEN, "in round the plate", flap_rot(0.0)),
          _w(0.8, p0, PINCH, "pinch the flap", flap_rot(0.0)),
-         *flap_arc(0.0, FLAP_UP, 4.0, PINCH, "raise the flap"),
-         _w(t_hold, pinch_point(FLAP_UP), PINCH, "hold the flap up", flap_rot(FLAP_UP))]
+         *flap_arc(0.0, FLAP_UP, 4.0, PINCH, "raise the flap")]
+    roll = 0.0
+    if push is None:
+        W.append(_w(t_hold, pinch_point(FLAP_UP), PINCH, "hold the flap up", flap_rot(FLAP_UP)))
+    else:   # WHY: the flap rolls with the mower; a pinch held at fixed world points would drag it or slip
+        t_push, roll = push
+        W += [_w(t_push, pinch_point(FLAP_UP), PINCH, "hold the flap up", flap_rot(FLAP_UP)),
+              _w(PUSH_T, pinch_point(FLAP_UP, roll), PINCH, "move with the mower", flap_rot(FLAP_UP)),
+              _w(0.6, pinch_point(FLAP_UP, roll), PINCH, FOLLOW_LABEL, flap_rot(FLAP_UP)),
+              _w(max(0.5, t_hold - t_push - PUSH_T - 0.6), pinch_point(FLAP_UP, roll), PINCH, "hold the flap up",
+                 flap_rot(FLAP_UP))]
     if variant == "prop":                                   # the flap is still held up at the end
-        return W + [_w(8.0, pinch_point(FLAP_UP), PINCH, "keep holding", flap_rot(FLAP_UP))]
+        return W + [_w(8.0, pinch_point(FLAP_UP, roll), PINCH, "keep holding", flap_rot(FLAP_UP))]
     # WHY tips let go fully open: the held bag sits 20 mm higher than hung, under the hand's usual let-go point
     theta_let = {"slam": FLAP_UP, "pinch": PINCH_LET, "tips": FLAP_UP}.get(variant, REST + LET_FLAP)
     if theta_let < FLAP_UP:
-        W += flap_arc(FLAP_UP, theta_let, 2.5, PINCH, "lower the flap")
-    pl = pinch_point(theta_let)
+        W += flap_arc(FLAP_UP, theta_let, 2.5, PINCH, "lower the flap", roll)
+    pl = pinch_point(theta_let, roll)
     pout = np.array([pl[0], Y_BESIDE, pl[2]])
     return W + [_w(0.6, pl, PINCH_OPEN, "let go of the flap", flap_rot(theta_let)),
                 _w(1.5, pout, PINCH_OPEN, "draw out sideways", flap_rot(theta_let)),
@@ -628,9 +696,15 @@ def bar_tcp(rod_xy, yaw, rod_z):
     return np.array([rod_xy[0], rod_xy[1], TOP + rod_z]) + _rz(yaw) @ np.array([HANDLE_X, 0.0, BAR_Z])
 
 
+PUSH_T = 2.0                     # s: the nudge or shove [CHOICE]
 PINCH_LET = FLAP_UP              # s_pinch: the flap let go fully open, onto the parked right gripper [CHOICE]
 TAIL_EXTRA = math.radians(1.0)   # the tail is set down this far past the hung tilt, onto the bench [CHOICE]
-UNDER = math.radians(80.0)       # s_pinch: the right gripper parks where the flap passes 80 deg, 80 mm out [CHOICE]
+UNDER = math.radians(85.0)       # s_pinch: the right gripper parks where the flap passes this angle [CHOICE: the whole
+#                                  gripper 38 mm over the bag (so the score is 0.5, not 0.25) and 6.6 mm under the flap
+#                                  while it is held at 110 deg]
+UNDER_R = 0.095                  # ... this far out from the hinge [CHOICE]
+PARK_PITCH = math.radians(40.0)  # ... its approach this far from straight down [CHOICE: the housing stays off the bag]
+PARK_Y = -0.090                  # ... at this y [CHOICE]
 
 
 def right_plan(start, variant, wait):
@@ -650,6 +724,8 @@ def right_plan(start, variant, wait):
          _w(1.2, bar_tcp((x0, y0), yaw0, CARRY_Z), BAR_GRIP, "lift off the bench", R0),
          _w(wait, bar_tcp((x0, y0), yaw0, CARRY_Z), BAR_GRIP, "wait for the flap", R0)]
     seat_z = FLOOR_Z + ROD_R - SEAT_PUSH
+    if variant == "lift":                                   # one hand: tip the bag, lift the flap's lip with it
+        return W + lift_route(seat_z)
     if variant == "one_arm":                                # carried straight in, the flap closed
         g = bar_tcp((sx, 0.0), 0.0, LIFT_Z)
         return W + [_w(3.0, bar_tcp((sx - SHORT, 0.0), 0.0, CARRY_Z), BAR_GRIP, "slide in, square", R1),
@@ -683,7 +759,7 @@ def right_plan(start, variant, wait):
         # The rod first closes its slack to the rear face (the line-up pass measures it), then rolls the mower.
         g_push = g_let + np.array([{"nudge": NUDGE, "shove": SHOVE}[variant] + PUSH_LAG, 0.0, 0.0])
         W += [_w(0.5, g_let, BAR_GRIP, PUSH_LABEL, R1),
-              _w(2.0, g_push, BAR_GRIP, "roll the mower", R1),
+              _w(PUSH_T, g_push, BAR_GRIP, "roll the mower", R1),
               _w(0.5, g_push, BAR_GRIP, "settle after the push", R1)]
         g_let = g_push
     # Set the bag's tail down on the bench while still holding it, turning it about the rod as it will hang, so that
@@ -700,10 +776,59 @@ def right_plan(start, variant, wait):
           _w(1.5, g_let - 0.06 * at + np.array([-0.05, -0.5 * dy, 0.04]), BAR_LETGO, "draw back", Rtail)]
     if variant == "pinch":                                  # the hand parks under the flap's path and stays
         hx, hz = HINGE
-        under = np.array([X_M + hx - 0.080 * math.sin(UNDER), -0.060, TOP + hz - 0.080 * math.cos(UNDER)])
-        W += [_w(2.0, under, BAR_GRIP, "under the flap's path", R1),
-              _w(12.0, under, BAR_GRIP, "stay there", R1)]
+        under = np.array([X_M + hx - UNDER_R * math.sin(UNDER), PARK_Y, TOP + hz - UNDER_R * math.cos(UNDER)])
+        a = _ry(-PARK_PITCH) @ np.array([0.0, 0.0, -1.0])
+        Rp = Rot(tcp_frame(a, np.array([-a[2], 0.0, a[0]])))
+        W += [_w(2.0, under, BAR_GRIP, "under the flap's path", Rp),
+              _w(12.0, under, BAR_GRIP, "stay there", Rp)]
     return W
+
+
+LIFT_TIP = math.radians(20.0)    # s_lift: the bag tipped nose-down this far [ARITH: its front-bottom corner then sits
+#                                  234 mm under the rod, so the rod can pass 19 mm under the flap's lip]
+LIFT_LOW = 0.236                 # ... rod centre height (M) while it goes in under the lip [ARITH: the corner 2 mm off
+#                                  the bench]
+LIFT_OUT = -0.080                # ... rod centre (M x) before it goes in [CHOICE: 11 mm outside the lip; the arm
+#                                  reaches the tipped bar here, not further out (RUN tools/ikcheck.py)]
+LIFT_IN = -0.031                 # ... rod centre (M x) between the flap and the hooks' lips [ARITH: 4 mm off the plate,
+#                                  1 mm off the lips; the cover's front corner then sits under the flap's lip]
+LIFT_LABEL = "line up under the lip"
+
+
+def tipped(rod_m, tilt):
+    """(TCP, Rot) on the bar for a rod centre at M (x, z), y 0, the bag turned tilt about the rod (tail down > 0)."""
+    Rt = _ry(-tilt)
+    rod = np.array([X_M + rod_m[0], 0.0, TOP + rod_m[1]])
+    return rod + Rt @ np.array([HANDLE_X, 0.0, BAR_Z]), Rot(Rt @ bar_rot(0.0).R)
+
+
+def lift_route(seat_z):
+    """s_lift: the right hand alone tips the bag nose-down, takes the rod in under the closed flap's lip, rises between
+    the flap and the hooks so the bag's cover lifts the lip, levels the bag, and sets the rod in the hooks. Whether it
+    works is what the stem's sim run shows. [CHOICE: geometry from a 2D sweep of this path, no PhysX]"""
+    tilt_hung = hung_pose()[2]
+    sx = 0.5 * sum(SLOT_X)
+    lie = CARRY_Z
+    steps = [(1.5, (LIFT_OUT, lie), 0.0, "square behind the flap"),
+             (1.5, (LIFT_OUT, 0.5 * (lie + LIFT_LOW)), -0.5 * LIFT_TIP, "tip nose-down"),
+             (1.5, (LIFT_OUT, LIFT_LOW), -LIFT_TIP, "down to the lip's height"),
+             (0.8, (LIFT_OUT, LIFT_LOW), -LIFT_TIP, LIFT_LABEL),
+             (3.0, (LIFT_IN, LIFT_LOW), -LIFT_TIP, "in under the lip"),
+             (4.0, (LIFT_IN, LIFT_Z), tilt_hung, "rise, lifting the lip"),
+             (2.0, (sx, LIFT_Z), tilt_hung, "carry over the slots"),
+             (2.0, (sx, seat_z), tilt_hung, "lower into the hooks"),
+             (0.8, (sx, seat_z), tilt_hung, "settle in the hooks"),
+             (1.0, (sx, seat_z), tilt_hung + TAIL_EXTRA, "set the tail down")]
+    W = []
+    for dur, rod_m, tilt, label in steps:
+        g, R = tipped(rod_m, tilt)
+        W.append(_w(dur, g, BAR_GRIP, label, R))
+    g, R = tipped((sx, seat_z), tilt_hung + TAIL_EXTRA)
+    at = R.R[:, 2]
+    return W + [_w(0.6, g, BAR_GRIP, UNLOAD_LABEL, R),
+                _w(0.8, g, BAR_LETGO, "open round the bar", R),
+                _w(1.2, g - 0.06 * at, BAR_LETGO, "slide off the bar", R),
+                _w(1.5, g - 0.06 * at + np.array([-0.05, 0.0, 0.04]), BAR_LETGO, "draw back", R)]
 
 
 TIPS_DX = SLOT_X[0] - LIP_T / 2 - 0.5 * sum(SLOT_X)   # s_tips: the rod centre over the lips' middle [ARITH]
@@ -712,25 +837,35 @@ T_GRIPPED = 3.0 + STEADY + 1.5 + 0.8 + 1.2            # s until the bag is gripp
 HOLD_TAIL = ("keep holding", "stay there")
 # Waypoints in free air, away from any part: the IK check allows these 3 mm and 2 deg (tools/ikcheck.py), every other one
 # 0.5 mm and 0.5 deg. WHY: the left wrist sits on its stop beside the flap; the nearest part is 7 mm or more away.
-FREE_AIR = ("up beside the bag", "beside the flap", "steady", "in round the plate", "draw out sideways", "back off", "behind the handle",
-            "draw back", "slide off the bar")
+FREE_AIR = ("up beside the bag", "beside the flap", "steady", "in round the plate", "draw out sideways", "back off",
+            "behind the handle", "draw back", "slide off the bar")
 
 
 def _plan(seed, v):
     if v == "nothing":
         return {}
     start = bag_layout(seed)
-    right = right_plan(start, v, wait=0.0 if v == "one_arm" else max(0.5, T_UP - T_GRIPPED + 0.5))
-    if v == "one_arm":
+    right = right_plan(start, v, wait=0.0 if v in ("one_arm", "lift") else max(0.5, T_UP - T_GRIPPED + 0.5))
+    if v in ("one_arm", "lift"):
         return {"right": right}
     t_right = sum(w.duration for w in right if w.label not in HOLD_TAIL)
-    return {"left": left_plan(max(1.0, t_right - T_UP + 0.5), v), "right": right}
+    push = None
+    if v in ("nudge", "shove"):   # the push starts this long after the left hand's hold begins
+        t0 = 0.0
+        for w in right:
+            if w.label == "roll the mower":
+                break
+            t0 += w.duration
+        push = (t0 - T_UP, {"nudge": NUDGE, "shove": SHOVE}[v])
+    return {"left": left_plan(max(1.0, t_right - T_UP + 0.5), v, push), "right": right}
 
 
 def plan(seed=None, variant=None):
     v = VARIANT if variant is None else variant
     p = _plan(seed, v)
     _SERVO.update({"on": "right" in p, "done": set(), "log": [], "events": servo_events(p.get("right", [])),
+                   "left_events": servo_events(p.get("left", []), (FOLLOW_LABEL,)), "left_done": set(),
+                   "roll": {"nudge": NUDGE, "shove": SHOVE}.get(v, 0.0),
                    "dy": ONE_HOOK_DY if v == "one_hook" else 0.0, "dx": TIPS_DX if v == "tips" else 0.0})
     return p
 
@@ -744,16 +879,19 @@ def demo():
 # -- the demo's corrections: a privileged line-up of the rod from the bag's true pose (the score never reads it) -------------
 # WHY: the arm is compliant and the 1 kg bag hangs from a pinch, so the rod sits millimetres off where the plan puts it
 # (the slot leaves 5.5 mm a side); a person looks at the hooks, the script reads the pose instead.
-_SERVO = {"on": False, "done": set(), "log": [], "events": [], "dy": 0.0, "dx": 0.0}
+_SERVO = {"on": False, "done": set(), "log": [], "events": [], "left_events": [], "left_done": set(), "roll": 0.0,
+          "dy": 0.0, "dx": 0.0}
 SERVO_MAX = (0.025, math.radians(6.0))   # the most one pass moves the hand (m, rad) [CHOICE: over the arm's ~20 mm
 #                                           sag under the bag]
+SERVO_MAX_Z1 = 0.040             # the first pass may lift the hand this far [CHOICE: the sag under the bag may reach
+#                                  about 36 mm, EST]
 
 
-def servo_events(W):
+def servo_events(W, labels=(*SERVO_LABELS, PUSH_LABEL, UNLOAD_LABEL, LIFT_LABEL)):
     out, t = [], 0.0
     for w in W:
         t += w.duration
-        if w.label in (*SERVO_LABELS, PUSH_LABEL, UNLOAD_LABEL):
+        if w.label in labels:
             out.append((t - 0.1, w.label))
     return out
 
@@ -782,12 +920,32 @@ def rod_error(bag_pos, bag_quat, label, roll):
     u = Rb @ np.array([0.0, 1.0, 0.0])
     yaw_rod = math.atan2(-u[0], u[1])
     sx = slot_x_world(roll) + _SERVO["dx"]
+    if label == LIFT_LABEL:
+        return np.array([X_M + roll + LIFT_OUT, 0.0, TOP + LIFT_LOW]) - np.asarray(bag_pos, float), -yaw_rod
     want_x = sx - SHORT if label == SERVO_LABELS[0] else sx
     want = np.array([want_x, _SERVO["dy"], TOP + LIFT_Z])
     return want - np.asarray(bag_pos, float), -yaw_rod
 
 
+def follow_roll(plans, t):
+    """The left hand's later waypoints moved by the mower's measured roll less the roll its plan already assumed."""
+    if "left" not in plans or _M.get("mower") is None:
+        return
+    for k, (tk, label) in enumerate(_SERVO["left_events"]):
+        if k in _SERVO["left_done"] or t < tk:
+            continue
+        _SERVO["left_done"].add(k)
+        d = np.array([float(_M["mower"]) - _SERVO["roll"], 0.0, 0.0])
+        d = np.clip(d, -SERVO_MAX[0], SERVO_MAX[0])
+        plans["left"].waypoints = shift_after(plans["left"].waypoints, t, d, 0.0, np.zeros(3))
+        rec = {"pass": f"left {k}", "label": label, "t": round(t, 2), "d_mm": [round(1000 * v, 2) for v in d]}
+        _SERVO["log"].append(rec)
+        print("[mower bag line-up] " + str(rec), flush=True)
+
+
 def servo(plans, t):
+    if _SERVO["on"]:
+        follow_roll(plans, t)
     if not _SERVO["on"] or _M.get("bag") is None or _M.get("tcps") is None or "right" not in plans:
         return
     for k, (tk, label) in enumerate(_SERVO["events"]):
@@ -808,7 +966,8 @@ def servo(plans, t):
             # the rod turns about the hand: where the rod centre lands after the turn, then the shift that remains
             pb_turned = tcp + _rz(dyaw) @ (np.asarray(pb) - tcp)
             d = (np.asarray(pb) + d) - pb_turned
-        d = np.clip(d, -SERVO_MAX[0], SERVO_MAX[0])
+        cap = np.array([SERVO_MAX[0], SERVO_MAX[0], SERVO_MAX_Z1 if label == SERVO_LABELS[0] else SERVO_MAX[0]])
+        d = np.clip(d, -cap, cap)
         plans["right"].waypoints = shift_after(plans["right"].waypoints, t, d, dyaw, tcp)
         rec = {"pass": k, "label": label, "t": round(t, 2), "d_mm": [round(1000 * v, 2) for v in d],
                "dyaw_deg": round(math.degrees(dyaw), 3)}

@@ -3,11 +3,14 @@
 # run limit); the top camera rendered after. Output in out/film_<hash of the task files>.
 set -eu
 cd "$(dirname "$0")"
-source /data/IsaacLab-Arena/yam.env >/dev/null 2>&1 || true
+# WHY env vars: ARENA_ENV (the simulator environment file) and LOCKS/LOCK_BASE (the shared GPU lock files) differ per
+# machine; the defaults are the shared instance's.
+source "${ARENA_ENV:-/data/IsaacLab-Arena/yam.env}" >/dev/null 2>&1 || true
 TASK=$(cd .. && pwd)
 # WHY a folder per task-file revision: an earlier revision's out/film made this refuse; the same revision still films once
 O=$PWD/out/film_$(cat "$TASK/mower_bag.py" "$TASK/mechanism.py" "$TASK/task.json" | sha256sum | cut -c1-8)
-case $1 in a) L=${LOCKS:-$HOME/locks}/sim.lock;; b) L=${LOCKS:-$HOME/locks}/sim.lock.b;; c) L=${LOCKS:-$HOME/locks}/sim.lock.c;; *) echo "lock a|b|c"; exit 2;; esac
+B=${LOCKS:-$HOME/locks}/${LOCK_BASE:-sim.lock}
+case $1 in a) L=$B;; b) L=$B.b;; c) L=$B.c;; *) echo "lock a|b|c"; exit 2;; esac
 [ -e "$O" ] && { echo "REFUSED: $O exists (move it away to film again)"; exit 4; }
 mkdir -p "$O"
 I=$(python3 -c "import json;print(json.load(open('$TASK/task.json'))['instruction'])")

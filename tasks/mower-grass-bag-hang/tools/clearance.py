@@ -5,9 +5,8 @@ part, and the bag's to the flap, with when and where. Parts a hand is meant to h
 the flap while pinched) are left out for that hand, and so is the bag against the hooks from the lowering into the
 hooks on. Ends with CLEARANCE BAD n (any other clearance under 3 mm). Planned poses, no IK, no sim.
 
-Gripper model (mm over the pad tips, along the approach axis): finger slices (from, to, thickness outward of the pad
-face, half width along the pad axis) and the housing beyond 83.5 mm, 51 x 33 mm half sizes [EST from the YAM gripper
-mesh, as other tasks in this repository measured it]."""
+Gripper model: mower_bag.gripper_points, the same points the scorer reads (finger slices and the housing, EST from the
+YAM gripper mesh). For s_nudge and s_shove the mower (and its flap) roll as the plan pushes them."""
 import math
 import pathlib
 import sys
@@ -23,34 +22,19 @@ from yam_arena.demo import ArmPlan  # noqa: E402
 from yam_arena.task_file import load  # noqa: E402
 
 M = load(HERE / "mower_bag.py").module
-SLICES = [(0, 10, 5.4, 11), (10, 20, 7.1, 14.8), (20, 40, 12.6, 22.6), (40, 60, 20.2, 30.4), (60, 83.5, 26, 36)]
-HOUSING = (83.5, 200.0, 51.0, 33.0)
-TIP = M.PAD_TIP - M.TCP_OFFSET[2]      # pad tips past the TCP (m)
 LIMIT = 0.003
 PINCHED = {"pinch the flap", "raise the flap", "hold the flap up", "lower the flap", "keep holding",
            "let go of the flap"}   # WHY let go: the fingers open from round the plate
 GRIPPED = {"grip the bar", "lift off the bench", "wait for the flap", "slide in, square", "lift over the lips",
            "lift to the hooks", "push in to the slots", "lower", "carry over the slots", "lower into the hooks",
-           "settle in the hooks", "keep holding", "set the tail down", M.UNLOAD_LABEL, "line up the push", "roll the mower", "settle after the push",
-           *M.SERVO_LABELS}
-
-
-def gripper_points(finger):
-    """Points in the TCP frame (x closing, y pad axis, z approach)."""
-    f = abs(finger)
-    pts = []
-    for h0, h1, out, hw in SLICES:
-        for h in np.linspace(h0, h1, 3) / 1000:
-            for s in (-1.0, 1.0):
-                for dx in np.linspace(0.0, out / 1000, 3):
-                    for y in np.linspace(-hw / 1000, hw / 1000, 5):
-                        pts.append((s * (f + dx), y, TIP - h))
-    h0, h1, hx, hy = HOUSING
-    for h in np.linspace(h0, h1, 7) / 1000:
-        for x in np.linspace(-hx / 1000, hx / 1000, 7):
-            for y in np.linspace(-hy / 1000, hy / 1000, 5):
-                pts.append((x, y, TIP - h))
-    return np.array(pts)
+           "settle in the hooks", "keep holding", "set the tail down", M.UNLOAD_LABEL, "line up the push",
+           "roll the mower", "settle after the push", *M.SERVO_LABELS,
+           "square behind the flap", "tip nose-down", "down to the lip's height", M.LIFT_LABEL, "in under the lip",
+           "rise, lifting the lip"}
+PINCHED |= {"move with the mower", M.FOLLOW_LABEL}
+gripper_points = M.gripper_points
+# WHY: s_lift is the one-hand route; it lifts the flap with the bag and passes 1 mm off the hooks' lips on purpose
+CONTACT_STEMS = {"s_one_arm": {("bag", "flap")}, "s_lift": {("bag", "flap"), ("bag", "hooks")}}
 
 
 def box_dists(pts, boxes):
@@ -75,10 +59,10 @@ BAG_PTS = np.array([(x, y, z) for x in np.linspace(M.FRONT - M.BAG_L, 0.005, 12)
                     if any(np.all((lo - 1e-9 <= (x, y, z)) & ((x, y, z) <= hi + 1e-9)) for lo, hi in BAG_BOXES)])
 
 
-def flap_angle(left_target):
+def flap_angle(left_target, roll=0.0):
     """The flap's angle from the left TCP while it pinches the plate (the pinch point PINCH_R out from the hinge)."""
     hx, hz = M.HINGE
-    p = left_target - np.array([M.X_M, 0.0, M.TOP])
+    p = left_target - np.array([M.X_M + roll, 0.0, M.TOP])
     return math.atan2(-(p[0] - hx), -(p[2] - hz))
 
 
@@ -104,8 +88,16 @@ def sweep(name, plans, seed):
     grip_rel = None
     theta, pinch_seen, low, bad = 0.0, False, {}, 0
     hooks_ok_from = None
+    t_push, push = None, {"s_nudge": M.NUDGE, "s_shove": M.SHOVE}.get(name, 0.0)
+    if push:
+        t_push = 0.0
+        for w in plans["right"]:
+            if w.label == "roll the mower":
+                break
+            t_push += w.duration
     t = 0.0
     while t <= T:
+        roll = 0.0 if t_push is None else push * min(1.0, max(0.0, (t - t_push) / M.PUSH_T))
         tg = {arm: a.target(min(t, a.duration)) for arm, a in A.items()}
         released = False
         if "left" in tg:
@@ -113,7 +105,7 @@ def sweep(name, plans, seed):
             if name == "s_prop" and label == "done":
                 label = "keep holding"
             if label in PINCHED:
-                theta, pinch_seen = flap_angle(tg["left"][0]), True
+                theta, pinch_seen = flap_angle(tg["left"][0], roll), True
             elif pinch_seen:
                 theta, released = {"s_pinch": M.UNDER, "s_tips": None, "s_hold": None}.get(name, M.REST), True
                 if theta is None:       # the flap lands on a bag held higher than hung: not tracked
@@ -137,7 +129,7 @@ def sweep(name, plans, seed):
                 grip_rel = None
         Rf = M._ry(theta)
         h = np.array([M.HINGE[0], 0.0, M.HINGE[1]])
-        pm = np.array([M.X_M, 0.0, M.TOP])
+        pm = np.array([M.X_M + roll, 0.0, M.TOP])
         for arm, (pos, R, f, label) in tg.items():
             if t >= A[arm].duration:
                 label = "keep holding" if (name == "s_prop" and arm == "left") else "done"
@@ -169,7 +161,7 @@ def sweep(name, plans, seed):
         t += 0.1
     for key in sorted(low):
         d, tt, label, where = low[key]
-        flag = d < LIMIT and key not in ((("bag", "flap"),) if name in ("s_one_arm",) else ())
+        flag = d < LIMIT and key not in CONTACT_STEMS.get(name, set())
         bad += int(flag)
         print(f"{name:14s} {key[0]:5s} vs {key[1]:5s} {1000 * d:6.1f} mm at t {tt:5.1f} ({label}) M {where}"
               f"{'  BAD' if flag else ''}")
@@ -180,6 +172,6 @@ if __name__ == "__main__":
     total = 0
     for s in (0, 1, 2):
         total += sweep("demo", M.plan(s, "demo"), s)
-    for v in ("one_arm", "one_hook", "tips", "ground", "hold", "prop", "pinch", "slam", "nudge", "shove"):
+    for v in ("one_arm", "lift", "one_hook", "tips", "ground", "hold", "prop", "pinch", "slam", "nudge", "shove"):
         total += sweep(f"s_{v}", M.plan(0, v), 0)
     print("CLEARANCE BAD", total)

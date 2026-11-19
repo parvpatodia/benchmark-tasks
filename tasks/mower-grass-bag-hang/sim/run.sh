@@ -3,9 +3,12 @@
 # no frames. Refuses a copy older than ../mower_bag.py (rerun mk.sh).
 set -eu
 cd "$(dirname "$0")"
-source /data/IsaacLab-Arena/yam.env >/dev/null 2>&1 || true
+# WHY env vars: ARENA_ENV (the simulator environment file) and LOCKS/LOCK_BASE (the shared GPU lock files) differ per
+# machine; the defaults are the shared instance's.
+source "${ARENA_ENV:-/data/IsaacLab-Arena/yam.env}" >/dev/null 2>&1 || true
 J=$(cd arm && pwd); F=$1; M=$2; S=${4:-0}; O=${F}_s$S
-case $3 in a) L=${LOCKS:-$HOME/locks}/sim.lock;; b) L=${LOCKS:-$HOME/locks}/sim.lock.b;; c) L=${LOCKS:-$HOME/locks}/sim.lock.c;; *) echo "lock a|b|c"; exit 2;; esac
+B=${LOCKS:-$HOME/locks}/${LOCK_BASE:-sim.lock}
+case $3 in a) L=$B;; b) L=$B.b;; c) L=$B.c;; *) echo "lock a|b|c"; exit 2;; esac
 [ "$J/$F.py" -nt ../mower_bag.py ] || { echo "STALE: $F.py older than mower_bag.py; rerun mk.sh"; exit 3; }
 I=$(python3 -c "import json;print(json.load(open('$J/task.json'))['instruction'])")
 mkdir -p "$PWD/out"
