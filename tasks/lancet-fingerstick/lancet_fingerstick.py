@@ -1,5 +1,5 @@
-"""A fingerstick trainer lies palm up: a palm block with an index finger and a ring finger, rolled so the side of the ring
-fingertip faces up; the ring finger rides on a light spring and gives way when pressed unless it is held. A BD
+"""A fingerstick trainer lies palm up: a palm block with an index finger, a thumb and a ring finger, rolled so the side of
+the ring fingertip faces up; the ring finger rides on a light spring and gives way when pressed unless it is held. A BD
 Microtainer contact-activated lancet (21 G x 1.8 mm) stands tip down in a stand whose socket holds its protective tab,
 and a BD sharps container stands beside. Do a fingerstick as BD directs. Done means: the lancet's tab was twisted off in
 the stand before the lancet came out of it; the ring finger was held still by a gripper closed on it from the lancet's
@@ -37,7 +37,16 @@ F_PRE = 1.0                      # N: the shield's preload against its stop [CHO
 F_FIRE = 8.0                     # N on the shield fires it [EST: inside the 4 - 15 N activation force of the Owen Mumford
 #                                  Unistik Touch contact-activated lancet, FDA 510(k) K222111; BD publishes no value]
 F_FIRE_MAX_REAL = 15.0           # N: the real BD lancet is used only if it fires at or under this (README Real trials)
-F_TOUCH = 2.0                    # N on the shield: the lancet is on the skin
+Q_TOUCH = 5e-5                   # m: the shield pushed this far off its stop is touching something (under it the
+#                                  model reads no force on the shield)
+F_TOUCH = F_PRE + K_SHIELD * Q_TOUCH   # 1.2 N: the shield off its stop, the lancet on the skin (the 0.4 rung's touch).
+#                                  WHY contact, not a firm press: a real trial reads the same event on a scale under the
+#                                  trainer (REAL_TOUCH, README Real trials, scoring)
+REAL_TOUCH = 0.55                # N: the scale's change that counts as the touch in a real trial. WHY 0.55: the scale
+#                                  reads 0.4837 to 1.5099 of the shield's force over the allowed presses with friction up
+#                                  to 1.0 [RUN: tools/yieldsweep.py k_range], so any touch the sim counts (F_TOUCH or
+#                                  more) reads at least 0.4837 x 1.2 = 0.58 N [ARITH]; one-way, a real reading of 0.55 N
+#                                  may be a touch as light as 0.55 / 1.5099 = 0.36 N on the shield
 LANCET_KG = (0.0020, 0.0020)     # housing, shield [EST: 4 g in all]. WHY 2 g on the shield: at 0.5 g (600x lighter than
 #                                  the hand) PhysX let it sink 2.9 mm into the fingertip at 3.8 N, so it never fired [RUN]
 
@@ -87,13 +96,15 @@ ROLL = math.radians(-30.0)       # the hand turned about its fingers' axis, so t
 BASE_KG = 3.0                    # the base plate with the palm block (weighted, taped down in the real rig) [CHOICE]
 APEX = (FINGERS["ring"][1], FINGERS["ring"][0])             # (u, v) of the ring's apex: the hand mechanism's origin
 HZ = 0.070                       # the ring's axis over the table
-RING_KG = 0.015                  # the printed ring finger [EST: PETG, about 12 cm^3 at 40% infill]
+RING_KG = 0.025                  # the ring finger with what moves with it [EST: the PETG print, about 15 g at 40% infill;
+#                                  the guide's block, 8 g (its datasheet); four M2 screws, about 1 g]
 K_RING = 100.0                   # N/m: the slide's return spring [CHOICE]
 RING_PRELOAD = 1.0               # N: the spring holds the finger up on its stop with this to spare over its weight
-#                                  [CHOICE]. WHY light: an unheld finger yields or withdraws under a lancet; BD shows the
-#                                  collector holding it (step 4, lower figure). The slide lumps a real finger's give
-#                                  (its knuckle, wrist and arm) into one vertical give at the fingertip [CHOICE]
-DROP_STOP = 0.010                # m: the slide's travel down to its lower stop (the carriage on the guide block)
+#                                  [CHOICE]. WHY light: an unheld finger is pushed away by a lancet [inference]; a
+#                                  hospital procedure for this lancet says "Grasp the finger" (README Sources). The
+#                                  slide lumps a real finger's give (its knuckle, wrist and arm) into one vertical slide
+#                                  at the knuckle; the finger is rigid on it, so its tip gives the same [CHOICE]
+DROP_STOP = 0.010                # m: the slide's travel down to its lower stop (the web's foot on the stop post)
 DROP_MAX = 0.002                 # m: the finger pushed more than this down its slide has not been held still [CHOICE]
 STEADY_AFTER = 0.5               # s: the finger must stay still from first touch until this long after the click.
 #                                  WHY after: a fast jab can fire before a light finger moves, which then gives way [EST:
@@ -209,21 +220,36 @@ RING_SHAPES = _finger_capsules("ring", "trainer")
 KNUCKLE_X = FINGERS["ring"][2] - APEX[0]           # the ring's knuckle (mechanism x)
 PLATE_X = (KNUCKLE_X - 0.010, PALM_U[1] - APEX[0] + 0.015)   # the base plate's extent along x [CHOICE]
 PLATE_Y = (-0.035, 0.060)                          # and across, round the ring and the palm block [CHOICE]
-HOLD_SEG = (DIP - APEX[0] + FINGERS["ring"][1], KNUCKLE_X + FINGERS["ring"][4])   # m along x: where a holding TCP
-#                                  counts as on the ring finger, from its distal joint to its base
-HOLD_R = 0.015                   # m: and this far off the finger's axis
-HOLD_GAP = (FINGERS["ring"][4] - 0.0045, FINGERS["ring"][4] + 0.0010)   # m: a half-gap closed on the finger (7.8 mm)
-# the slide (rig.scad, part "ring" and the base's guide block; README Real trials): a carriage under the ring finger's
-# knuckle, on two vertical 4 mm steel pins that slide in the guide block, a spring round each pin under a collar that
-# stops the carriage at the top. Mechanism frame, m; z from the ring's axis.
-CAR_X = (KNUCKLE_X - 0.006, KNUCKLE_X + 0.014)    # the carriage along x. WHY to +14 mm: the palm block starts 17 mm
-#                                  behind the knuckle
-CAR_HALF_Y = 0.005               # its half-width. WHY 5 mm: the holding pads, closed, stand 7.3 mm off the finger's
-#                                  axis and reach 8 mm under it, so a carriage within 5 mm of the axis keeps 2.3 mm from
-#                                  them [ARITH]
-CAR_Z = (-0.012, -0.003)         # its bottom and top (the top inside the finger's capsule, fused in the print)
-PIN_X = (KNUCKLE_X - 0.001, KNUCKLE_X + 0.009)    # the two pins along x, on the axis in y [CHOICE]
-GUIDE_TOP = CAR_Z[0] - DROP_STOP                  # the guide block's top: the carriage lands on it at the lower stop
+HOLD_SEG = (DIP - APEX[0] + FINGERS["ring"][1], KNUCKLE_X)   # m along x: where a holding TCP counts as on the ring
+#                                  finger, from its distal joint to its knuckle (the real trial's inked lines)
+HOLD_R = 0.015                   # m: and at most this far from the finger's axis
+HOLD_ACROSS = 0.004              # m: and at most this far off it along the gripper's closing direction [CHOICE]. WHY:
+#                                  closed on the 15.6 mm finger, both pads touch it only with the finger between them
+HOLD_GAP_ON = FINGERS["ring"][4] - 0.0006   # m: the half-gap a gripper closed on the ring finger reads [EST: the
+#                                  lancet's grip read 0.2 to 1.1 mm under the housing's half-thickness in the sim trace,
+#                                  2026-11-17; to be checked against the film's trace (README Sim results)]
+HOLD_GAP = (HOLD_GAP_ON - 0.0015, HOLD_GAP_ON + 0.0015)   # m: a half-gap within 1.5 mm of that reading is closed on it
+# the slide (rig.scad; README Real trials): a miniature linear guide under the ring finger's knuckle. Its rail stands on
+# a post of the base; its block carries a web printed with the finger; two springs on fixed pins push the web's foot up
+# against collars at the pins' tops (the top stop), and the foot lands on a stop post 10 mm down (the lower stop).
+# WHY a rolling guide and not pins in printed holes: the press is 80 to 90 mm ahead of the slide, and plain pins in
+# bores jam at offsets over L / (2 mu) (16 mm at L 8 mm, mu 0.25); a preloaded ball block does not wedge, and its
+# rated pitch moment covers the press (README Real trials, the slide). Mechanism frame, m; z from the ring's axis.
+RAIL = {"part": "LILY MGN7C1R40Z0CM", "rail_len": 0.040, "rail_w": 0.007, "rail_h": 0.0048, "block_l": 0.0225,
+        "block_w": 0.017, "height": 0.008, "B": 0.012, "C": 0.008, "C0": 1240.0, "MR": 4.7, "MP": 2.84, "MY": 2.84}
+#                                  [SOURCE: LILY Bearing's product page for MGN7C1R40Z0CM ("Interchangeable With:
+#                                  HIWIN"), read 2026-11-19: rail 40 mm, WR 7, HR 4.8, block L 22.5, W 17, H 8, H1 1.5,
+#                                  mounting holes B 12 x C 8 (M2 x 2.5), C0 1.24 kN, MR 4.7, MP 2.84, MY 2.84 N-m]
+WEB_X = (KNUCKLE_X - 0.006, KNUCKLE_X)            # the web printed under the knuckle, the block bolted to its +x face
+WEB_HALF_Y = 0.005               # its half-width over z -14 mm. WHY 5 mm: the holding pads, closed, stand 7.3 mm off
+#                                  the finger's axis and reach 8 mm under it, so the web keeps 2.3 mm from them [ARITH]
+BLOCK_Z = (-0.0415, -0.019)      # the block at rest (22.5 mm). WHY its top 19 mm under the axis: at the lower stop the
+#                                  finger's rounded knuckle end comes down over the rail's top and keeps 1.9 mm [ARITH]
+RAIL_Z = (BLOCK_Z[1] - RAIL["rail_len"], BLOCK_Z[1])   # the rail, its top level with the block's at rest
+POST_X = (KNUCKLE_X + RAIL["height"], KNUCKLE_X + RAIL["height"] + 0.008)   # the post the rail is screwed to
+FOOT_Z = (BLOCK_Z[0], BLOCK_Z[0] + 0.005)           # the web's foot, across the spring pins
+SPRING_Y = 0.015                 # the spring pins either side of the axis, at the web's middle in x [CHOICE]
+GUIDE_TOP = FOOT_Z[0] - DROP_STOP                   # the lower stop post's top: the foot lands on it
 
 
 def ring_target():
@@ -231,16 +257,29 @@ def ring_target():
     return (RING_PRELOAD + RING_KG * GRAVITY) / K_RING
 
 
-def hand_parts():
-    """The base (plate, palm block, index finger, thumb, and the slide's guide block, drawn) and the ring finger on a
-    vertical slide at its knuckle: a spring holds it up on its top stop with RING_PRELOAD to spare; pressed down, it
-    gives way unless a gripper holds it. The guide block is drawn; the joint and its stops carry the finger, as the
-    guide pins and the spring do in the rig (rig.scad)."""
+def slide_fixed():
+    """The slide's fixed parts on the base, drawn only: the post, the rail on it, the lower stop post (rig.scad)."""
     floor = -HZ
+    return (_box((POST_X[0], -0.012, floor + 0.005), (POST_X[1], 0.012, RAIL_Z[1]), GREY, collide=False),
+            _box((POST_X[0] - RAIL["rail_h"], -RAIL["rail_w"] / 2, RAIL_Z[0]),
+                 (POST_X[0], RAIL["rail_w"] / 2, RAIL_Z[1]), DARK, collide=False),
+            _box((WEB_X[0], -0.003, floor + 0.005), (WEB_X[1], 0.003, GUIDE_TOP), GREY, collide=False))
+
+
+def hand_parts():
+    """The base (plate, palm block, index finger, thumb, and the slide's post, rail and lower stop, drawn) and the ring
+    finger on a vertical slide at its knuckle (its web, foot and block drawn): a spring holds it up on its top stop
+    with RING_PRELOAD to spare; pressed down, it gives way unless a gripper holds it. The joint and its stops carry the
+    finger, as the linear guide and the springs do in the rig (rig.scad)."""
+    floor = -HZ
+    x0, x1 = WEB_X
     base = (_box((PLATE_X[0], PLATE_Y[0], floor), (PLATE_X[1], PLATE_Y[1], floor + 0.005), GREY, material="rubber"),
-            _box((CAR_X[0], -0.012, floor + 0.005), (CAR_X[1], 0.012, GUIDE_TOP), GREY, collide=False)) + HAND_SHAPES
-    carriage = _box((CAR_X[0], -CAR_HALF_Y, CAR_Z[0]), (CAR_X[1], CAR_HALF_Y, CAR_Z[1]), SKIN, collide=False)
-    ring = Link("ring", RING_KG, RING_SHAPES + (carriage,))
+            ) + slide_fixed() + HAND_SHAPES
+    moving = (_box((x0, -WEB_HALF_Y, FOOT_Z[1]), (x1, WEB_HALF_Y, -0.003), SKIN, collide=False),
+                _box((x0, -SPRING_Y - 0.0035, FOOT_Z[0]), (x1, SPRING_Y + 0.0035, FOOT_Z[1]), SKIN, collide=False),
+                _box((x1, -RAIL["block_w"] / 2, BLOCK_Z[0]), (x1 + RAIL["height"] - 0.0015, RAIL["block_w"] / 2,
+                     BLOCK_Z[1]), DARK, collide=False))   # the block (H1 1.5 mm clear of the post)
+    ring = Link("ring", RING_KG, RING_SHAPES + moving)
     joint = Joint("ring", "prismatic", "ring", (KNUCKLE_X, 0.0, 0.0), "Z", -DROP_STOP, 0.0, stiffness=K_RING,
                   damping=0.5, target=ring_target())
     return Link("hand_base", BASE_KG, base), (ring,), (joint,)
@@ -379,7 +418,7 @@ def place_layout(env):
 # -- geometry the model and the scorer share ----------------------------------------------------------------------------
 def shield_force(q):
     """The push on the shield (N) from its travel: off its stop, the preload plus the spring; on it, 0."""
-    return F_PRE + K_SHIELD * q if q > 5e-5 else 0.0
+    return F_PRE + K_SHIELD * q if q > Q_TOUCH else 0.0
 
 
 def face_w(l_pos, l_quat, q=0.0):
@@ -396,6 +435,17 @@ def ring_drop(ring_q):
     """How far (m) the ring finger has been pushed down its slide (ring_q, the slide's position, is 0 on its top stop
     and negative down)."""
     return max(0.0, -float(ring_q))
+
+
+TIP_MARK = 0.0115                # m back from the ring's apex: the fingertip's mark the real trial reads "still" at, on
+#                                  the finger's axis beside the site (README Real trials) [CHOICE: the site's middle]
+
+
+def tip_height(ring_pos, ring_quat, base_pos, base_quat):
+    """The fingertip mark's height (m) in the base's frame. WHY: the real trial reads "still" at the fingertip as well
+    as at the web (a slide that pitched would drop the tip more), so the sim reads the same point."""
+    p = _rot3(ring_quat) @ np.array([TIP_MARK, 0.0, 0.0]) + np.asarray(ring_pos, float) - np.asarray(base_pos, float)
+    return float((_rot3(base_quat).T @ p)[2])
 
 
 def site_of(p_mech):
@@ -508,21 +558,32 @@ def let_go(hand, l_pos, l_quat):
 
 
 def finger_held(hand, ring_pos, ring_quat):
-    """A gripper closed on the ring finger: its finger half-gap in HOLD_GAP and its TCP within HOLD_R of the finger's
-    axis between its distal joint and its base (HOLD_SEG). WHY a rule as well as the slide: the 0.4 rung is reached at a
-    touch, before the press is hard enough to move an unheld finger, and the rule is what a real trial's camera sees."""
-    if hand is None or hand[0] is None or hand[1] is None:
+    """A gripper closed on the ring finger: (TCP, finger reading, the gripper's quat). Its half-gap in HOLD_GAP (what
+    the pads read closed on the finger), its TCP over the finger's axis between the distal joint and the knuckle
+    (HOLD_SEG), at most HOLD_ACROSS off it along the closing direction (the gripper's x axis) and HOLD_R from it, and
+    its pad tips (TIP under the TCP) below the axis. WHY a rule as well as the slide: the 0.4 rung is reached at a
+    touch, before the press is hard enough to move an unheld finger, and the rule is what a real trial's camera sees.
+    WHY each part: a gripper closed on air beside or over the finger reads a smaller gap, sits off the axis along its
+    closing direction, or has its tips above the axis."""
+    if hand is None or len(hand) < 3 or any(v is None for v in hand[:3]):
         return False
     gap = -float(hand[1])
-    p = _rot3(ring_quat).T @ (np.asarray(hand[0], float) - np.asarray(ring_pos, float))
-    x = min(max(float(p[0]), HOLD_SEG[0]), HOLD_SEG[1])
-    return bool(HOLD_GAP[0] <= gap <= HOLD_GAP[1] and math.hypot(float(p[0]) - x, math.hypot(p[1], p[2])) <= HOLD_R)
+    if not HOLD_GAP[0] <= gap <= HOLD_GAP[1]:
+        return False
+    Rr = _rot3(ring_quat)
+    tcp = np.asarray(hand[0], float)
+    x = float((Rr.T @ (tcp - np.asarray(ring_pos, float)))[0])
+    if not HOLD_SEG[0] <= x <= HOLD_SEG[1]:
+        return False
+    d = tcp - (np.asarray(ring_pos, float) + Rr @ np.array([x, 0.0, 0.0]))
+    across = abs(float(d @ _rot3(hand[2])[:, 0]))
+    return bool(across <= HOLD_ACROSS and float(d[2]) < TIP and float(np.linalg.norm(d)) <= HOLD_R)
 
 
 # -- the model -----------------------------------------------------------------------------------------------------------
 def _fresh_model(seed=None):
     return {"t": 0.0, "tab_off": False, "out": False, "fault": None, "press": None, "max_drop": 0.0, "touch_t": None,
-            "fire_t": None, "positioned": False, "fired": False, "fire": None, "free_t": 0.0, "q": 0.0, "ring_q": 0.0,
+            "fire_t": None, "unheld_t": None, "tip0": None, "positioned": False, "fired": False, "fire": None, "free_t": 0.0, "q": 0.0, "ring_q": 0.0,
             "tab": 0.0,
             "right": None, "left": None, "steps": 0, "error": None, "layout": shift_turn(seed), "base0": None}
 
@@ -535,9 +596,10 @@ def _latch(m, why):
         m["fault"] = why
 
 
-def advance(m, dt, l_pos, l_quat, q, tab, ring_q, ring_pos, ring_quat, right, left=None):
+def advance(m, dt, l_pos, l_quat, q, tab, ring_q, ring_pos, ring_quat, right, left=None, base=None):
     """One step: the tab's break, the lancet out of the socket, the press on the skin (where, how square, slid or not,
-    the ring finger held still or not), the firing, and the used lancet's fate."""
+    the ring finger held and still or not), the firing, and the used lancet's fate. A hand is (TCP, finger reading,
+    gripper quat); base, the trainer's base pose (pos, quat), adds the fingertip mark's drop to the slide's."""
     m["t"] += dt
     m["q"], m["tab"], m["ring_q"] = float(q), float(tab), float(ring_q)
     m["right"], m["left"] = right, left
@@ -558,14 +620,23 @@ def advance(m, dt, l_pos, l_quat, q, tab, ring_q, ring_pos, ring_quat, right, le
         _latch(m, "fired in the stand (pressed down on the post after the twist)")
     if m["out"] and m["tab_off"] and f >= F_TOUCH and m["touch_t"] is None:
         m["touch_t"] = m["t"]
+    drop = ring_drop(ring_q)
+    if base is not None:
+        h = tip_height(ring_pos, ring_quat, base[0], base[1])
+        if m["tip0"] is None:      # WHY the first step: the finger starts on its top stop
+            m["tip0"] = h
+        drop = max(drop, m["tip0"] - h)
     # WHY from first touch to STEADY_AFTER past the click, whatever the force: a jab fires before the finger moves
-    if m["touch_t"] is not None and (m["fire_t"] is None or m["t"] <= m["fire_t"] + STEADY_AFTER + 1e-9):
-        m["max_drop"] = max(m["max_drop"], ring_drop(ring_q))
+    window = m["touch_t"] is not None and (m["fire_t"] is None or m["t"] <= m["fire_t"] + STEADY_AFTER + 1e-9)
+    if window:
+        m["max_drop"] = max(m["max_drop"], drop)
         if m["max_drop"] > DROP_MAX:
             when = "within 0.5 s of the click" if m["fired"] else "under the press"
             _latch(m, f"the ring finger was not held still: it gave {1000 * m['max_drop']:.1f} mm {when}")
     others = [h for h in (right, left) if not held_by(h, l_pos, l_quat)]
     held = any(finger_held(h, ring_pos, ring_quat) for h in others)
+    if window and not held and m["unheld_t"] is None:
+        m["unheld_t"] = m["t"]
     if m["out"] and m["tab_off"] and not m["fired"] and f >= F_TOUCH:
         if m["press"] is None:
             m["press"] = p_mech.copy()
@@ -575,7 +646,7 @@ def advance(m, dt, l_pos, l_quat, q, tab, ring_q, ring_pos, ring_quat, right, le
         site = site_of(p_mech)
         ok, why = site_ok(site)
         square = site is not None and tilt_of(l_quat, ring_quat, site[3]) <= TILT_MAX
-        if ok and square and held and m["max_drop"] <= DROP_MAX:
+        if ok and square and held and m["unheld_t"] is None and m["max_drop"] <= DROP_MAX:
             m["positioned"] = True
         if f >= F_FIRE:
             m["fired"], m["fire_t"] = True, m["t"]
@@ -590,6 +661,10 @@ def advance(m, dt, l_pos, l_quat, q, tab, ring_q, ring_pos, ring_quat, right, le
                 _latch(m, "fired with no gripper holding the ring finger")
     elif f < F_TOUCH:
         m["press"] = None
+    # WHY at the click and not at the first unheld step: a finger let go of gives way, and "not held still" then says so
+    if m["fired"] and m["unheld_t"] is not None:
+        _latch(m, f"the ring finger was not held from first touch to {STEADY_AFTER:g} s after the click (let go "
+                  f"{m['unheld_t'] - m['touch_t']:.2f} s after the touch)")
     if m["out"] and not in_sharps(l_pos) and not held_by(right, l_pos, l_quat) and not held_by(left, l_pos, l_quat):
         m["free_t"] += dt
         if m["free_t"] > DROP_S:
@@ -636,12 +711,13 @@ def run_model(env):
             g = _np(rob.data.body_link_pose_w)[0][list(rob.body_names).index("gripper")]
             qr = _np(rob.data.joint_pos)[0]
             hands.append((g[:3] - origin + _rot3(g[3:7]) @ np.array(TCP_OFFSET),
-                          float(qr[list(rob.joint_names).index("joint7")])))
+                          float(qr[list(rob.joint_names).index("joint7")]), g[3:7].copy()))
         if _M["base0"] is None:
             _M["base0"] = _np(hand.data.root_link_pose_w)[0][:3] - origin
-        _M["base"] = _np(hand.data.root_link_pose_w)[0][:3] - origin
+        pb = _np(hand.data.root_link_pose_w)[0]
+        _M["base"] = pb[:3] - origin
         advance(_M, float(base.step_dt), pl[:3] - origin, pl[3:7], q, tab, ring_q, ph[:3] - origin, ph[3:7], hands[0],
-                hands[1])
+                hands[1], (pb[:3] - origin, pb[3:7]))
         _M["steps"] += 1
     except Exception as e:  # WHY: never stop the run; no model step means no firing and so no full score
         _M["error"] = "step " + repr(e)
@@ -658,18 +734,26 @@ def read_clock(env):
 
 # -- scoring -------------------------------------------------------------------------------------------------------------
 LOST_Z = TOP - 0.030
-BASE_MOVED = 0.005               # m: the hand's base dragged this far from its start is a fault
+BASE_MOVED = 0.005               # m: the hand's base dragged (or lifted) this far from its start is a fault
+BASE_TURN = math.radians(2.0)    # its turn on the table, or its tilt off flat, past this is a fault too [CHOICE]
 
 
 def failure(objects, m):
-    """Latched faults: the model's (tab on when lifted, a slide, a bad fire, a drop), the hand's base dragged, the lancet
-    off the table, or the model not running."""
+    """Latched faults: the model's (tab on when lifted, a slide, a bad fire, a drop), the hand's base dragged, lifted,
+    turned or tipped, the lancet off the table, or the model not running."""
     if m["fault"]:
         return m["fault"]
     b = objects["hand"]
     start = np.array(layout(m["layout"])["hand"][:2])   # m["layout"] is the trial's (dx, dy, yaw)
+    hx, hy, hz, yaw0 = layout(m["layout"])["hand"]
     if float(np.linalg.norm(np.asarray(b.pos[:2], float) - start)) > BASE_MOVED:
         return "trainer hand's base dragged out of place"
+    if abs(float(b.pos[2]) - hz) > BASE_MOVED:
+        return "trainer hand's base lifted or pushed down"
+    Rb = _rot3(b.quat_xyzw)
+    turn = (math.atan2(float(Rb[1, 0]), float(Rb[0, 0])) - yaw0 + math.pi) % (2 * math.pi) - math.pi
+    if abs(turn) > BASE_TURN or math.acos(max(-1.0, min(1.0, float(Rb[2, 2])))) > BASE_TURN:
+        return "trainer hand's base turned or tipped"
     if float(objects["lancet"].pos[2]) < LOST_Z:
         return "lancet lost"
     if m["error"]:

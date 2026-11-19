@@ -4,33 +4,35 @@ A fingerstick trainer lies palm up: a palm block with an index finger, a thumb a
 its fingers so the side of the ring fingertip faces up. The ring finger rides on a light vertical slide under its
 knuckle and gives way when pressed unless it is held. A BD Microtainer contact-activated lancet (366577, 21 G x 1.8 mm)
 stands tip down in a stand whose socket holds its protective tab, and a BD 305635 sharps container stands beside. The
-robot does the fingerstick as BD's guide gives it: twist the tab off, hold the ring finger still with one gripper,
-place the lancet square on the side of its fingertip that faces up with the other, press until it fires, and drop the
-used lancet into the container.
+robot twists the tab off, holds the ring finger with one gripper ("Grasp the finger", a hospital procedure for this
+lancet), places the lancet square on the side of the ring fingertip that faces up with the other, presses until it
+fires, and drops the used lancet into the container (the tab, the press and the discard are the steps of BD's guide).
 
 The hold is set by the model's physics and checked by a rule. Physics: the unheld ring finger gives 2 mm at 1.20 N
 straight down (a 1 N preload over its weight on a 100 N/m spring), and every press the scorer allows reaches that
-long before the lancet fires at 8 N. Rule: the lancet must fire with a gripper closed on the ring finger, and the ring
-finger must stay within 2 mm of its top stop from the lancet's first touch until 0.5 s after the click. Holding the
-wrist, the palm or the index finger does not hold the ring finger, so it scores 0 (Review response, point 1).
+long before the lancet fires at 8 N. Rule: from the lancet's first touch until 0.5 s after the click, a gripper must
+be closed on the ring finger with both pads on it at every step, and the ring finger must stay within 2 mm of its top
+stop, read at its slide and at its fingertip. Holding the wrist, the palm or the index finger, or closing on air
+beside the ring finger, does not hold it, so it scores 0 (Review response, point 1). The demo's hold lifts the finger
+against its top stop, so the hold pushes up against the press; a grip that does not lift scores 0 (stem g00).
 
 The trainer's place and turn are drawn from the seed (Seeds), so a replayed path misses the site: a plan made for one
 seed's layout, replayed on another's, failed in all 20 seed pairs tried, and the unshifted plan failed at all 8 corners
 of the layout box (`test_open_loop_plan_fails_other_layouts`). Two seeds whose layouts lie within a few mm of each other
 may share a plan; the test does not claim otherwise.
 
-Files: `lancet_fingerstick.py` (the task), `mechanism.py` (articulated objects, adapted from benchmark-tasks #223,
-MIT), `test_lancet_fingerstick.py` (offline tests), `task.json`, `rig.scad` (the printable real-trial rig: base with
-the fixed fingers and the slide's guide, the ring finger with its carriage, the stand and its cup), `tools/`
+Files: `lancet_fingerstick.py` (the task), `mechanism.py` (articulated objects, adapted from benchmark-tasks #223, MIT),
+`test_lancet_fingerstick.py` (offline tests), `task.json`, `rig.scad` (the printable real-trial rig: base with the fixed
+fingers and the slide's post, the ring finger with its web, the springs' shims, the stand and its cup), `tools/`
 (`gen_taskjson.py` writes task.json; `yieldsweep.py` the one-arm yield sweep; `ikcheck.py` reach; `clearance.py` the
-sharps container; `grippers.py` the two arms' meshes against each other and the trainer; `rig_scad.py` writes
-`rig.scad` from the task's numbers), `sim/` (run scripts and the sim stems).
+sharps container; `grippers.py` the two arms' meshes against each other and the trainer; `rig_scad.py` writes `rig.scad`
+from the task's numbers), `sim/` (run scripts and the sim stems).
 
 ## Review response (a5621a2)
 
-1. "the robot must stabilize the punctured finger itself during the press ... rather than immobilizing a rigid finger
-   by holding the wrist". The hinged rigid hand is gone. The punctured finger, the ring, is the only part that moves:
-   it is on a sprung slide and gives way under any allowed one-handed press (The model, the slide; `tools/yieldsweep.py`;
+1. "the robot must stabilize the punctured finger itself during the press ... rather than immobilizing a rigid finger by
+   holding the wrist". The hinged rigid hand is gone. The punctured finger, the ring, is the only part that moves: it is
+   on a sprung slide and gives way under any allowed one-handed press (The model, the slide; `tools/yieldsweep.py`;
    `test_unheld_finger_gives_before_fire`). A fire with no gripper closed on the ring finger scores 0 ("fired with no
    gripper holding the ring finger"), and so does the ring finger moving more than 2 mm from first touch to 0.5 s after
    the click. A gripper on the index finger, the palm or the base holds nothing that matters (`test_finger_held_rule`,
@@ -38,8 +40,9 @@ sharps container; `grippers.py` the two arms' meshes against each other and the 
 2. "no socket dimensions or printable design". The stand, its post and its cup are parts `stand` and `cup` of
    `rig.scad`, with every size under Real trials, the stand.
 3. "Specify a real-trial measurement for the 5 N partial-credit threshold". The 0.4 rung no longer has a firm-press
-   force. It is the lancet touching the site at 2 N or more, square, with the ring finger held and still. A real trial
-   reads the touch on a kitchen scale under the trainer (1 g, 0.01 N), tared after the hold (Real trials, scoring).
+   force. It is contact: the lancet's shield pushed off its stop on the site (1.2 N), square, with the ring finger held
+   and still. A real trial reads it on a kitchen scale under the trainer (1 g), tared after the hold, as a change of
+   56 g (0.55 N) or more, a one-way bound (Real trials, scoring).
 4. "assess the lancet angle against the local skin normal at each allowed puncture site rather than assuming every site
    faces vertically". Square is the lancet's axis within 10 deg of the skin's inward normal at the point it touches,
    read by `tilt_of` against `site_of`'s normal, never against the vertical
@@ -60,9 +63,13 @@ Saved copies were read; every quote here is from them.
   into a sharps container according to your facility's established procedures", and "CAUTION: Handle all biologic
   samples and blood collection "sharps" (lancets, needles, luer adapters, and blood collection sets) in accordance
   with the policies and procedures of your facility." Its figure for step 4 (lower panel) shows the collector's hand
-  holding the patient's finger near its base, below the shaded site; its figure shades both sides of the fingertip
-  pad; its step 6 figure shows the tab twisted with curved arrows and no stated direction; its step 9A is headed "For
-  glucose testing".
+  holding the patient's finger near its base, below the shaded site; that figure is of selecting the site, and the
+  guide shows no figure of the finger during the press. Its figure shades both sides of the fingertip pad; its step 6
+  figure shows the tab twisted with curved arrows and no stated direction.
+- Akron Children's Hospital, laboratory procedure "Performing a Capillary Puncture" (Version 7), which names this
+  lancet's family ("BD Microtainer Contact-Activated Lancet 2.0 mm (blue)"): "Grasp the finger, and using a sterile
+  lancet, press firmly against the finger to make a puncture." It does not say how long the grasp lasts; that it lasts
+  through the press is our reading of the sentence [inference].
 - BD, FDA 510(k) K223243 (BD Microtainer Contact-Activated Lancet): "The BD Microtainer® Contact-Activated Lancet is
   activated by applying pressure against the puncture site upon contact; after skin puncture, the needle/blade returns
   into the device." and "Once activated, the device is auto-disabled". Its table gives the materials: needle carrier
@@ -98,10 +105,11 @@ Saved copies were read; every quote here is from them.
 Not sourced, and set in the code with [EST] or [CHOICE]: the lancet's body size (13 x 10 x 37 mm) and mass (4 g); the
 fire force, 8 N, chosen inside Unistik's 4 to 15 N because BD publishes none; the tab's break torque, 3 N-cm, under
 Facet's 4.9 N-cm limit, and its break angle, 45 deg; the site's bounds, read from BD's shaded figure and narrowed to 8
-mm and more from the apex, on the side that faces up; the square, slide, held and still limits; the ring finger's
-slide (its 15 g, 100 N/m spring, 1 N preload and 10 mm travel); the friction bound of the yield sweep (1.0); the rig's
-printed parts, fits and bought parts (`rig.scad`). None has been measured yet; each one the real trial depends on is
-measured before the trials (Real trials, checks 1 to 8).
+mm and more from the apex, on the side that faces up; the square, slide, held and still limits; the ring finger's slide
+(its 25 g, 100 N/m spring, 1 N preload and 10 mm travel); the half-gap a gripper closed on the ring finger reads (7.2
+mm, planned, to be checked against the film's trace); the friction bound of the yield sweep (1.0); the rig's printed
+parts, fits and bought parts (`rig.scad`; the linear guide's sizes and ratings are its vendor's page). None has been
+measured yet; each one the real trial depends on is measured before the trials (Real trials, checks 1 to 8).
 
 ## The model
 
@@ -117,12 +125,15 @@ measured before the trials (Real trials, checks 1 to 8).
   tab; here it stays in the post's slot and is taken out at reset, so it is not a step the robot does. Lifted out more
   than 10 mm before the break, the lancet still has its tab on: a fault.
 - The trainer: a base (a 3 kg plate taped down, a palm block, an index finger on a rod into the palm, a thumb) and the
-  ring finger (15 g) on a vertical prismatic joint at its knuckle, 99 mm behind its apex. A spring (100 N/m) holds it
-  up on its top stop with 1 N to spare over its weight; it stops 10 mm down. The middle and little fingers are left
-  off: a gripper closed round the ring finger's base needs its pads 7.8 to 14.2 mm either side of the finger's axis,
-  where the neighbours' surfaces lie (12.2 and 12.7 mm off it). The slide lumps a real finger's give (its knuckle,
-  wrist and arm) into one vertical give at the knuckle: a real finger pressed by a lancet and not held moves away,
-  which is why BD's figure has the collector hold it.
+  ring finger (25 g: the print, the guide's block and its screws) on a vertical prismatic joint at its knuckle, 99 mm
+  behind its apex. A spring (100 N/m) holds it up on its top stop with 1 N to spare over its weight; it stops 10 mm
+  down. The middle and little fingers are left off: a gripper closed round the ring finger's base needs its pads 7.8
+  to 14.2 mm either side of the finger's axis, where the neighbours' surfaces lie (12.2 and 12.7 mm off it). Practice
+  on a lone finger is what the commercial trainer the rig uses already is: Wallcur's Lance "fits over the finger of a
+  standard patient or Mannequin" (Sources). The slide lumps a real finger's give (its knuckle, wrist and arm) into one
+  vertical give at the knuckle; the finger is rigid on it, so its tip gives what its knuckle gives. That a real finger
+  pressed by a lancet and not held moves away is our inference, not measured and not quoted from a source; the
+  sources say to grasp the finger (Akron) and show it held while the site is chosen (BD step 4).
 - The site: the pad of the ring fingertip, 8 to 15 mm back from the apex and 15 to 45 deg round from the pad's middle
   line, on the side that faces up. The shield's face within 1.5 mm of the skin is on it. WHY the side facing up only:
   the YAM's gripper points down, so it can hold the lancet near vertical; the 30 deg roll turns that side's normal to
@@ -132,16 +143,29 @@ measured before the trials (Real trials, checks 1 to 8).
   put the arms under 10 mm apart.
 - Square: the lancet's axis within 10 deg of the skin's inward normal where the shield's face touches (`tilt_of` with
   `site_of`'s normal), at each allowed site, not against the vertical.
-- The press: from first touch (2 N) to firing, the face moving more than 1.0 mm on the skin is a slide. Lifting off
-  (under 2 N) ends a placement, so the lancet may be lifted and placed again.
-- Held: a gripper that is not holding the lancet, its finger half-gap 3.3 to 8.8 mm and its TCP within 15 mm of the
-  ring finger's axis between its distal joint (26.6 mm back from the apex) and its base (106.8 mm back), in the ring
-  finger's own frame. A fire with no such gripper is a fault.
-- Still: from the lancet's first touch (2 N on the shield, tab off, out of the stand) until 0.5 s after the click, the
-  ring finger pushed more than 2 mm down its slide is a fault, whatever the force at the time. WHY past the click: a
-  jab fast enough to fire on the finger's inertia leaves the finger moving down; from 1 m/s its 1.15 N of spring force
-  stops 15 g only after 0.015 x 1 / (2 x 1.15) = 6.5 mm, past 2 mm, within tens of ms [ARITH, 1-D, EST]. Slow
-  presses are the sweep's.
+- The press: from first touch (the shield pushed off its stop, 1.2 N) to firing, the face moving more than 1.0 mm on
+  the skin is a slide. Lifting off (the shield back on its stop) ends a placement, so the lancet may be lifted and
+  placed again.
+- Held: a gripper that is not holding the lancet, closed on the ring finger as it is with both pads on it: its
+  half-gap 5.7 to 8.7 mm and its TCP within 15 mm of the ring finger's axis between its distal joint (26.6 mm back
+  from the apex) and its base (99.0 mm back), at most 4 mm off the axis along the gripper's closing direction, and its
+  pad tips (13 mm under the TCP) below the axis, in the ring finger's own frame. The half-gap window is 1.5 mm either
+  side of 7.2 mm, the reading planned for a gripper closed on the 7.8 mm finger [EST: the lancet's grip read 0.2 to
+  1.1 mm under the housing's half-thickness; checked against the film's trace, Sim results]. A gripper closed on air
+  4 mm beside the finger, or with its tips above the axis, is not holding it (`test_finger_held_rule`). The hold must
+  be there at every step from the lancet's first touch until 0.5 s after the click: a step without it is a fault ("not
+  held from first touch to 0.5 s after the click"), and a fire with no such gripper is a fault.
+- The model reads the hold and the finger at 20 Hz, the control rate, so a jab between two steps is not seen by the
+  drop check. It does not need to be: the hold must be contact-like and present at every step of the window, so a jab
+  on an unheld finger scores 0 however it is timed, and only a gripper really closed on the finger can score.
+- Still: from the lancet's first touch (the shield off its stop, tab off, out of the stand) until 0.5 s after the
+  click, the ring finger pushed more than 2 mm down is a fault, whatever the force at the time. The drop is read at
+  the slide and at a fingertip mark 11.5 mm back from the apex on its axis, against the base, and the larger counts;
+  the real trial reads the same two points. WHY past the click: a jab fast enough to fire on the finger's inertia
+  leaves the finger moving down; from 1 m/s the net force on it, the 1 N preload plus 100 N/m times its drop x, stops
+  25 g only after 8.7 mm (0.5 x 0.025 x 1^2 = 1.0 x + 50 x^2), past 2 mm [ARITH, 1-D; the 1 m/s is EST]. Slow presses
+  are the sweep's. A finger pinned on its lower stop is 10 mm down, so pressing it there is a fault too
+  (`test_ring_pinned_at_its_lower_stop`).
 - The yield sweep (`tools/yieldsweep.py`): a press is allowed when the shield's face is on the site and the lancet's
   axis d is within 10 deg of the skin's inward normal n. The shield's spring carries the axial load, so the contact
   force C on the skin has C . d = F, the force on the shield. Friction (coefficient up to mu) lets C lean up to atan
@@ -163,7 +187,10 @@ measured before the trials (Real trials, checks 1 to 8).
   can lift the finger there.
 - The demo's hold: the left closes on the ring finger 91.5 mm back from its apex, 81.5 mm behind the press, and aims 25
   mm over the finger, lifting it against its top stop with about 12.5 N [EST: the arm's 0.5 N/mm at the TCP], so the
-  finger does not move until a press passes 13.5 N.
+  finger does not move until a press passes 13.5 N. The hold pushes the finger up, against the press: that is what
+  holds it still. A grip on the finger that does not lift it (stem g00) leaves the press to meet the slide's spring
+  and the arm's stiffness; its offline replay scores 0, not held still (`test_sim_stems`). A jab past the hold
+  (stem y00, 40 mm under contact in one step) also scores 0, not held still.
 - Out of the stand: the lancet's frame more than 4 mm across or 10 mm up from where it stood. This latches: a lancet
   put back in the stand still counts as out.
 - Fired in the stand: with its tab off and still in the stand, the lancet pressed down to 8 N on its shield fires into
@@ -175,17 +202,18 @@ measured before the trials (Real trials, checks 1 to 8).
 - Let go: a gripper's half-gap over 7.0 mm, or its TCP more than 60 mm from the lancet's axis. The 0.8 and 1.0 rungs
   need both grippers to have let go.
 - Dropped: the lancet out of the stand, held by neither gripper and not in the container: loose for 0.5 s.
-- The trainer's base may move 5 mm; more is a fault (dragged).
+- The trainer's base may turn or tip 2 deg and move 5 mm; more is a fault (dragged, lifted or pushed down, turned or
+  tipped).
 
 Two arms on one finger. Two top-down YAM grippers working about 80 mm apart on one finger is near the geometric limit:
 along x their link4s meet under about 105 mm. Turning the trainer 30 deg (its fingers point toward the wrist 30 deg
 right of +x) gives the most room. `tools/grippers.py` poses each arm's collision meshes (gripper, both tips, link5,
 link4 of the YAM URDF) by forward kinematics along both plans, every 0.1 s, and reports the least distance between the
 arms and from each arm to the trainer's fixed parts. Over seeds 0, 2 and 4, the layout's eight corners and the two-arm
-stems (f00, k00, c00, i00), the arms stay at least 10.5 mm apart (corner -12, -12 mm, +6 deg, through the press) and
-each arm at least 3.3 mm from the trainer's fixed parts [RUN: tools/grippers.py, 2026-11-19] (floors 10 and 3 mm
-[CHOICE]; in i00 the left's grip on the index is the stem, so the index is left out of that check). The arms' lag on a
-descent (2 to 10 mm) is not in that check. To keep the arms apart the left takes the finger while the right waits
+stems (f00, k00, c00, i00, a00, g00, y00), the arms stay at least 10.5 mm apart (corner -12, -12 mm, +6 deg, through the
+press) and each arm at least 3.3 mm from the trainer's fixed parts [RUN: tools/grippers.py, 2026-11-19] (floors 10 and 3
+mm [CHOICE]; in i00 the left's grip on the index is the stem, so the index is left out of that check). The arms' lag on
+a descent (2 to 10 mm) is not in that check. To keep the arms apart the left takes the finger while the right waits
 clear at (0.10, -0.07). After the press the right backs out to that same spot, and only once the left has let go and
 parked does the right go to the container: at the hold the two wrists cross in y, so either arm leaving first along
 another path met the other.
@@ -230,21 +258,38 @@ numbers; `test_rig_scad_is_current` checks it is current):
 - The trainer, two prints and bought parts (`rig.scad`; units mm, z over the table, x along the finger from the ring's
   apex):
   - Part `base`, one print: a plate 104 by 95 by 5 mm (x 89 to 193), ballasted to 3 kg and taped down; on it the palm
-    block on a pedestal, the index finger on a rod into the palm block, the thumb, and the slide's guide block. The
-    part is 191 by 120 by 96 mm, so it needs a bed of at least 201 by 130 mm and 101 mm of height (from the model's
-    shapes; not rendered).
-  - The guide block: 20 by 24 mm (x 93 to 113), its top at z 48, a bridge whose top (z 40 to 48) carries the pins'
-    4.2 mm bushings, with a slot under it open across the block for the collars and springs, and two spring seat
-    posts (3.5 mm, 8 mm high) on the plate under the pins.
+    block on a pedestal, the index finger on a rod into the palm block, the thumb, the slide's post, the spring pins'
+    bosses and the lower stop post. The part is 191 by 120 by 96 mm, so it needs a bed of at least 201 by 130 mm and
+    101 mm of height (from the model's shapes; not rendered).
+  - The post: x 107 to 115, 24 mm across, z 5 to 51, with three M2 heat-set inserts in its -x face at z 16, 31 and 46
+    for the rail's screws. The lower stop post: x 93 to 99, 6 mm across, its top at z 18.5.
   - Part `ring`: the ring finger (distal radius 7.3 mm less the Lance wall, proximal 7.8 mm, axis 70 mm over the table)
-    and under its knuckle a carriage 20 by 10 mm, z 58 to 67, fused to it. Two 4 mm steel dowel pins, 41 mm long, are
-    pressed 8 mm into the carriage at x 98 and 108 and slide in the bushings. The carriage lands on the guide block's
-    top after 10 mm: the lower stop.
-  - Bought: two 4 mm bore shaft collars (10 mm OD, 5 mm wide [EST]) clamped on the pins under the bridge top: the top
-    stop. Two compression springs, one round each pin between its seat and its collar, each 0.05 N/mm, free length
-    41.5 mm, 30 mm long at rest (0.574 N each, 1.15 N in all: the 1 N preload plus the finger's weight), 20 mm at the
-    lower stop, so solid length under 20 mm [CHOICE: not sourced; check R measures the slide as built]. The collars'
-    clamp position sets the springs' length at rest, so the preload can be set on the rig.
+    and under its knuckle a web x 93 to 99, fused to it, 17 mm wide up to z 56 and 10 mm wide above (2.3 mm inside the
+    holding pads), down to a foot z 28.5 to 33.5 that spans the two spring pins. The guide's block is bolted to the
+    web's +x face by four M2 screws (holes 12 by 8 mm apart, at z 35.75 and 43.75). The foot lands on the stop post
+    after 10 mm: the lower stop.
+  - The slide, bought: a miniature linear guide, LILY MGN7C1R40Z0CM, listed as interchangeable with HIWIN's MGN7C
+    [SOURCE: LILY Bearing's product page, read 2026-11-19]: rail 40 mm long, 7 wide, 4.8 high, holes for M2 x 6 at a 15
+    mm pitch, 5 mm from each end; block 22.5 long, 17 wide, 8 mm high over the rail's base, M2 holes 2.5 mm deep, 12 by
+    8 mm apart; very light preload (Z0); basic static load 1.24 kN; static moments MR 4.7, MP 2.84, MY 2.84 N m; block 8
+    g. The block's screws are M2 x 6 in 2.2 mm counterbores in the 6 mm web, so 2.2 mm of each enters the block's 2.5 mm
+    thread; the rail's are M2 x 6 into the post's inserts. The rail runs z 11 to 51 on the post; the block, z 28.5 to 51
+    at rest, stays on it over the 10 mm travel. The press at the demo's site is 93 mm ahead of the block's middle, so a
+    15 N press (check H's) puts 1.40 N m of pitch moment on it, under MP's 2.84 N m [ARITH]. WHY a rolling guide: plain
+    pins in printed holes jam when the load is more than L / (2 mu) ahead of them (16 mm for 8 mm of engagement at mu
+    0.25), and the press is 88 to 95 mm ahead; a ball block has no such wedge [EST: its friction is not modelled; check
+    R measures the give with it]. WHY not LM4UU bushings: THK's LM catalog says "When using the Linear Bushing on a
+    single shaft, use two or more units" to avoid a moment load, and a guide carries the pitch moment in one part.
+  - Bought, for the springs: two 4 x 40 mm steel dowel pins pressed 8 mm into the plate and their bosses at x 96,
+    15 mm either side of the axis, z 0 to 40; two 4 mm bore shaft collars (10 mm OD, 5 mm wide [EST]) clamped on the
+    pins on the foot's top, z 33.5 to 38.5: the top stop. Two compression springs, one on each pin between its seat
+    and the foot, each music wire 0.32 mm on a 4.8 mm mean diameter (OD 5.12, ID 4.48), 18.8 active coils and 20.8 in
+    all, ends closed and ground, 0.05 N/mm, free length 31.0 mm, 18.5 mm long at rest (0.623 N each, 1.25 N in all:
+    the 1 N preload plus the finger's weight), 8.5 mm at the lower stop, solid 6.66 mm, peak stress 458 MPa [ARITH:
+    `tools/rig_scad.py` from k = G d^4 / (8 D^3 n) with G 79.3 GPa, a handbook value, EST]. The spring index is 15,
+    above the 4 to 12 a maker prefers [EST]; the pin inside keeps it from buckling. This is a full order spec for a
+    custom spring; a catalog spring within 10% of rate and free length passes if check R passes. The springs sit at
+    z 10 on two printed 1 mm shims each (part `shims`); a shim taken out lowers each spring's force by 0.05 N.
 - The stand (parts `stand` and `cup`), fixed to the table:
 
   | part | size, mm |
@@ -259,37 +304,46 @@ numbers; `test_rig_scad_is_current` checks it is current):
 - A kitchen scale (5 kg, 1 g readability) under the trainer's base, its display in the side camera's view; a push-pull
   force gauge (0.1 N readability) with a flat tip; a cap torque gauge (0.1 N-cm); digital calipers (0.01 mm); a
   digital angle gauge (0.1 deg); a 0.01 g scale; a protractor; a 10x loupe; washable ink and a paper template of the
-  site zone (1 mm and 5 deg lines); a steel rule (0.5 mm divisions) fixed upright beside the carriage, which carries a
-  scribed line; a side camera (60 fps) on the rule, the carriage and the scale's display; a second side camera at 90
-  deg to it; an overhead camera; a microphone on the same recording.
+  site zone (1 mm and 5 deg lines); two steel rules (0.5 mm divisions) fixed upright to the base, one beside the web,
+  which carries a scribed line, and one beside the fingertip, where an ink mark on the Lance finger's side at its axis
+  sits 11.5 mm back from the apex (the model's TIP_MARK); a side camera (60 fps) on both rules and marks and the
+  scale's display; a second side camera at 90 deg to it; an overhead camera; a microphone on the same recording.
 
 The rig file has not been rendered or printed: OpenSCAD is not installed where it was written, and the offline test
 checks only that the file is current, its brackets balance and its numbers are the model's. A render would add that
-each part is one closed solid a slicer accepts and that the carriage clears the guide block and the palm over its
-travel.
+each part is one closed solid a slicer accepts and that the web and the block clear the post, the rail and the palm
+over their travel.
 
 Checks before any trial, each with its pass criterion (no trial runs until all pass):
 
-1. Fire force: five lancets pressed by hand, shield first, onto the gauge's tip through a 3 mm silicone pad; the peak
-   at the click. Pass: every one at or under 15 N, and the lowest at least 4.6 N: at that force every allowed press
-   pushes the unheld finger down by 1.0 N more than its 1.20 N give force (the sweep's least k at friction 1.0, 0.4837,
-   times 4.6 N, less 1.20 N). If the lowest is under 4.6 N, the collars are moved to lower the preload, check R is
-   re-run, the sim is set to the readings (`F_FIRE` the mean, `RING_PRELOAD` check R's) and the offline tests are
-   re-run; `test_unheld_finger_gives_before_fire` fails if the margin no longer holds.
+1. Fire force: five lancets pressed by hand, shield first, onto the gauge's tip through a 3 mm silicone pad; the peak at
+   the click. Pass: every one at or under 15 N, and the lowest at least 4.6 N: at that force every allowed press pushes
+   the unheld finger down by 1.0 N more than its 1.20 N give force (the sweep's least k at friction 1.0, 0.4837, times
+   4.6 N, less 1.20 N). If the lowest is under 4.6 N, shims are taken out from under the springs to lower the preload
+   (0.1 N a mm), check R is re-run, the sim is set to the readings (`F_FIRE` the mean, `RING_PRELOAD` check R's) and the
+   offline tests are re-run; `test_unheld_finger_gives_before_fire` fails if the margin no longer holds.
 2. Tab: ten tabs twisted off in the stand by the torque gauge on the housing, five each way. Pass: every peak at or
    under 4.9 N-cm (Facet's limit) and every break at or under 60 deg (protractor), under the demo's 70 deg twist.
 3. Body size and tab cap: five lancets with calipers. Pass: each side within 1 mm of the sim's 13 x 10 x 37 mm, or the
    sim is updated and its tests re-run. The tab cap's width, thickness and height set `tab_w`, `tab_t` and `tab_h`.
 3b. Ring finger: the Lance finger's wall, read with calipers on a cut spare, sets `lance_wall` before the ring is
    printed. After printing, the ring fingertip's radius with the Lance finger on is read with calipers. Pass: within
-   0.3 mm of the sim's 7.3 mm; else the ring is reprinted. The ring with its pins weighs 15 g plus or minus 5 g (0.01 g
-   scale).
-R. Slide: the gauge straight down on the ring's top 10 mm from the apex (the demo's site), the carriage's line read
-   on the rule. Pass: the force at 2 mm of drop is 1.0 to 1.4 N (the sim's 1.20 N plus or minus 0.2 N), and the
-   finger returns to within 0.25 mm of its top stop when let go, five times. At 1.4 N every allowed press still gives
-   the finger way by 2.47 N at 8 N (0.4837 x 8 - 1.4).
+   0.3 mm of the sim's 7.3 mm; else the ring is reprinted. The ring with the block bolted on weighs 25 g plus or minus
+   5 g (0.01 g scale). The Lance finger's length is read with the rule. If it reaches past the distal joint's line
+   (26.6 mm from the apex), it is trimmed at the line, so the proximal segment, where the hold closes, keeps its
+   7.8 mm radius and the held window its reading; uncut, its wall would add about 1 mm to the half-gap the gripper
+   reads there [EST: the 1.0 mm wall], inside the 1.5 mm window but at its edge.
+R. Slide: the gauge straight down on the ring's top 10 mm from the apex (the demo's site), read at both points: the
+   web's line and the fingertip mark on their rules. Pass, five times: the force at 2 mm of drop at the fingertip is
+   1.0 to 1.4 N (the sim's 1.20 N plus or minus 0.2 N); the two drops agree within 0.5 mm at 2 mm (the block does not
+   pitch); and the finger returns to within 0.25 mm of its top stop at both points when let go. At 1.4 N every allowed
+   press still gives the finger way by 2.47 N at 8 N (0.4837 x 8 - 1.4). If it fails, in order, each followed by check
+   R again: over 1.4 N, a shim out under each spring (0.1 N less); no return, the block wiped and re-oiled; still no
+   return, or the drops differ by more than 0.5 mm, the block replaced on the same rail; if it still fails, no trial
+   runs.
 H. Hold: the left arm runs the demo's hold on the ring finger; the gauge pressed straight down at the demo's site to
-   15 N. Pass: the carriage's line moves under 1 mm (rule).
+   15 N. Pass: the web's line and the fingertip mark each move under 1 mm (rules). The left's gripper reading,
+   closed on the finger, is logged here: it is the setup reading the trial's held check uses.
 5. Square: a 2 mm rod held square to the skin at the demo's site, 10 mm from the apex on the side facing up, is
    within 3 deg of vertical (angle gauge).
 6. Patch: the site zone of a spare Lance finger, on the ring, is coated with washable ink and left to dry. Five
@@ -316,18 +370,24 @@ check 6, and the scale is tared once the trainer is on it):
   in the stand).
 - Fired: the click on the audio track. Spent: after the trial the lancet is pressed on the gauge to 15 N with no second
   click (BD: auto-disabled).
-- Held: the overhead and side videos show a gripper closed on the ring finger, both its fingers on it, between the
-  distal joint's line (inked 26.6 mm from the apex) and the knuckle's line (inked at 99 mm). A click with no gripper so
-  closed scores 0.
+- Held: in every frame from the touch (below) until 0.5 s after the click, the overhead and side videos show a
+  gripper closed on the ring finger with both pads on it (no light between pad and finger in the side view), its pad
+  tips below the finger's axis line (side view), between the distal joint's line (inked 26.6 mm from the apex) and
+  the knuckle's line (inked at 99 mm); and its logged gripper reading is within 1.5 mm of that gripper's reading
+  closed on the finger at setup. These are the sim's held rule (The model, Held) in what the cameras and the arm's
+  log show. A frame without such a gripper scores 0.
 - Touch (the 0.4 rung): the scale's reading, with the display filmed. It is tared again once the holding gripper has
   closed on the ring finger and lifted it to its stop, and before the lancet touches: the hold's pull is then constant,
-  because a held finger stays on its stop, so the change is the press's downward part. The touch is a change of 204 g
-  (2.0 N) or more, read to 1 g (0.01 N). The sim's 2 N is on the shield's axis; the scale reads its downward part,
-  0.48 to 1.51 times it over the allowed presses with friction up to 1.0 [RUN: `tools/yieldsweep.py`], so the two
-  thresholds are the same number on different quantities, and the real one is what a trial can read.
-- Still: from the side camera at 60 fps, the carriage's line stays within 2 mm of its mark at rest on the rule (read
-  to 0.25 mm [EST]), from the first frame the scale's change reaches 204 g until 0.5 s after the click (the audio on
-  the same recording).
+  because a held finger stays on its stop, so the change is the press's downward part. The touch is a change of 56 g
+  (0.55 N) or more, read to 1 g (0.01 N). The sim's touch is contact, the shield pushed off its stop (1.2 N on its
+  axis); the scale reads the downward part, 0.4837 to 1.5099 times the shield's force over the allowed presses with
+  friction up to 1.0 [RUN: `tools/yieldsweep.py`], so every touch the sim counts reads at least 0.4837 x 1.2 = 0.58 N
+  on the scale, over 0.55 N [ARITH]. The bound is one-way: a reading of 0.55 N may be a touch as light as
+  0.55 / 1.5099 = 0.36 N on the shield, so a real trial can count a lighter touch than the sim does, and it does not
+  miss a touch the sim counts.
+- Still: from the side camera at 60 fps, the web's line and the fingertip mark each stay within 2 mm of their marks at
+  rest on their rules (read to 0.25 mm [EST]), from the first frame the scale's change reaches 56 g until 0.5 s after
+  the click (the audio on the same recording).
 - The patch scored: where the lancet was placed more than once, the inked finger shows a patch for each placement;
   the one scored is the patch under the press that gave the click, picked on the overhead video.
 - Site: that patch's centre lies inside the zone on the template laid on the ring fingertip (8 to 15 mm back from the
@@ -347,7 +407,8 @@ check 6, and the scale is tared once the trainer is on it):
 - In the container: the container weighed before and after on the 0.01 g scale gains the lancet's mass (weighed in
   check 3) within 0.1 g; the video shows each gripper open (fingers more than 14 mm apart) or its TCP more than 60 mm
   from the lancet; no lancet loose elsewhere for 0.5 s.
-- The base: within 5 mm of its taped outline on the scale's platform.
+- The base: within 5 mm of its taped outline on the scale's platform, and turned or tipped under 2 deg (angle gauge on
+  its plate before and after).
 
 Rig protection and sharps handling (for the trial, not part of the task):
 
@@ -389,6 +450,10 @@ from its run's log once it has run.
 yam_arena, `--seed 0` (the first row under Seeds), `object_jitter=0`, 20 Hz, 1,200-step limit. FILM_PENDING
 DREAM_PENDING Both runs hash `lancet_fingerstick.py`, `mechanism.py` and `task.json` before starting (`sim/film.sh`,
 `sim/dream.sh`), to be checked against the files here (`task.json` as it was before its `scores` line was filled in).
+Expected for the film: 1.0 inside the 1,200 steps; the left's half-gap (`lf` in the trace) inside 5.7 to 8.7 mm from
+the touch until 0.5 s after the click; and the base's height (`Hz` in the trace) not rising while the left lifts. If
+the left's reading on the finger is not 7.2 mm within 0.5 mm, `HOLD_GAP_ON` is set to the trace's reading and the
+tests re-run; if the base rises, the hold lifts the trainer and that is reported.
 
 More PhysX runs of the scripted policy, each on a copy that `sim/mk.sh` makes of this `lancet_fingerstick.py` with a
 per-step trace appended (`sim/log_snippet.py`, which writes `sim/out/trace_<copy>_<seed>.csv`), and for the stems
@@ -401,25 +466,36 @@ per-step trace appended (`sim/log_snippet.py`, which writes `sim/out/trace_<copy
 | one arm: left parked, the demo's 1.5 s press | 0 | o00 | 0, not held still | |
 | one arm: left parked, a 0.15 s jab | 0 | j00 | 0, not held still | |
 | one arm: left parked, a jab 30 mm under contact in one control step (0.05 s) | 0 | x00 | 0, not held still (or no gripper holding the ring finger) | |
-| one arm: left parked, a press 8.5 mm from the apex driven 10 deg toward the knuckle | 0 | w00 | 0, not held still (or slid) | |
+| one arm: left parked, a press 8.5 mm from the apex driven 10 deg toward the knuckle | 0 | w00 | 0, not held still | |
 | both arms: the lancet pressed down in the stand after the twist | 0 | f00 | 0, fired in the stand | |
 | both arms: after firing, the lancet held inside the container, never let go | 0 | k00 | 0.6 | |
 | both arms: the tab twisted the other way (-70 deg) | 0 | c00 | 1.0, success | |
 | both arms: the left closes on the index finger instead of the ring | 0 | i00 | 0, not held still (or no gripper holding the ring finger) | |
+| both arms: the left closed on air 14.5 mm beside the ring finger, inside the earlier held rule, and a jab 30 mm under contact in one step | 0 | a00 | 0, not held still (or fired with no gripper holding the ring finger) | |
+| both arms: the left closes on the ring finger but does not lift it | 0 | g00 | 0, not held still | |
+| both arms: the demo's hold, and a jab 40 mm under contact in one step | 0 | y00 | 0, not held still | |
 
 The stems' plans pass the same reach check as the demo's (`tools/ikcheck.py stems`). The offline replay is
 quasi-static, so x00 replays as a slow press; whether a PhysX jab fires before the finger moves is what x00 shows, and
-either way the window scores it 0.
+either way the window scores it 0. o00, j00 and w00 are expected to fail as "not held still", the finger giving way
+before the fire; if PhysX instead gives "fired with no gripper holding the ring finger" (a fire before the finger
+moves 2 mm), or for w00 "slid", the score is the same 0, and the fault is reported as found: it means the light
+finger did not give way in time. g00 and y00 test the hold itself in PhysX: the offline replay holds the finger as a joint with the
+arm's assumed stiffness, so whether PhysX lets the press through a grip that does not lift, or a 40 mm jab through the
+demo's hold, is what those two runs show.
 
 ## Sim against real
 
 - The needle, the skin's puncture and the blood are not simulated; the shield's spring stands in for the drive and
   fires at a set force. The real lancet's click and its spent state are read from audio and a re-press.
-- A real finger yields at its joints, its wrist and its arm, and withdraws; the trainer lumps that into one vertical
-  sprung slide at the ring finger's knuckle, in the sim and in the rig. The real slide's pins may bind under a press at
-  the fingertip, 83 to 100 mm in front of them; check R measures the give where the lancet presses, binding included.
-- The palm block's pedestal and the slide's guide block are printed parts in the rig; in the sim the base is one rigid
-  body and the guide block and carriage are drawn only.
+- A real finger yields at its joints, its wrist and its arm; the trainer lumps that into one vertical sprung slide at
+  the ring finger's knuckle, in the sim and in the rig. That an unheld real finger withdraws under a lancet is our
+  inference (The model, the trainer).
+- The real slide is a rolling linear guide, its pitch moment rated 2.84 N m against 1.40 N m from a 15 N press 93 mm
+  ahead [ARITH]; its friction is not modelled. Check R measures the give at the fingertip and at the web, friction and
+  any pitch included.
+- The palm block's pedestal and the slide's post are printed parts in the rig; in the sim the base is one rigid body
+  and the post, rail, block and web are drawn only.
 - The yield sweep is quasi-static and assumes skin friction of at most 1.0; a real Lance finger's silicone on the
   shield's polyethylene has not been measured (check R measures the give force, not the friction).
 - The scale reads the press's downward part; the sim's touch threshold is on the shield's axis (Real trials, Touch).
@@ -433,19 +509,22 @@ either way the window scores it 0.
 
 ## Tests
 
-`python3 test_lancet_fingerstick.py` (with yam_arena on PYTHONPATH) runs the offline tests: the shield and the site
-(the demo's site faces up; the pad's middle, too far round, past the pad or short of 8 mm, the side facing down, the
-index), the tab either way, a good press, no fire under 8 N, the placed rung needing the finger held, a fire with no
-hold, a slide, a small creep and a fresh placement, a tilted lancet, the finger giving way, the jab window past the
-click and from first touch, the held rule (index, palm, open, on nothing, past the distal joint), squareness against
-the local normal at every site, fires off the hand and in the stand, a drop and the container, a slipped or deep grasp
-still held, the yield sweep (and a design that fails it, and the side facing down), the scorer (a model that stops,
-the base dragged, the ladder in order along the demo), both arms' demo replayed at the 8 corners of the layout box,
-on `--seed` 0 to 19 and on every seed in the table, the layout's draw, a plan replayed on another seed's layout
-failing, the base clear of the stand and the container, the lazy routes below and the sim stems, the geometry, these
-numbers against the code, the real trial's two-camera squareness reading against the scorer's tilt, and `rig.scad`
-current and at the model's sizes. `tools/ikcheck.py` (no argument: the 8 corners, `--seed` 0, 2, 4 and the stems)
-checks both arms' reach and joint6; `tools/clearance.py` every arm link against the sharps container;
+`python3 test_lancet_fingerstick.py` (with yam_arena on PYTHONPATH) runs the offline tests: the shield and the site (the
+demo's site faces up; the pad's middle, too far round, past the pad or short of 8 mm, the side facing down, the index),
+the tab either way, a good press, no fire under 8 N, the placed rung needing the finger held, a fire with no hold, a
+slide, a small creep and a fresh placement, a tilted lancet, the finger giving way, the jab window past the click and
+from first touch, the held rule (index, palm, open, on nothing, past the distal joint), squareness against the local
+normal at every site, fires off the hand and in the stand, a drop and the container, a slipped or deep grasp still held,
+the yield sweep (and a design that fails it, and the side facing down), the scorer (a model that stops, the base
+dragged, the ladder in order along the demo), both arms' demo replayed at the 8 corners of the layout box, on `--seed` 0
+to 19 and on every seed in the table, the layout's draw, a plan replayed on another seed's layout failing, the base
+clear of the stand and the container, the lazy routes below and the sim stems, the geometry, these numbers against the
+code, the real trial's two-camera squareness reading against the scorer's tilt, and `rig.scad` current and at the
+model's sizes. Added in this revision: the held rule against a gripper closed on air 4 and 4.5 mm beside the finger,
+with its tips above the axis, behind the knuckle, and at stem a00's pose; the touch as contact; the hold needed at every
+step from touch to 0.5 s after the click; the ring pinned on its lower stop; still read at the fingertip of a pitched
+finger; the base lifted, turned or tipped. `tools/ikcheck.py` (no argument: the 8 corners, `--seed` 0, 2, 4 and the
+stems) checks both arms' reach and joint6; `tools/clearance.py` every arm link against the sharps container;
 `tools/grippers.py` the arms against each other and the trainer.
 
 ### Lazy routes
@@ -455,6 +534,10 @@ checks both arms' reach and joint6; `tools/clearance.py` every arm link against 
 | Press without holding the ring finger | 0 | every allowed press gives the unheld finger way by 2.48 N or less (friction up to 1.0), before the 8 N fire; "the ring finger was not held still" |
 | Jab so fast it fires before the finger moves | 0 | the finger still gives within 0.5 s of the click, and no gripper held it |
 | Hold the index finger, the palm or the base instead | 0 | none holds the ring finger; "not held still" or "fired with no gripper holding the ring finger" |
+| Close a gripper on air beside or over the ring finger | 0 | its gap, its offset along the closing direction or its tips above the axis say it is not on the finger; "not held still" or "fired with no gripper holding the ring finger" (stem a00) |
+| Grip the ring finger, fire, then let go within 0.5 s of the click | 0 | "not held from first touch to 0.5 s after the click" |
+| Grip the ring finger without lifting it | 0 | the press meets only the spring and the arm's stiffness; "not held still" (stem g00) |
+| Push the ring finger down to its lower stop, then press | 0 | it is 10 mm down; "not held still" |
 | Pull the lancet straight out, no twist | 0 | "lifted out of the stand with its tab still on" |
 | Twist, then press the lancet down in the stand | 0 | "fired in the stand" |
 | Press on the index fingertip | 0 | "not the side of the ring fingertip" |
@@ -498,8 +581,7 @@ by dermal puncture, such as heel or finger stick methods." Both national medical
 fingerstick, heelstick)." It falls under the Core tasks of Medical Assistants (833,900), "Collect blood, tissue, or
 other laboratory specimens, log the specimens, and prepare them for testing.", and of Licensed Practical and Licensed
 Vocational Nurses (666,900), "Collect samples, such as blood, urine, or sputum from patients, and perform routine
-laboratory tests on samples." The same fingerstick is the one people with diabetes do at home for a glucose reading
-(BD's step 9A is headed "For glucose testing"). The accepted #1951 rests on one Medical Assistants Core task, and #2049
+laboratory tests on samples." The accepted #1951 rests on one Medical Assistants Core task, and #2049
 on tasks of three occupations; this follows #2049.
 
 ## Third-party code

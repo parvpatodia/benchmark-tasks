@@ -82,6 +82,12 @@ def hold_grip(seed):
 GRIP_R_READ = -(M.FINGERS["ring"][4] - 0.0005)   # a finger closed on the ring finger reads it 0.5 mm in [EST]
 
 
+def lq(seed, yaw=None):
+    """A top-down gripper's quat at the plan's yaw (default the hand's): its closing direction (x) across the finger
+    (yam_arena's URDF: joint7 slides along the gripper link's x, which the plan's yaw puts 90 deg off it)."""
+    return q_from_R(rz((M.layout(seed)["hand"][3] if yaw is None else yaw) - math.pi / 2))
+
+
 class Kin:
     """A kinematic stand-in for the sim, both arms."""
     GRAB = 0.004
@@ -189,7 +195,7 @@ class Kin:
         # a finger closed on the housing stops at it: report what the sim reads, not the command
         right = (self.r[0].copy(), min(self.r[1], GRIP_READ) if self.held else self.r[1])
         _, _, ltcp, lread = self._left_on_finger()
-        left = (ltcp, lread)
+        left = (ltcp, lread, lq(self.seed, self.lf[2]))
         M.advance(M._M, DT, self.l.copy(), self._lancet_quat(), self.q, self.tab, -self.drop, hp, hq, right, left)
         M._CLOCK["dt"] = DT
         M._CLOCK["steps"] += 1
@@ -258,7 +264,7 @@ def press_at(m, p_mech, f, drop=0.0, l_quat=(0.0, 0.0, 0.0, 1.0), seed=0, right=
     q = max(0.0, (f - M.F_PRE) / M.K_SHIELD) if f > M.F_PRE else 0.0
     l_pos = face - M._rot3(l_quat) @ np.array([0.0, 0.0, q])
     tcp = M.grip_point(l_pos, l_quat)
-    left = (hold_grip(seed) - [0, 0, drop], GRIP_R_READ) if held else None
+    left = (hold_grip(seed) - [0, 0, drop], GRIP_R_READ, lq(seed)) if held else None
     M.advance(m, DT, l_pos, l_quat, q, M.TAB_BREAK + 0.1, -drop, hp, hq,
               right if right is not None else (tcp, GRIP_READ), left)
 
@@ -325,12 +331,81 @@ class Model(unittest.TestCase):
         self.assertIsNone(m["fault"])
 
     def test_placed_needs_the_finger_held(self):
-        """A touch on a good site is "placed" only with a gripper closed on the ring finger."""
+        """A touch on a good site is "placed" only with a gripper closed on the ring finger since the first touch."""
+        m = fresh()
+        press_at(m, GOOD, M.F_TOUCH + 0.5)
+        self.assertTrue(m["positioned"])
         m = fresh()
         press_at(m, GOOD, M.F_TOUCH + 0.5, held=False)
         self.assertFalse(m["positioned"])
         press_at(m, GOOD, M.F_TOUCH + 0.5)
+        self.assertFalse(m["positioned"])   # held now, but not from the first touch
+
+    def test_touch_is_contact(self):
+        """The touch is the shield off its stop (F_TOUCH, 1.2 N); a real trial's scale reading of REAL_TOUCH is under
+        what any touch the sim counts reads on the scale (the least ratio at friction 1.0)."""
+        self.assertAlmostEqual(M.F_TOUCH, M.F_PRE + M.K_SHIELD * M.Q_TOUCH)
+        self.assertEqual(M.shield_force(M.Q_TOUCH * 0.99), 0.0)
+        self.assertGreaterEqual(M.shield_force(M.Q_TOUCH * 1.01), M.F_TOUCH)
+        lo, hi = YS.k_range(1.0)
+        self.assertGreater(lo * M.F_TOUCH, M.REAL_TOUCH)
+        m = fresh()
+        press_at(m, GOOD, M.F_TOUCH + 0.01)
         self.assertTrue(m["positioned"])
+
+    def test_hold_must_last_from_touch_to_after_the_click(self):
+        """F2: the finger let go of at any step from the first touch to 0.5 s after the click scores 0 (latched at the
+        click, or when let go after it); let go later, it does not count."""
+        m = fresh()
+        press_at(m, GOOD, 3.0)
+        press_at(m, GOOD, 5.0, held=False)
+        press_at(m, GOOD, 5.0)
+        self.assertIsNone(m["fault"])
+        press_at(m, GOOD, 9.0)
+        self.assertIn("not held from first touch", m["fault"])
+        m = fresh()
+        press_at(m, GOOD, 3.0)
+        press_at(m, GOOD, 9.0)
+        for _ in range(int(0.3 / DT)):
+            press_at(m, GOOD + [0, 0, 0.02], 0.0)
+        press_at(m, GOOD + [0, 0, 0.02], 0.0, held=False)
+        self.assertIn("not held from first touch", m["fault"])
+        m = fresh()
+        press_at(m, GOOD, 3.0)
+        press_at(m, GOOD, 9.0)
+        for _ in range(int(0.6 / DT)):
+            press_at(m, GOOD + [0, 0, 0.02], 0.0)
+        press_at(m, GOOD + [0, 0, 0.02], 0.0, held=False)
+        self.assertIsNone(m["fault"])
+
+    def test_ring_pinned_at_its_lower_stop(self):
+        """A finger pushed down onto its lower stop (rigid there) and pressed is not held still: the drop counts from
+        the top stop."""
+        m = fresh()
+        press_at(m, GOOD, 3.0, drop=M.DROP_STOP)
+        press_at(m, GOOD, 9.0, drop=M.DROP_STOP)
+        self.assertIn("not held still", m["fault"])
+
+    def test_still_is_read_at_the_fingertip_too(self):
+        """B1: a ring finger that pitches on its slide (its tip down 3 mm, the slide's reading still 0) is not still:
+        the fingertip mark is read against the base, as the real trial reads it."""
+        m = fresh()
+        hp, hq = ring_link(0)
+        base = (hp.copy(), hq.copy())
+        lp = hp + M._rot3(hq) @ np.asarray(GOOD, float)
+        M.advance(m, DT, lp, (0, 0, 0, 1), 0.0, M.TAB_BREAK + 0.1, 0.0, hp, hq, None, None, base)
+        self.assertIsNone(m["fault"])
+        a = math.asin(0.003 / (M.KNUCKLE_X - M.TIP_MARK))   # turned about the knuckle, tip down 3 mm
+        piv = hp + M._rot3(hq) @ np.array([M.KNUCKLE_X, 0.0, 0.0])
+        Rp = M._rot3(hq) @ ry(-a) @ M._rot3(hq).T
+        rq = q_from_R(Rp @ M._rot3(hq))
+        rpos = piv + Rp @ (hp - piv)
+        face = rpos + M._rot3(rq) @ np.asarray(GOOD, float)
+        q = (3.0 - M.F_PRE) / M.K_SHIELD
+        left = (hold_grip(0), GRIP_R_READ, lq(0))
+        M.advance(m, DT, face - [0, 0, q], (0, 0, 0, 1), q, M.TAB_BREAK + 0.1, 0.0, rpos, rq,
+                  (M.grip_point(face - [0, 0, q], (0, 0, 0, 1)), GRIP_READ), left, base)
+        self.assertIn("not held still", m["fault"] or "")
 
     def test_fire_without_holding_the_finger_latches(self):
         """Fired with the finger still (say, a light finger under a fast jab) but no gripper on it: 0."""
@@ -419,14 +494,29 @@ class Model(unittest.TestCase):
         hp, hq = ring_link(0)
         R = M._rot3(hq)
         on = lambda x, y=0.0, z=M.HOLD_TCP: hp + R @ np.array([x, y, z])   # noqa: E731
-        self.assertTrue(M.finger_held((hold_grip(0), GRIP_R_READ), hp, hq))
-        self.assertTrue(M.finger_held((on(0.040), GRIP_R_READ), hp, hq))
+        q = lq(0)
+        self.assertTrue(M.finger_held((hold_grip(0), GRIP_R_READ, q), hp, hq))
+        self.assertTrue(M.finger_held((on(0.040), GRIP_R_READ, q), hp, hq))
+        self.assertTrue(M.finger_held((on(M.HOLD_AT, M.HOLD_ACROSS - 0.0005), GRIP_R_READ, q), hp, hq))
+        self.assertFalse(M.finger_held((hold_grip(0), GRIP_R_READ), hp, hq), "no quat: closing direction unknown")
         iy, iz = M._axis_yz(M.FINGERS["index"][0])
         for tcp, gap, why in ((on(M.HOLD_AT, iy, iz + M.HOLD_TCP), -(M.FINGERS["index"][4] - 0.0005), "index"),
                               (on(0.140, 0.020, M.PALM_W + 0.005), GRIP_R_READ, "palm"),
                               (hold_grip(0), M.OPEN_R, "open"), (hold_grip(0), -0.001, "on nothing"),
-                              (on(0.012), GRIP_R_READ, "on the pad, past the distal joint")):
-            self.assertFalse(M.finger_held((tcp, gap), hp, hq), why)
+                              (on(0.012), GRIP_R_READ, "on the pad, past the distal joint"),
+                              (on(M.KNUCKLE_X + 0.002), GRIP_R_READ, "behind the knuckle line"),
+                              (on(M.HOLD_AT, 0.004), -0.005, "closed on air 4 mm beside the ring"),
+                              (on(M.HOLD_AT, M.HOLD_ACROSS + 0.0005), GRIP_R_READ, "4.5 mm beside, reading as on it"),
+                              (on(M.HOLD_AT, 0.0, M.TIP + 0.001), GRIP_R_READ, "over it, pad tips above the axis"),
+                              (on(M.HOLD_AT, -0.0145, 0.002), -0.005, "stem a00: on air, the old rule's held")):
+            self.assertFalse(M.finger_held((tcp, gap, q), hp, hq), why)
+        # the old rule (15 mm, 3.3 to 8.8 mm) held stem a00's air grip; the new one does not
+        d = on(M.HOLD_AT, -0.0145, 0.002) - on(M.HOLD_AT, 0.0, 0.0)
+        self.assertLess(float(np.linalg.norm(d)), 0.015)
+        # turned 90 deg (closing along the finger), the same TCP on the axis is still on it: across is 0 either way,
+        # but the gap it reads closed along the finger would be its length, not the 7.8 mm radius
+        self.assertTrue(M.finger_held((hold_grip(0), GRIP_R_READ, lq(0, M.layout(0)["hand"][3] + math.pi / 2)),
+                                      hp, hq))
 
     def test_square_is_against_the_local_normal_at_every_site(self):
         """The square rule reads the lancet against the skin's inward normal where it touches, at every allowed site
@@ -586,6 +676,20 @@ class Scoring(unittest.TestCase):
         o = Kin(0).objects()
         o["hand"] = st(o["hand"].pos + [M.BASE_MOVED + 0.001, 0, 0])
         self.assertIn("dragged", M.failure(o, M._M))
+
+    def test_base_lifted_turned_or_tipped_latches(self):
+        """NIT: the base's z, its turn and its tilt are checked as well as its x, y."""
+        yaw = M.layout(0)["hand"][3]
+        for dz, R, why in ((M.BASE_MOVED + 0.001, rz(yaw), "lifted"), (0.0, rz(yaw + M.BASE_TURN + 0.01), "turned"),
+                           (0.0, rz(yaw) @ ry(M.BASE_TURN + 0.01), "tipped"), (0.0, rz(yaw + 0.01), None)):
+            M.reset_memory(0)
+            o = Kin(0).objects()
+            o["hand"] = st(o["hand"].pos + [0, 0, dz], q_from_R(R))
+            got = M.failure(o, M._M)
+            if why is None:
+                self.assertIsNone(got)
+            else:
+                self.assertIn(why, got or "")
 
     def test_ladder_along_the_demo(self):
         M.reset_memory(trial_seed(2))
@@ -784,7 +888,8 @@ class LazyRoutes(unittest.TestCase):
         """sim/stems.py, appended by sim/mk.sh to the stem copies (README Sim results), replayed offline on --seed 0's
         layout: each scores what the README expects, for the reason it gives."""
         src = (HERE / "sim" / "stems.py").read_text()
-        want = {"o": (0.0, ("not held still",)), "j": (0.0, ("not held still",)),
+        want = {"a": (0.0, ("not held",)), "g": (0.0, ("not held still",)), "y": (0.0, ("not held still",)),
+                "o": (0.0, ("not held still",)), "j": (0.0, ("not held still",)),
                 "x": (0.0, ("not held still", "no gripper holding the ring finger")),
                 "w": (0.0, ("not held still", "slid")), "f": (0.0, ("fired in the stand",)), "k": (0.6, (None,)),
                 "c": (1.0, (None,)), "i": (0.0, ("not held still", "no gripper holding the ring finger"))}
@@ -800,9 +905,18 @@ class LazyRoutes(unittest.TestCase):
             tip = [w for w in d["right"] if w.label == "tip on the site"][0]
             if stem == "j":
                 self.assertEqual(press.duration, ns["_JAB_S"])
-            if stem == "x":   # 30 mm under contact in one control step
+            if stem in "xay":   # 30 mm (40 mm for y00) under contact in one control step
                 self.assertEqual(press.duration, DT)
-                self.assertAlmostEqual(tip.pos[2] - press.pos[2], 0.030, places=9)
+                self.assertAlmostEqual(tip.pos[2] - press.pos[2], 0.040 if stem == "y" else 0.030, places=9)
+            if stem == "a":   # closed on air beside the finger: the old rule's held, the new rule's not
+                hold = [w for w in d["left"] if w.label == "keep holding through the press"][0]
+                g, _ = M.ring_world(seed, M.HOLD_AT)
+                self.assertLess(float(np.linalg.norm(np.asarray(hold.pos) - g)), 0.015)
+                self.assertTrue(0.0033 <= -hold.finger <= 0.0088)
+            if stem == "g":
+                hold = [w for w in d["left"] if w.label == "keep holding through the press"][0]
+                g, _ = M.ring_world(seed, M.HOLD_AT)
+                self.assertAlmostEqual(hold.pos[2] - g[2], M.HOLD_TCP, places=9)
             if stem == "c":
                 self.assertTrue(any(w.yaw == -M.TWIST for w in d["right"]))
             M.reset_memory(seed)
@@ -844,13 +958,21 @@ class Geometry(unittest.TestCase):
         self.assertGreater(M.PAD_TIP_L, M.CUP_D + 0.005)
 
     def test_slide_parts_fit(self):
-        """The carriage stays 2 mm or more inside the holding pads (closed, 7.3 mm off the finger's axis), ends 3 mm
-        before the palm block, and lands on the guide block after DROP_STOP; the hold lies on the finger in front of it."""
-        self.assertGreaterEqual(-GRIP_R_READ - M.CAR_HALF_Y, 0.002)
-        self.assertGreaterEqual(M.hand_to_mech((M.PALM_U[0], M.FINGERS["ring"][0], 0.0))[0] - M.CAR_X[1], 0.002)
-        self.assertAlmostEqual(M.CAR_Z[0] - M.GUIDE_TOP, M.DROP_STOP, places=12)
-        self.assertLess(M.CAR_Z[1], 0.0)
-        self.assertTrue(M.CAR_X[0] < M.PIN_X[0] < M.PIN_X[1] < M.CAR_X[1])
+        """B1: the web stays 2 mm or more inside the holding pads (closed, 7.3 mm off the finger's axis); the post ends
+        before the palm block; the foot lands on the stop post after DROP_STOP; the block stays on the rail over the
+        travel and clear of the post (H1); the finger's knuckle end clears the rail's top at the lower stop; and a 15 N
+        press at the demo's site puts less pitch moment on the block than its rating (MP)."""
+        self.assertGreaterEqual(-GRIP_R_READ - M.WEB_HALF_Y, 0.002)
+        self.assertGreater(M.hand_to_mech((M.PALM_U[0], M.FINGERS["ring"][0], 0.0))[0], M.POST_X[1])
+        self.assertAlmostEqual(M.FOOT_Z[0] - M.GUIDE_TOP, M.DROP_STOP, places=12)
+        self.assertGreaterEqual(M.BLOCK_Z[0] - M.DROP_STOP, M.RAIL_Z[0])
+        self.assertLessEqual(M.BLOCK_Z[1], M.RAIL_Z[1])
+        self.assertAlmostEqual(M.POST_X[0] - (M.WEB_X[1] + M.RAIL["height"]), 0.0, places=12)
+        rp = M.FINGERS["ring"][4]
+        low = -M.DROP_STOP - math.sqrt(rp ** 2 - (M.POST_X[0] - M.RAIL["rail_h"] - M.KNUCKLE_X) ** 2)
+        self.assertGreater(low - M.RAIL_Z[1], 0.001)
+        self.assertLessEqual(15.0 * (M.WEB_X[1] + M.RAIL["height"] / 2 - M.SITE_AIM), M.RAIL["MP"])
+        self.assertLess(M.WEB_X[0] + 0.0, M.KNUCKLE_X)
         self.assertTrue(M.HOLD_SEG[0] < M.HOLD_AT < M.HOLD_SEG[1])
 
     def test_shield_reaches_skin_before_housing(self):
@@ -872,6 +994,9 @@ class Geometry(unittest.TestCase):
         self.assertLessEqual(M.F_FIRE / (2 * 0.34 * grip), 0.65)
         hold = 5000.0 * (M.FINGERS["ring"][4] + M.GRIP_R)   # the left's 5 mm into the ring finger
         self.assertLessEqual(hold * 1.5, 40.0)
+
+
+PIN_D_TXT = "4"
 
 
 class ReadmeNumbers(unittest.TestCase):
@@ -903,15 +1028,20 @@ class ReadmeNumbers(unittest.TestCase):
                                                       :.0f} deg round from the pad's middle line",
                   f"within {math.degrees(M.TILT_MAX):.0f} deg of the skin's inward normal",
                   f"more than {1000 * M.SLIDE_MAX:.1f} mm on the skin is a slide",
-                  f"pushed more than {1000 * M.DROP_MAX:.0f} mm down its slide",
+                  f"pushed more than {1000 * M.DROP_MAX:.0f} mm down is a fault",
                   f"until {M.STEADY_AFTER:g} s after the click", f"loose for {M.DROP_S:g} s",
-                  f"rolled {abs(math.degrees(M.ROLL)):.0f} deg", f"the ring finger ({1000 * M.RING_KG:.0f} g)",
+                  f"rolled {abs(math.degrees(M.ROLL)):.0f} deg", f"the ring finger ({1000 * M.RING_KG:.0f} g:",
                   f"{1000 * M.KNUCKLE_X:.0f} mm behind its apex", f"A spring ({M.K_RING:g} N/m)",
                   f"with {M.RING_PRELOAD:g} N to spare over its weight; it stops {1000 * M.DROP_STOP:.0f} mm down",
                   f"gives {1000 * M.DROP_MAX:.0f} mm at {YS.give_force():.2f} N straight down",
                   f"half-gap {1000 * M.HOLD_GAP[0]:.1f} to {1000 * M.HOLD_GAP[1]:.1f} mm and its TCP within "
                   f"{1000 * M.HOLD_R:.0f} mm of the ring finger's axis between its distal joint "
                   f"({1000 * M.HOLD_SEG[0]:.1f} mm back from the apex) and its base ({1000 * M.HOLD_SEG[1]:.1f} mm back)",
+                  f"at most {1000 * M.HOLD_ACROSS:.0f} mm off the axis along the gripper's closing direction",
+                  f"1.5 mm either side of {1000 * M.HOLD_GAP_ON:.1f} mm",
+                  f"a fingertip mark {1000 * M.TIP_MARK:.1f} mm back from the apex",
+                  f"may turn or tip {math.degrees(M.BASE_TURN):.0f} deg",
+                  f"stops 25 g only after {1000 * ((-M.RING_PRELOAD + math.sqrt(M.RING_PRELOAD ** 2 + M.K_RING * M.RING_KG)) / M.K_RING):.1f} mm",
                   f"{1000 * M.HOLD_AT:.1f} mm back from its apex, {1000 * (M.HOLD_AT - M.SITE_AIM):.1f} mm behind the press",
                   f"aims {1000 * M.HOLD_UP:.0f} mm over the finger",
                   f"pads {1000 * rp:.1f} to 14.2 mm either side",
@@ -967,33 +1097,54 @@ class ReadmeNumbers(unittest.TestCase):
         self.assertIn(f"1.0 to 1.4 N (the sim's {g:.2f} N plus or minus 0.2 N)", t)
         self.assertIn(f"by {M.F_FIRE * k - 1.4:.2f} N at 8 N ({k:.4f} x 8 - 1.4)", t)
         lo, hi = YS.k_range(1.0)
-        self.assertIn(f"{lo:.2f} to {hi:.2f} times it", t)
-        self.assertIn(f"{round(1000 * M.F_TOUCH / M.GRAVITY):.0f} g ({M.F_TOUCH:.1f} N)", t)
+        self.assertIn(f"{lo:.4f} to {hi:.4f} times the shield's force", t)
+        # B2: the real touch is a one-way bound on the sim's: every sim touch reads at least lo x F_TOUCH on the scale
+        self.assertGreaterEqual(lo * M.F_TOUCH, M.REAL_TOUCH)
+        self.assertIn(f"at least {lo:.4f} x {M.F_TOUCH:.1f} = {lo * M.F_TOUCH:.2f} N", t)
+        self.assertIn(f"{M.REAL_TOUCH:g} / {hi:.4f} = {M.REAL_TOUCH / hi:.2f} N", t)
+        self.assertIn(f"{round(1000 * M.REAL_TOUCH / M.GRAVITY):.0f} g ({M.REAL_TOUCH:g} N)", t)
 
     def test_rig_numbers(self):
         """The rig's sizes under Real trials are rig_scad.numbers(), which come from the model."""
         t = self.TXT
         n = _tool("rig_scad").numbers()
-        cx0, cx1, cw, cb, ct = n["carriage"]
-        gx0, gx1, gw, gt, gu = n["guide"]
+        wx0, wx1, ww, _, _ = n["web"]
         sp, pin = n["spring"], n["pin"]
         x0, x1, y0, y1, _ = n["plate"]
         bx, by, bz = n["base_size"]
+        px0, px1, phw, pb, ptop = n["post"]
+        rl = M.RAIL
         for s in (f"a plate {x1 - x0:g} by {y1 - y0:g} by 5 mm (x {x0:g} to {x1:g})",
                   f"{bx} by {by} by {bz} mm, so it needs a bed of at least {bx + 10} by {by + 10} mm and {bz + 5} mm",
-                  f"{gx1 - gx0:g} by {gw:g} mm (x {gx0:g} to {gx1:g}), its top at z {gt:g}",
-                  f"(z {gu:g} to {gt:g}) carries the pins'", f"a carriage {cx1 - cx0:g} by {cw:g} mm, z {cb:g} to {ct:g}",
-                  f"{pin['length']:g} mm long, are pressed 8 mm into the carriage at x {n['pins_x'][0]:g} and "
-                  f"{n['pins_x'][1]:g}", f"top after {n['drop_stop']:g} mm: the lower stop",
-                  f"each {sp['rate_each']:g} N/mm, free length {sp['free']:.1f} mm, {sp['rest']:g} mm long at rest "
+                  f"The post: x {px0:g} to {px1:g}, {phw:g} mm across, z {pb:g} to {ptop:g}",
+                  "at z " + ", ".join(f"{v:g}" for v in n["rail_holes_z"][:-1]) + f" and {n['rail_holes_z'][-1]:g}",
+                  f"its top at z {n['stop_top']:g}", f"a web x {wx0:g} to {wx1:g}", f"{ww:g} mm wide above",
+                  f"foot z {n['foot'][0]:g} to {n['foot'][1]:g}",
+                  f"at z {n['block_holes_z'][0]:g} and {n['block_holes_z'][1]:g}",
+                  f"after {n['drop_stop']:g} mm: the lower stop", rl["part"].split()[1],
+                  f"rail {1000 * rl['rail_len']:g} mm long, {1000 * rl['rail_w']:g} wide, {1000 * rl['rail_h']:g} high",
+                  f"block {1000 * rl['block_l']:g} long, {1000 * rl['block_w']:g} wide, {1000 * rl['height']:g} mm high",
+                  f"MR {rl['MR']:g}, MP {rl['MP']:g}, MY {rl['MY']:g} N m",
+                  f"The rail runs z {n['rail'][2]:g} to {n['rail'][3]:g}",
+                  f"{n['lever']:g} mm ahead of the block's middle", f"puts {n['moment_15N']:.2f} N m of pitch moment",
+                  f"two {PIN_D_TXT} x {pin['length']:g} mm steel dowel pins", f"at x {n['pins'][0]:g}",
+                  f"z {n['collar'][0]:g} to {n['collar'][1]:g}: the top stop",
+                  f"music wire {sp['wire']:g} mm", f"(OD {sp['od']:g}, ID {sp['id']:g})",
+                  f"{sp['active']:g} active coils and {sp['total']:g} in all",
+                  f"{sp['rate_each']:g} N/mm, free length {sp['free']:.1f} mm, {sp['rest']:g} mm long at rest "
                   f"({sp['force_rest_each']:.3f} N each, {2 * sp['force_rest_each']:.2f} N in all",
-                  f"{sp['bottom']:g} mm at the lower stop", f"axis {n['ring_axis_z']:g} mm over the table",
+                  f"{sp['bottom']:g} mm at the lower stop, solid {sp['solid']:g} mm, peak stress {sp['tau']} MPa",
+                  f"spring index is {sp['index']:.0f}", f"sit at z {n['seat_top']:g}",
+                  f"axis {n['ring_axis_z']:g} mm over the table",
                   f"{n['cup_pocket'][0]:g} by {n['cup_pocket'][1]:g}, {n['cup_pocket'][2]:g} deep",
                   f"stops it at +-{n['tab_stop_deg']:g} deg"):
             self.assertIn(s, t)
         self.assertAlmostEqual(2 * sp["force_rest_each"], M.RING_PRELOAD + M.RING_KG * M.GRAVITY, places=2)
-        self.assertGreater(sp["bottom"], 0.0)
-        self.assertGreater(pin["bottom"] - 1000 * M.DROP_STOP, n["seat_top"])   # the pins clear the seats at the stop
+        self.assertGreater(sp["bottom"], sp["solid"])                # the springs never go solid
+        self.assertLessEqual(n["moment_15N"], M.RAIL["MP"])
+        self.assertGreater(n["finger_clear"], 1.0)
+        self.assertGreaterEqual(pin["top"], n["collar"][1])           # the collars sit on the pins
+        self.assertAlmostEqual(n["foot"][0] - n["stop_top"], 1000 * M.DROP_STOP, places=6)
 
     def test_instruction_is_outcomes_not_choreography(self):
         """Under 1000 characters, and no gripper assignment or grasp (the #826 rejection)."""
@@ -1075,8 +1226,13 @@ class RealTrial(unittest.TestCase):
         for a, b in ("{}", "()", "[]"):
             self.assertEqual(txt.count(a), txt.count(b))
         n = rs.numbers()
-        cx0, cx1, cw, cb, ct = n["carriage"]
-        self.assertIn(f"translate([{cx0}, {-cw / 2}, {cb}]) cube([{round(cx1 - cx0, 3)}, {cw}, {round(ct - cb, 3)}])", txt)
+        wx0, wx1, ww, _, wt = n["web"]
+        fb = n["foot"][0]
+        self.assertIn(f"translate([{wx0}, {-ww / 2}, {fb}]) cube([{round(wx1 - wx0, 3)}, {ww}, {round(wt - fb, 3)}])", txt)
+        # the cup's arc slot is centred on the stop pin (at 0 deg) and meets it at +-TAB_STOP either way
+        half = n["tab_stop_deg"] + n["stop_half_deg"]
+        self.assertIn("translate([9.0, 0, ", txt)
+        self.assertIn(f"rotate([0, 0, {-round(half, 3):g}]) rotate_extrude(angle = {round(2 * half, 3):g})", txt)
         self.assertEqual(n["drop_stop"], round(1000 * M.DROP_STOP, 3))
         self.assertIn(f"capsule([26.6, 0.0, {n['ring_axis_z']}], [99.0, 0.0, {n['ring_axis_z']}], 7.8);", txt)
         # the shield's face rests on the post at the model's height, and the cup's pocket is the model's socket
@@ -1085,7 +1241,7 @@ class RealTrial(unittest.TestCase):
         self.assertIn(f"cylinder(d = {rs.POST_D}, h = {face})", txt)
         self.assertIn(f"cube([{round(1000 * (M.L_W + 2 * M.CUP_CLEAR), 3)}, {round(1000 * (M.L_T + 2 * M.CUP_CLEAR), 3)}",
                       txt)
-        self.assertIn(f"rotate_extrude(angle = {2 * math.degrees(M.TAB_STOP):g})", txt)
+        self.assertAlmostEqual(half - n["stop_half_deg"], math.degrees(M.TAB_STOP), places=6)   # the slot's ends
         # the springs: two in parallel are the model's K_RING, and at rest they carry the preload plus the weight
         sp = n["spring"]
         self.assertAlmostEqual(2 * sp["rate_each"] * 1000, M.K_RING, places=6)

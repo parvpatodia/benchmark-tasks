@@ -1,6 +1,7 @@
 
 
-# -- appended by sim/mk.sh to the stem copies only (o00 j00 x00 w00 f00 k00 c00 i00); the task file itself is unchanged.
+# -- appended by sim/mk.sh to the stem copies only (o00 j00 x00 w00 f00 k00 c00 i00 a00 g00 y00); the task file itself
+# is unchanged.
 # Each stem is the demo's own plan with one change, and its expected score (README Sim results; test_sim_stems replays
 # each offline):
 #   o00  one arm: the left stays parked, the right presses as the demo does (20 mm under contact over 1.5 s).
@@ -19,9 +20,19 @@
 #   c00  both arms; the tab twisted the other way (clockwise seen from above). Expected 1.0: either way breaks it.
 #   i00  both arms; the left closes on the index finger instead of the ring. Expected 0, "not held still" (or "no
 #        gripper holding the ring finger").
+#   a00  both arms; the left closes on air 14.5 mm beside the ring finger (away from the index), its TCP 2 mm over the
+#        axis and its pads at 5 mm, inside the earlier revision's held rule (15 mm, 3.3 to 8.8 mm), and the right
+#        jabs 30 mm under contact in one control step. Expected 0, "not held still" offline (or "fired with no gripper
+#        holding the ring finger").
+#   g00  both arms; the left closes on the ring finger but does not lift it against its stop. WHY: the press then
+#        meets only the arm's stiffness and the slide's spring, and gives the finger way. Expected 0, "not held still".
+#   y00  both arms, the demo's hold; the right jabs 40 mm under contact in one control step. WHY: a legitimate hold
+#        and a jab past the hold's 13.5 N. Expected 0, "not held still".
 _STEM = "none"
 _JAB_S = 0.15
 _X_S, _X_DZ = 0.05, 0.030
+_Y_DZ = 0.040
+_AIR_ACROSS, _AIR_Z, _AIR_GAP = 0.0145, 0.002, -0.005
 _NEAR_S = 0.0085
 _I_FWD = 0.002                   # the index hold this far nearer the apex than the ring's, and its pads open this far
 _I_OPEN = 0.005                  # past the index's skin. WHY: at the ring's distance and 20 mm open, the left's pads
@@ -48,14 +59,34 @@ def _index_hold(seed):
     return np.array([-s * iy - c * _I_FWD, c * iy - s * _I_FWD, iz]), -(FINGERS["index"][4] - 0.005)
 
 
+def _jab(right, dz):
+    """The press made one control step deep, dz under contact."""
+    return [_w(_X_S, np.asarray(w.pos) - [0, 0, dz - PRESS_DZ], w.finger, w.label, w.yaw)
+            if w.label == "press until it fires" else
+            (_w(w.duration, np.asarray(w.pos) - [0, 0, dz - PRESS_DZ], w.finger, w.label, w.yaw)
+             if w.label == "hold the press" else w) for w in right]
+
+
+def _no_lift(left):
+    """The left's lift on the finger taken out: it stays where it closed."""
+    return [_w(w.duration, np.asarray(w.pos) - [0, 0, HOLD_UP], w.finger, w.label, w.yaw)
+            if w.label in ("hold it up on its stop", "keep holding through the press") else w for w in left]
+
+
 def _stem(right, left, seed):
     if _STEM == "j":
         right = [_w(_JAB_S, w.pos, w.finger, w.label, w.yaw) if w.label == "press until it fires" else w for w in right]
-    if _STEM == "x":
-        right = [_w(_X_S, np.asarray(w.pos) - [0, 0, _X_DZ - PRESS_DZ], w.finger, w.label, w.yaw)
-                 if w.label == "press until it fires" else
-                 (_w(w.duration, np.asarray(w.pos) - [0, 0, _X_DZ - PRESS_DZ], w.finger, w.label, w.yaw)
-                  if w.label == "hold the press" else w) for w in right]
+    if _STEM in ("x", "a"):
+        right = _jab(right, _X_DZ)
+    if _STEM == "y":
+        right = _jab(right, _Y_DZ)
+    if _STEM == "g":
+        left = _no_lift(left)
+    if _STEM == "a":
+        yaw = layout(seed)["hand"][3]
+        off = np.array([math.sin(yaw), -math.cos(yaw), _AIR_Z - HOLD_TCP]) * [_AIR_ACROSS, _AIR_ACROSS, 1.0]
+        left = [_w(w.duration, np.asarray(w.pos) + off, _AIR_GAP if w.finger in (GRIP_R, OPEN_R) else w.finger, w.label,
+                   w.yaw) if w.label in _HOLD else w for w in _no_lift(left)]
     if _STEM == "w":
         near, yaw = site_world(seed, _NEAR_S)
         dp = near - site_world(seed)[0]

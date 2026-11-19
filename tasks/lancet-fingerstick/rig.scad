@@ -1,16 +1,18 @@
 // rig.scad: the real-trial rig for lancet-fingerstick, written by tools/rig_scad.py from lancet_fingerstick.py.
 // Do not edit by hand; rerun the tool. Units mm, z from the table top, x toward the wrist from the ring's apex,
-// y to the thumb side. Render each part on its own: part = "base", "ring", "stand" or "cup" ("all" views
-// the set assembled, the ring finger on its top stop).
+// y to the thumb side. Render each part on its own: part = "base", "ring", "stand", "cup" or "shims"
+// ("all" views the set assembled, the ring finger on its top stop).
 // The base prints in one piece, 191 by 120 by 96 mm: a bed of at least 201 by 130 mm
 // with 101 mm of height (from the model's shapes; not rendered).
 // Print (CHOICE, not trialled): PETG; base on its plate with tree supports under the fingers, thumb and palm;
-// ring on its side with supports under the pad; stand on its bottom; cup rim up.
-// Bought: two 4 mm steel dowel pins 41.0 mm long, pressed 8 mm into the carriage;
-// two 4 mm bore shaft collars (10 mm OD, 5 mm wide) clamped on the pins under the guide block's top,
-// where they stop the finger at the top of its travel; two compression springs, one round each pin under its
-// collar, each 0.05 N/mm, free length 41.471 mm, inside diameter over 4.5 mm, outside under 10 mm,
-// solid length under 20.0 mm [CHOICE: not sourced; README check R measures the slide as built].
+// ring on its side with supports under the pad; stand on its bottom; cup rim up; shims flat.
+// Bought: one miniature linear guide LILY MGN7C1R40Z0CM (40 mm rail, block 22.5 mm, pitch moment 2.84 N m);
+// four M2 x 6 socket screws (web to block, heads in 4 mm counterbores 2.2 deep, so 2.2 mm enters the block's 2.5 mm thread)
+// and three M2 x 6 screws with M2 heat-set inserts (rail to post);
+// two 4 x 40 mm steel dowel pins pressed 8 mm into the plate and its bosses; two 4 mm bore shaft collars
+// (10 mm OD, 5 mm wide) clamped on the pins on the web's foot, the top stop; two compression springs, one on each pin
+// under the foot, each music wire 0.32 mm, OD 5.12 mm, 18.8 active coils, 20.8 total, ends closed and ground,
+// free length 30.953 mm, rate 0.05 N/mm, solid 6.66 mm (under the 8.5 mm it reaches) [ARITH; README check R measures it].
 part = "all";
 lance_wall = 1.0;   // the Lance trainer finger's wall, measured with calipers (README check 3b) [EST until measured]
 tab_w = 6.0; tab_t = 3.0; tab_h = 4.0;   // the lancet's tab cap, measured with calipers (README check 3) [EST]
@@ -31,39 +33,47 @@ module ring_finger(lance_wall) {
   capsule([7.3, 0.0, 70.0], [26.6, 0.0, 70.0], 7.3 - lance_wall);
   capsule([26.6, 0.0, 70.0], [99.0, 0.0, 70.0], 7.8);
 }
-// the slide: the carriage 20 by 10 mm, z 58.0 to 67.0, fused under the ring finger's knuckle; it
-// lands on the guide block's top (z 48.0) after 10.0 mm, the lower stop
-module carriage() { translate([93.0, -5.0, 58.0]) cube([20.0, 10.0, 9.0]); }
-module pin_holes(d, z0, h) { for (x = [98.0, 108.0]) translate([x, 0, z0]) cylinder(d = d, h = h); }
-module ring() { difference() { union() { ring_finger(lance_wall); carriage(); }
-  pin_holes(3.9, 57.99, 8.01); } }   // the pins pressed in from below
-// the guide block: a bridge 20 by 24 mm on the plate, its top z 40.0 to 48.0 carrying the
-// pins' bushings; under it a slot open across y (z 5 to 40.0) for the collars and the springs
-module guide() { difference() {
-  translate([93.0, -12.0, 5]) cube([20.0, 24.0, 43.0]);
-  translate([92.0, -13.0, 5 - 0.01]) cube([22.0, 26.0, 35.01]);
-  pin_holes(4.2, 39.0, 10); }
-  for (x = [98.0, 108.0]) translate([x, 0, 5]) cylinder(d = 3.5, h = 8.0);   // the spring seats
-  for (y = [-12.0, 8.0]) translate([93.0, y, 5]) cube([20.0, 4, 35.0]);   // the bridge's two walls
-}
-module base() {
+// the slide, on the ring: a web x 93.0 to 99.0 fused under the knuckle, 17 mm wide up to z 56.0 and 10 mm
+// above it (clear of the holding pads), the block bolted to its +x face; its foot (z 28.5 to 33.5) rides the two pins,
+// pushed up by the springs against the collars, and lands on the stop post after 10.0 mm
+module web() { difference() { union() {
+  translate([93.0, -8.5, 28.5]) cube([6.0, 17, 27.5]);
+  translate([93.0, -5.0, 28.5]) cube([6.0, 10.0, 38.5]);
+  translate([93.0, -18.5, 28.5]) cube([6.0, 37, 5.0]); }
+  for (y = [-15.0, 15.0]) translate([96.0, y, 27.5]) cylinder(d = 4.5, h = 7.0);   // the pins run free
+  for (p = [[-6.0, 35.75], [-6.0, 43.75], [6.0, 35.75], [6.0, 43.75]]) translate([92.99, p[0], p[1]]) rotate([0, 90, 0]) {
+    cylinder(d = 2.4, h = 6.02); cylinder(d = 4.0, h = 2.2); }   // the block's four screws
+} }
+module ring() { union() { ring_finger(lance_wall); web(); } }
+// the post: x 107.0 to 115.0, the rail screwed to its -x face through three heat-set inserts (z 16, 31, 46)
+module post() { difference() {
+  translate([107.0, -12.0, 5.0]) cube([8.0, 24.0, 46.0]);
+  for (z = [16.0, 31.0, 46.0]) translate([106.99, 0, z]) rotate([0, 90, 0]) cylinder(d = 3.2, h = 5); } }
+// the pins' bosses (their seats, z 5 to 8, then 2 shims of 1 mm: the springs sit at z 10.0) and the lower stop post (top z 18.5)
+module bosses() { for (y = [-15.0, 15.0]) translate([96.0, y, 5.0]) cylinder(d = 8, h = 3); }
+module stop_post() { translate([93.0, -3.0, 5.0]) cube([6.0, 6, 13.5]); }
+module shims() { for (i = [0 : 3]) translate([12 * i, 0, 0]) difference() { cylinder(d = 8, h = 1); translate([0, 0, -0.01]) cylinder(d = 4.3, h = 1.02); } }
+module base() { difference() { union() {
   translate([89.0, -35.0, 0]) cube([104.0, 95.0, 5.0]);   // the plate, ballasted to 3 kg and taped down
-  guide(); index(); palm(); pedestal(); thumb();
-}
+  post(); bosses(); stop_post(); index(); palm(); pedestal(); thumb(); }
+  for (y = [-15.0, 15.0]) translate([96.0, y, -0.01]) cylinder(d = 3.9, h = 8.02);   // the pins pressed in
+} }
 module stand() { difference() { translate([-20.0, -20.0, 0]) cube([40.0, 40.0, 25.0]);
   translate([0, 0, 19.0]) cylinder(d = 24.4, h = 7.0); }   // the cup's recess
   difference() { cylinder(d = 10.0, h = 27.0);   // the fixed post, its top at the shield's face
     translate([-tab_w / 2, -tab_t / 2, 27.0 - tab_h]) cube([tab_w, tab_t, tab_h + 0.01]); }   // the slot that holds the tab cap still
-  translate([9.0, 0, 19.0]) cylinder(d = 3.0, h = 3);   // the stop pin in the recess's floor
+  translate([9.0, 0, 19.0]) cylinder(d = 3.0, h = 3);   // the stop pin in the recess's floor, at 0 deg
 }
 // the cup: keyed to the housing (13.8 by 10.8 mm, 8.0 mm deep, 0.4 mm each side), turning on the
-// post; an arc slot under it meets the stop pin at +-100 deg, the model's TAB_STOP either way
+// post; an arc slot under it, centred on the stop pin at rest, meets the pin at +-100 deg, the model's TAB_STOP either way
+// (the slot spans +-110.888 deg: the stop plus the pin's own 10.888 deg half-width)
 module cup() { difference() { translate([0, 0, 19.0]) cylinder(d = 24.0, h = 16.0);
   translate([-6.9, -5.4, 27.0]) cube([13.8, 10.8, 9.0]);
   translate([0, 0, 18.0]) cylinder(d = 10.4, h = 9.01);   // turns on the post
-  translate([0, 0, 18.99]) rotate([0, 0, 80]) rotate_extrude(angle = 200) translate([7.3, 0]) square([3.4, 3.4]);
+  translate([0, 0, 18.99]) rotate([0, 0, -110.888]) rotate_extrude(angle = 221.776) translate([7.3, 0]) square([3.4, 3.4]);
 } }
 if (part == "base" || part == "all") color("grey") base();
 if (part == "ring" || part == "all") ring();
 if (part == "stand" || part == "all") translate([0, -120, 0]) stand();
 if (part == "cup" || part == "all") translate([0, -120, 0]) color("white") cup();
+if (part == "shims") shims();

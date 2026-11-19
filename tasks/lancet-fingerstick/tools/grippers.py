@@ -91,7 +91,8 @@ def arm_points(side, q6, finger):
 
 
 def hand_hulls(seed, grip_index=False):
-    """The trainer's fixed parts (world), each as a convex hull: every base shape of the hand mechanism but the plate.
+    """The trainer's fixed parts (world), each as a convex hull: every base shape of the hand mechanism but the plate,
+    and the slide's post, rail and stop post.
     With grip_index, less the index finger and its rod into the palm. WHY: stem i00's left closes on the index on
     purpose (its pads 5 mm into it, the same squeeze as on the ring), so that contact is the stem, not a collision."""
     hx, hy, hz, yaw = F.layout(seed)["hand"]
@@ -100,7 +101,7 @@ def hand_hulls(seed, grip_index=False):
     out = []
     n = len(F._finger_capsules("index"))
     skip = set(range(n)) | {n + 1} if grip_index else set()   # hand_shapes' order: index, palm, index rod, thumb
-    for i, shape in enumerate(F.HAND_SHAPES):
+    for i, shape in enumerate(F.HAND_SHAPES + F.slide_fixed()):   # WHY the slide's post and rail: fixed, drawn only
         if i in skip:
             continue
         pts = shape_points(shape)

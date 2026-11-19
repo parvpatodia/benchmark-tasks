@@ -1,10 +1,11 @@
 """rig_scad.py: writes ../rig.scad, the printable real-trial rig, from the task's own numbers (no hand-copied sizes).
 
-Parts: the base (plate, the palm block with the index finger and the thumb on a pedestal, and the ring finger's guide
-block with its two pin bushings and spring seats), the ring finger (its two segments and the carriage under its
-knuckle, with the pins' holes), and the lancet stand (a fixed block and post holding the tab cap, and a cup keyed to
-the housing that turns on the post, stopped at +-100 deg). Bought parts: two 4 mm steel pins, two 4 mm shaft collars,
-two compression springs (sizes below). Units mm; z from the table top; x along the fingers toward the wrist from the
+Parts: the base (plate, the palm block with the index finger and the thumb on a pedestal, the post the slide's rail is
+screwed to, the spring pins' bosses and the lower stop post), the ring finger (its two segments and the web under its
+knuckle that the slide's block is bolted to, with a foot round the spring pins), printed shims under the springs, and
+the lancet stand (a fixed block and post holding the tab cap, and a cup keyed to the housing that turns on the post,
+stopped at +-100 deg). Bought parts: a miniature linear guide, M2 screws and inserts, two 4 x 40 mm dowels, two 4 mm
+shaft collars, two compression springs (specs in the file's header). Units mm; z from the table top; x along the fingers toward the wrist from the
 ring's apex, y to the thumb side (the model's hand mechanism frame, with z shifted by its HZ).
 
 WHY generated: the rig must be rebuildable from the model; generating it from lancet_fingerstick.py makes the print take
@@ -25,13 +26,20 @@ sys.path.insert(0, str(HERE))
 import lancet_fingerstick as F  # noqa: E402
 
 OUT = HERE / "rig.scad"
-PIN_D = 4.0          # mm: the slide's pins, 4 mm steel dowels [CHOICE]
-PIN_PRESS = 8.0      # mm: how deep each pin is pressed into the carriage (a 3.9 mm hole) [CHOICE]
-BUSH_CLEAR = 0.2     # mm: on the pin's diameter in the guide block's bushings [CHOICE]
-BRIDGE_T = 8.0       # mm: the guide block's top, the pins' bushing length [CHOICE]
+PIN_D, PIN_L = 4.0, 40.0   # mm: the spring pins, 4 x 40 mm steel dowels (a standard length) [CHOICE]
+PIN_PRESS = 8.0      # mm: each pressed through the plate (5) and its boss (3) [CHOICE]
+BOSS_D, BOSS_H = 8.0, 3.0   # mm: the pins' bosses on the plate [CHOICE]
+SHIM_T, SHIMS = 1.0, 2      # mm: printed shims under each spring on its boss; one out cuts each spring's force by its
+#                             rate x 1 mm [CHOICE: the preload's adjustment, README checks 1 and R]
 COLLAR_H, COLLAR_OD = 5.0, 10.0   # mm: a 4 mm bore shaft collar, its width and diameter [EST: a common size]
-SEAT_D, SEAT_H = 3.5, 8.0         # mm: the spring seat posts on the plate under each pin [CHOICE]
-GUIDE_W = 24.0       # mm: the guide block across y [CHOICE]
+FOOT_HALF_Y = 18.5   # mm: the web's foot across y, round the pins (15 mm out) [CHOICE]
+WEB_LOW_HALF_Y = 8.5   # mm: the web where the block is bolted on, the block's half-width [SOURCE: W 17]
+STOP_HALF_Y = 3.0    # mm: the lower stop post [CHOICE]
+M2_CLEAR, M2_HEAD, M2_INSERT = 2.4, 4.0, 3.2   # mm: an M2 clearance hole, its head's counterbore, a heat-set insert's
+#                                                 hole [EST: common sizes]
+RAIL_HOLE_E, RAIL_HOLE_P = 5.0, 15.0   # mm: the rail's first hole from its end and the holes' pitch [SOURCE: E 5, P 15]
+SPRING_WIRE, SPRING_MEAN = 0.32, 4.8   # mm: the springs' music wire and mean coil diameter [CHOICE]
+G_WIRE = 79300.0     # N/mm^2: music wire's shear modulus [EST: a handbook value, not read here]
 CUP_OD = 24.0        # mm: the turning cup's outside diameter [CHOICE]
 CUP_SINK = 6.0       # mm: how far the cup sits down in its recess in the stand [CHOICE]
 POST_D = 10.0        # mm: the fixed post the cup turns on; the tab cap's slot is in its top [CHOICE]
@@ -48,32 +56,63 @@ def pt(p, dz=0.0):
     return f"[{mm(p[0])}, {mm(p[1])}, {mm(p[2] + dz)}]"
 
 
+def spring(rest, comp, bottom, k_each):
+    """An order spec for each slide spring (mm, N): music wire SPRING_WIRE on a mean diameter SPRING_MEAN, the active
+    coils that give the rate k = G d^4 / (8 D^3 n), closed ends (two dead coils), and its peak stress at the lower stop
+    (Wahl-corrected) [ARITH]."""
+    d, D = SPRING_WIRE, SPRING_MEAN
+    n = G_WIRE * d ** 4 / (8 * D ** 3 * k_each)
+    c = D / d
+    f_max = k_each * (rest + comp - bottom)
+    wahl = (4 * c - 1) / (4 * c - 4) + 0.615 / c
+    tau = wahl * 8 * f_max * D / (math.pi * d ** 3)
+    return {"wire": d, "od": round(D + d, 2), "id": round(D - d, 2), "active": round(n, 1), "total": round(n + 2, 1),
+            "solid": round((n + 2) * d, 2), "index": round(c, 1), "f_max": round(f_max, 2), "tau": round(tau)}
+
+
 def numbers():
     """The rig's numbers (mm), each from the model. The tests and the README read these."""
     hz = F.HZ
-    car_bot, car_top = mm(hz + F.CAR_Z[0]), mm(hz + F.CAR_Z[1])
-    guide_top = mm(hz + F.GUIDE_TOP)
-    under = round(guide_top - BRIDGE_T, 3)                      # the bridge's underside: the collars stop here
-    rest = round(under - COLLAR_H - 5.0, 3)                     # each spring's length at rest (plate top at 5 mm)
-    comp = round(1000 * F.ring_target(), 3)                     # its compression there (preload plus weight)
-    k_each = F.K_RING / 2 / 1000                                # N/mm, two in parallel
-    pin_top = round(car_bot + PIN_PRESS, 3)
-    pin_bot = round(rest + 5.0 - 10.0 + 0.0, 3)                 # 10 mm under the collar's bottom
+    z = lambda v: mm(hz + v)  # noqa: E731
+    web = (mm(F.WEB_X[0]), mm(F.WEB_X[1]), mm(2 * F.WEB_HALF_Y), z(F.FOOT_Z[1]), z(-0.003))
+    foot = (z(F.FOOT_Z[0]), z(F.FOOT_Z[1]))
+    block = (z(F.BLOCK_Z[0]), z(F.BLOCK_Z[1]))
+    rail = (round(mm(F.POST_X[0]) - mm(F.RAIL["rail_h"]), 3), mm(F.POST_X[0]), z(F.RAIL_Z[0]), z(F.RAIL_Z[1]))
+    seat = round(5.0 + BOSS_H + SHIMS * SHIM_T, 3)
+    rest = round(foot[0] - seat, 3)                              # each spring's length at rest, seat to foot
+    comp = round(1000 * F.ring_target(), 3)                      # its compression there (preload plus weight)
+    k_each = F.K_RING / 2 / 1000                                 # N/mm, two in parallel
+    bottom = round(rest - 1000 * F.DROP_STOP, 3)
+    lever = round(mm(F.WEB_X[1] + F.RAIL["height"] / 2 - F.SITE_AIM), 1)   # the press (at the site) to the block
     return {
-        "carriage": (mm(F.CAR_X[0]), mm(F.CAR_X[1]), mm(2 * F.CAR_HALF_Y), car_bot, car_top),
-        "pins_x": (mm(F.PIN_X[0]), mm(F.PIN_X[1])),
-        "guide": (mm(F.CAR_X[0]), mm(F.CAR_X[1]), GUIDE_W, guide_top, under),
-        "drop_stop": round(car_bot - guide_top, 3),
+        "web": web,
+        "foot": foot,
+        "block": block,
+        "block_holes_z": (round((block[0] + block[1]) / 2 - mm(F.RAIL["C"]) / 2, 3),
+                          round((block[0] + block[1]) / 2 + mm(F.RAIL["C"]) / 2, 3)),
+        "rail": rail,
+        "rail_holes_z": tuple(round(rail[2] + RAIL_HOLE_E + i * RAIL_HOLE_P, 3) for i in range(3)),
+        "post": (mm(F.POST_X[0]), mm(F.POST_X[1]), 24.0, 5.0, rail[3]),
+        "stop_top": z(F.GUIDE_TOP),
+        "drop_stop": round(foot[0] - z(F.GUIDE_TOP), 3),
+        "pins": (round(mm(F.WEB_X[0] + F.WEB_X[1]) / 2, 3), mm(F.SPRING_Y)),
+        "pin": {"bottom": 0.0, "top": PIN_L, "length": PIN_L},
+        "collar": (foot[1], round(foot[1] + COLLAR_H, 3)),
+        "seat_top": seat,
         "spring": {"rate_each": round(k_each, 3), "rest": rest, "comp": comp, "free": round(rest + comp, 3),
-                   "bottom": round(rest - 1000 * F.DROP_STOP, 3),
-                   "force_rest_each": round(k_each * comp, 3)},
-        "pin": {"top": pin_top, "bottom": pin_bot, "length": round(pin_top - pin_bot, 3)},
-        "seat_top": 5.0 + SEAT_H,
+                   "bottom": bottom, "force_rest_each": round(k_each * comp, 3),
+                   **spring(rest, comp, bottom, k_each)},
+        # the ring's knuckle end over the rail's top at the lower stop, at the rail's near face [ARITH]
+        "finger_clear": round(mm(hz) - 1000 * F.DROP_STOP - z(F.RAIL_Z[1])
+                              - math.sqrt(mm(F.FINGERS["ring"][4]) ** 2 - (rail[0] - mm(F.KNUCKLE_X)) ** 2), 2),
+        "lever": lever,
+        "moment_15N": round(15.0 * lever / 1000, 2),
         "plate": (mm(F.PLATE_X[0]), mm(F.PLATE_X[1]), mm(F.PLATE_Y[0]), mm(F.PLATE_Y[1]), 5.0),
         "ring_axis_z": mm(hz),
         "stand": (mm(2 * F.STAND_HALF), mm(F.STAND_H)),
         "cup_pocket": (mm(F.L_W + 2 * F.CUP_CLEAR), mm(F.L_T + 2 * F.CUP_CLEAR), mm(F.CUP_D)),
         "tab_stop_deg": round(math.degrees(F.TAB_STOP), 3),
+        "stop_half_deg": round(math.degrees(math.asin((STOP_PIN_D / 2 + FIT / 2) / STOP_R)), 3),
         "base_size": base_size(),
     }
 
@@ -130,33 +169,43 @@ def hand_lines():
 
 def lines():
     n = numbers()
-    cx0, cx1, cw, cb, ct = n["carriage"]
-    px0, px1 = n["pins_x"]
-    gx0, gx1, gw, gt, gu = n["guide"]
+    wx0, wx1, ww, wb, wt = n["web"]
+    fb, ft = n["foot"]
+    bh0, bh1 = n["block_holes_z"]
+    pxm, py = n["pins"]
+    px0, px1, phw, pb, ptop = n["post"]
     sp, pin = n["spring"], n["pin"]
     x0, x1, y0, y1, pt_ = n["plate"]
     cpw, cpt, cpd = n["cup_pocket"]
     sw, sh = n["stand"]
-    stop = n["tab_stop_deg"]
+    stop, half = n["tab_stop_deg"], n["stop_half_deg"]
     face = sh + mm(F.TAB_H)                     # the shield's face rests here: the model's stand top plus its tab layer
     rim = face + cpd                              # the cup's rim: the model's socket wall top
     floor = sh - CUP_SINK
+    wide = n["block"][1] + 5.0                    # the web is the block's width up to 5 mm over its top, then narrows
+    holes = "[" + ", ".join(f"[{y}, {z}]" for y in (-mm(F.RAIL["B"]) / 2, mm(F.RAIL["B"]) / 2) for z in (bh0, bh1)) + "]"
     r = ["// rig.scad: the real-trial rig for lancet-fingerstick, written by tools/rig_scad.py from lancet_fingerstick.py.",
          "// Do not edit by hand; rerun the tool. Units mm, z from the table top, x toward the wrist from the ring's apex,",
-         "// y to the thumb side. Render each part on its own: part = \"base\", \"ring\", \"stand\" or \"cup\" (\"all\" views",
-         "// the set assembled, the ring finger on its top stop).",
+         "// y to the thumb side. Render each part on its own: part = \"base\", \"ring\", \"stand\", \"cup\" or \"shims\"",
+         "// (\"all\" views the set assembled, the ring finger on its top stop).",
          f"// The base prints in one piece, {n['base_size'][0]} by {n['base_size'][1]} by {n['base_size'][2]} mm: a bed of at "
          f"least {n['base_size'][0] + 10} by {n['base_size'][1] + 10} mm",
          f"// with {n['base_size'][2] + 5} mm of height (from the model's shapes; not rendered).",
          "// Print (CHOICE, not trialled): PETG; base on its plate with tree supports under the fingers, thumb and palm;",
-         "// ring on its side with supports under the pad; stand on its bottom; cup rim up.",
-         f"// Bought: two {PIN_D:g} mm steel dowel pins {pin['length']} mm long, pressed {PIN_PRESS:g} mm into the carriage;",
-         f"// two {PIN_D:g} mm bore shaft collars ({COLLAR_OD:g} mm OD, {COLLAR_H:g} mm wide) clamped on the pins under the "
-         "guide block's top,",
-         "// where they stop the finger at the top of its travel; two compression springs, one round each pin under its",
-         f"// collar, each {sp['rate_each']} N/mm, free length {sp['free']} mm, inside diameter over {PIN_D + 0.5:g} mm, "
-         f"outside under {COLLAR_OD:g} mm,",
-         f"// solid length under {sp['bottom']} mm [CHOICE: not sourced; README check R measures the slide as built].",
+         "// ring on its side with supports under the pad; stand on its bottom; cup rim up; shims flat.",
+         f"// Bought: one miniature linear guide {F.RAIL['part']} ({mm(F.RAIL['rail_len']):g} mm rail, block "
+         f"{mm(F.RAIL['block_l'])} mm, pitch moment {F.RAIL['MP']} N m);",
+         f"// four M2 x 6 socket screws (web to block, heads in {M2_HEAD:g} mm counterbores 2.2 deep, so 2.2 mm enters the "
+         "block's 2.5 mm thread)",
+         "// and three M2 x 6 screws with M2 heat-set inserts (rail to post);",
+         f"// two {PIN_D:g} x {pin['length']:g} mm steel dowel pins pressed {PIN_PRESS:g} mm into the plate and its bosses; "
+         f"two {PIN_D:g} mm bore shaft collars",
+         f"// ({COLLAR_OD:g} mm OD, {COLLAR_H:g} mm wide) clamped on the pins on the web's foot, the top stop; two "
+         "compression springs, one on each pin",
+         f"// under the foot, each music wire {sp['wire']} mm, OD {sp['od']} mm, {sp['active']} active coils, "
+         f"{sp['total']} total, ends closed and ground,",
+         f"// free length {sp['free']} mm, rate {sp['rate_each']} N/mm, solid {sp['solid']} mm (under the "
+         f"{sp['bottom']} mm it reaches) [ARITH; README check R measures it].",
          'part = "all";',
          "lance_wall = 1.0;   // the Lance trainer finger's wall, measured with calipers (README check 3b) [EST until measured]",
          "tab_w = 6.0; tab_t = 3.0; tab_h = 4.0;   // the lancet's tab cap, measured with calipers (README check 3) [EST]",
@@ -165,47 +214,67 @@ def lines():
          ]
     r += hand_lines()
     r += [
-        f"// the slide: the carriage {cx1 - cx0:g} by {cw:g} mm, z {cb} to {ct}, fused under the ring finger's knuckle; it",
-        f"// lands on the guide block's top (z {gt}) after {n['drop_stop']} mm, the lower stop",
-        f"module carriage() {{ translate([{cx0}, {-cw / 2}, {cb}]) cube([{round(cx1 - cx0, 3)}, {cw}, {round(ct - cb, 3)}]); }}",
-        f"module pin_holes(d, z0, h) {{ for (x = [{px0}, {px1}]) translate([x, 0, z0]) cylinder(d = d, h = h); }}",
-        "module ring() { difference() { union() { ring_finger(lance_wall); carriage(); }",
-        f"  pin_holes({PIN_D - 0.1:g}, {round(cb - 0.01, 3)}, {PIN_PRESS + 0.01:g}); }} }}   // the pins pressed in from below",
-        f"// the guide block: a bridge {gx1 - gx0:g} by {gw:g} mm on the plate, its top z {gu} to {gt} carrying the",
-        f"// pins' bushings; under it a slot open across y (z 5 to {gu}) for the collars and the springs",
-        "module guide() { difference() {",
-        f"  translate([{gx0}, {-gw / 2}, 5]) cube([{round(gx1 - gx0, 3)}, {gw}, {round(gt - 5, 3)}]);",
-        f"  translate([{gx0 - 1}, {-gw / 2 - 1}, 5 - 0.01]) cube([{round(gx1 - gx0 + 2, 3)}, {gw + 2}, {round(gu - 5 + 0.01, 3)}]);",
-        f"  pin_holes({PIN_D + BUSH_CLEAR:g}, {round(gu - 1, 3)}, {BRIDGE_T + 2:g}); }}",
-        f"  for (x = [{px0}, {px1}]) translate([x, 0, 5]) cylinder(d = {SEAT_D}, h = {SEAT_H});   // the spring seats",
-        f"  for (y = [{-gw / 2}, {gw / 2 - 4}]) translate([{gx0}, y, 5]) cube([{round(gx1 - gx0, 3)}, 4, {round(gu - 5, 3)}]);"
-        "   // the bridge's two walls",
-        "}",
-        "module base() {",
+        f"// the slide, on the ring: a web x {wx0} to {wx1} fused under the knuckle, {2 * WEB_LOW_HALF_Y:g} mm wide up to "
+        f"z {wide} and {ww:g} mm",
+        f"// above it (clear of the holding pads), the block bolted to its +x face; its foot (z {fb} to {ft}) rides the "
+        f"two pins,",
+        f"// pushed up by the springs against the collars, and lands on the stop post after {n['drop_stop']} mm",
+        "module web() { difference() { union() {",
+        f"  translate([{wx0}, {-WEB_LOW_HALF_Y}, {fb}]) cube([{round(wx1 - wx0, 3)}, {2 * WEB_LOW_HALF_Y:g}, "
+        f"{round(wide - fb, 3)}]);",
+        f"  translate([{wx0}, {-ww / 2}, {fb}]) cube([{round(wx1 - wx0, 3)}, {ww}, {round(wt - fb, 3)}]);",
+        f"  translate([{wx0}, {-FOOT_HALF_Y}, {fb}]) cube([{round(wx1 - wx0, 3)}, {2 * FOOT_HALF_Y:g}, {round(ft - fb, 3)}]); }}",
+        f"  for (y = [{-py}, {py}]) translate([{pxm}, y, {fb - 1}]) cylinder(d = {PIN_D + 0.5:g}, h = {round(ft - fb + 2, 3)});"
+        "   // the pins run free",
+        f"  for (p = {holes}) translate([{wx0 - 0.01}, p[0], p[1]]) rotate([0, 90, 0]) {{",
+        f"    cylinder(d = {M2_CLEAR}, h = {round(wx1 - wx0 + 0.02, 3)}); cylinder(d = {M2_HEAD}, h = 2.2); }}"
+        "   // the block's four screws",
+        "} }",
+        "module ring() { union() { ring_finger(lance_wall); web(); } }",
+        f"// the post: x {px0} to {px1}, the rail screwed to its -x face through three heat-set inserts (z "
+        + ", ".join(f"{v:g}" for v in n["rail_holes_z"]) + ")",
+        "module post() { difference() {",
+        f"  translate([{px0}, {-phw / 2}, {pb}]) cube([{round(px1 - px0, 3)}, {phw}, {round(ptop - pb, 3)}]);",
+        f"  for (z = {list(n['rail_holes_z'])}) translate([{px0 - 0.01}, 0, z]) rotate([0, 90, 0]) "
+        f"cylinder(d = {M2_INSERT}, h = 5); }} }}",
+        f"// the pins' bosses (their seats, z {pb:g} to {pb + BOSS_H:g}, then {SHIMS} shims of {SHIM_T:g} mm: the springs "
+        f"sit at z {n['seat_top']}) and the lower stop post (top z {n['stop_top']})",
+        f"module bosses() {{ for (y = [{-py}, {py}]) translate([{pxm}, y, {pb}]) cylinder(d = {BOSS_D:g}, h = {BOSS_H:g}); }}",
+        f"module stop_post() {{ translate([{wx0}, {-STOP_HALF_Y}, {pb}]) cube([{round(wx1 - wx0, 3)}, {2 * STOP_HALF_Y:g}, "
+        f"{round(n['stop_top'] - pb, 3)}]); }}",
+        f"module shims() {{ for (i = [0 : {2 * SHIMS - 1}]) translate([12 * i, 0, 0]) difference() {{ "
+        f"cylinder(d = {BOSS_D:g}, h = {SHIM_T:g}); translate([0, 0, -0.01]) cylinder(d = {PIN_D + 0.3:g}, h = {SHIM_T + 0.02:g}); }} }}",
+        "module base() { difference() { union() {",
         f"  translate([{x0}, {y0}, 0]) cube([{round(x1 - x0, 3)}, {round(y1 - y0, 3)}, {pt_}]);   // the plate, ballasted "
         f"to {F.BASE_KG:g} kg and taped down",
-        "  guide(); index(); palm(); pedestal(); thumb();",
-        "}",
+        "  post(); bosses(); stop_post(); index(); palm(); pedestal(); thumb(); }",
+        f"  for (y = [{-py}, {py}]) translate([{pxm}, y, -0.01]) cylinder(d = {PIN_D - 0.1:g}, h = {PIN_PRESS + 0.02:g});"
+        "   // the pins pressed in",
+        "} }",
         f"module stand() {{ difference() {{ translate([{-sw / 2}, {-sw / 2}, 0]) cube([{sw}, {sw}, {sh}]);",
         f"  translate([0, 0, {floor}]) cylinder(d = {CUP_OD + FIT}, h = {CUP_SINK + 1}); }}   // the cup's recess",
         f"  difference() {{ cylinder(d = {POST_D}, h = {face});   // the fixed post, its top at the shield's face",
         f"    translate([-tab_w / 2, -tab_t / 2, {face} - tab_h]) cube([tab_w, tab_t, tab_h + 0.01]); }}"
         "   // the slot that holds the tab cap still",
-        f"  translate([{STOP_R}, 0, {floor}]) cylinder(d = {STOP_PIN_D}, h = 3);   // the stop pin in the recess's floor",
+        f"  translate([{STOP_R}, 0, {floor}]) cylinder(d = {STOP_PIN_D}, h = 3);   // the stop pin in the recess's floor, at 0 deg",
         "}",
         f"// the cup: keyed to the housing ({cpw} by {cpt} mm, {cpd} mm deep, {mm(F.CUP_CLEAR)} mm each side), turning on the",
-        f"// post; an arc slot under it meets the stop pin at +-{stop:g} deg, the model's TAB_STOP either way",
+        f"// post; an arc slot under it, centred on the stop pin at rest, meets the pin at +-{stop:g} deg, the model's "
+        "TAB_STOP either way",
+        f"// (the slot spans +-{round(stop + half, 3):g} deg: the stop plus the pin's own {half:g} deg half-width)",
         f"module cup() {{ difference() {{ translate([0, 0, {floor}]) cylinder(d = {CUP_OD}, h = {round(rim - floor, 3)});",
         f"  translate([{-cpw / 2}, {-cpt / 2}, {face}]) cube([{cpw}, {cpt}, {cpd + 1}]);",
         f"  translate([0, 0, {floor - 1}]) cylinder(d = {POST_D + FIT}, h = {round(face - floor + 1.01, 3)});"
         "   // turns on the post",
-        f"  translate([0, 0, {floor - 0.01}]) rotate([0, 0, {180 - stop:g}]) rotate_extrude(angle = {2 * stop:g}) "
+        f"  translate([0, 0, {floor - 0.01}]) rotate([0, 0, {-round(stop + half, 3):g}]) "
+        f"rotate_extrude(angle = {round(2 * (stop + half), 3):g}) "
         f"translate([{STOP_R - STOP_PIN_D / 2 - FIT / 2}, 0]) square([{STOP_PIN_D + FIT}, 3.4]);",
         "} }",
         'if (part == "base" || part == "all") color("grey") base();',
         'if (part == "ring" || part == "all") ring();',
         'if (part == "stand" || part == "all") translate([0, -120, 0]) stand();',
         'if (part == "cup" || part == "all") translate([0, -120, 0]) color("white") cup();',
+        'if (part == "shims") shims();',
     ]
     return r
 

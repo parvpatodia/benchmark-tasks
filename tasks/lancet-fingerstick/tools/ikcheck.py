@@ -16,7 +16,7 @@ from yam_arena import station  # noqa: E402
 from yam_arena.demo import ArmPlan, Waypoint  # noqa: E402
 
 J6 = 2.0944
-STEMS = "ojxwfkci"               # the sim stems (sim/stems.py, sim/mk.sh)
+STEMS = "ojxwfkciagy"               # the sim stems (sim/stems.py, sim/mk.sh)
 
 
 def stem_plan(stem, seed):
