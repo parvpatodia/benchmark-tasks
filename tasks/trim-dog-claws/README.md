@@ -256,8 +256,8 @@ inspect-robots run --embodiment yam_arena --policy yam_scripted -E task=nail_tri
 With each finger capped at 40 N (`GRIP_N` in `nail_trim.py`), inspect-robots, `yam_arena`, 20 Hz, `object_jitter=0`,
 one launch each on this revision's committed files (their hashes are in each run's `files.sha256`) [RUN]:
 
-- Filmed demo (`sim/film.sh`, `yam_scripted`, `--seed` 0): FILM_PENDING
-- Dream-1 (`sim/dream.sh`, `dream`, `--seed` 0, 3,000 steps, the one guarded run): DREAM_PENDING
+- Filmed demo (`sim/film.sh`, `yam_scripted`, `--seed` 0): 1.0, success at step 1,834 (91.7 s).
+- Dream-1 (`sim/dream.sh`, `dream`, `--seed` 0, 3,000 steps, the one guarded run): 0, 3,000 steps, the run limit.
 
 Earlier runs, on the round 1 files with yam_arena's default 50 N finger cap (superseded by the two runs above, kept
 for the record):
