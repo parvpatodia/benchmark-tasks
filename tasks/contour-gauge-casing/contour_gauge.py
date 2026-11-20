@@ -31,7 +31,10 @@ EXPECT = {"demo": 1.0, "nothing": 0.0, "one_arm": 0.0, "no_press": 0.0, "off_lin
 
 # -- the wall, the doorway and the casing ---------------------------------------------------------------------------------
 X_WALL = 0.400                   # the wall's face, world x [CHOICE: hands at the copy at x 0.36, inside top-down reach]
-Y_IN = -0.060                    # the casing's inner (doorway) edge, world y [CHOICE: falls in a gap between fingers]
+Y_IN = -0.0605                   # the casing's inner (doorway) edge, world y [CHOICE: in a gap between fingers]
+# WHY -60.5 mm and 4 mm fingers: the finger beside the casing's widest step was dragged off its copy by a 1 mm
+# sideways drift (toward -y) of the hands in the draw back (GPU traces); this puts 1.9 mm between that finger and
+# the step; the finger beside the 6.4 mm step has 0.85 mm, on the side the drift moves away from
 REVEAL = 0.003                   # the casing's inner edge stands this far into the opening past the jamb's face
 #                                  [CHOICE: a common 1/8 in reveal, not load-bearing]
 STOCK_W, STOCK_T = 0.0635, 0.0191  # 1x3 S4S pine casing stock, 2-1/2 x 3/4 in dressed [SOURCE: lumber dressed sizes]
@@ -88,7 +91,7 @@ TRAVEL = 0.0318                  # finger travel, the deepest profile [SOURCE: "
 SPAN = 0.252                     # fingers' span along the frame [SOURCE: 10 in profile length; ARITH: 42 x 6 mm]
 PITCH = 0.006                    # model finger pitch [EST: one model finger stands for several real ones]
 N_FING = round(SPAN / PITCH)     # 42 [ARITH]
-FING_W, FING_H = 0.005, 0.008    # model finger width (y) and height (z) [EST]
+FING_W, FING_H = 0.004, 0.008    # model finger width (y) and height (z) [EST]
 FRAME_D, FRAME_H = 0.020, 0.012  # frame depth (x) and thickness (z) [EST]
 PROTRUDE = 0.040                 # fingertips in front of the frame with the fingers set straight [EST]
 BLOCK_L = 0.030                  # solid end block past the last finger at each end, along y [EST]
@@ -229,7 +232,7 @@ FLAT_DEG = 3.0                       # gauge flat: its z axis within 3 deg of ve
 REST_TOL = 0.002                     # frame bottom within 2 mm over the sheet's top [CHOICE]
 STILL = 0.02                         # m/s [CHOICE]
 CLEAR = 0.020                        # every hand point 20 mm from the gauge [CHOICE]
-EDGE_IN = 0.0025                     # fingers judged on the sheet: tip centre half a finger inside its side edges, so
+EDGE_IN = 0.0025                     # fingers judged on the sheet: tip centre over half a finger inside its side edges, so
 #                                    a finger that copied the open doorway is judged only once it lies on the sheet [CHOICE]
 G_LO = np.array([TAIL0 - TRAVEL, -SPAN / 2 - BLOCK_L, 0.0])   # the gauge's bounds in G, fingers fully in or out
 G_HI = np.array([TIP0, SPAN / 2 + BLOCK_L, FRAME_H])
@@ -404,6 +407,7 @@ install(SagCorrector())
 YAW = {"left": -90.0, "right": 90.0}   # fingers close along x on each end block [CHOICE: checkkit reach]
 TCP_H = 0.0145                   # TCP over the gauge's bottom when holding it: pad tips 1.5 mm over its bottom [ARITH:
 #                                  TCP to pad tips 13 mm (yam_arena TCP_OFFSET and the pad mesh)]
+CREEP = 0.0015                   # the corrector overshoots its push target [RUN: 1.6 mm, GPU trace]
 D_COPY = 0.032                   # frame front to wall at the copy [CHOICE: inside the 26 to 39 mm window, README]
 X_COPY = X_WALL - D_COPY - FX0   # frame centre at the copy [ARITH: 0.358]
 X_NEAR = X_WALL - STOCK_T - 0.004 - TIP0   # frame centre with the straight fingertips 4 mm short of the casing [ARITH]
@@ -455,12 +459,20 @@ def plan(seed=None, mode_name="demo"):
             # reaches the commanded depth against the fingers' hold instead of lagging by the arm's compliance; the
             # copy depth must be known to the plan, because the place on the sheet is the copy pose slid back
             p.move((X_COPY - 0.006, yb, TOP + TCP_H), t=2.5, label="press: push in")
-            # WHY a slow last 6 mm: on a 3 s ramp the corrector overshot the target by 1.7 to 2.7 mm (fastrun trace,
+            # WHY a slow last 6 mm: on a single 3 s push the corrector overshot the target by 1.7 to 2.7 mm (fastrun trace,
             # GPU), and an overshoot is copied into the fingers for good, since they do not spring back
-            p.move((X_COPY, yb, TOP + TCP_H), t=3.0, label="press: push in slowly")
+            p.move((X_COPY - CREEP, yb, TOP + TCP_H), t=3.0, label="press: push in slowly")
+            # WHY the ease off is not contact and is followed by a still wait: the corrector's trim winds up while
+            # the fingers resist (the command ran 47 mm ahead of the left hand, GPU trace); frozen through the draw
+            # back, that stored load tipped the gauge 5 deg in the pads and swung the hands sideways, dragging
+            # fingers off the copy (four GPU traces). Stepping the target back 4 mm and letting the corrector settle
+            # there unloads the arms in place, every axis held, before the gauge moves
             p.hold(1.0, "press: hold")
-            p.move((X_NEAR, yb, TOP + TCP_H), t=2.0, label="press: draw back")
-        p.move((X_NEAR, yb, TOP + TCP_H + LIFT), t=1.2, label="lift off the floor")
+            p.move((X_COPY - CREEP - 0.004, yb, TOP + TCP_H), t=1.0, label="press: ease off")
+            p.hold(1.5, "press: unload the arms")
+            p.move((X_COPY - CREEP - 0.004, yb, TOP + TCP_H + 0.003), t=0.8, label="press: ease up", contact=True)
+            p.move((X_NEAR - 0.010, yb, TOP + TCP_H + 0.003), t=2.5, label="press: draw back", contact=True)
+        p.move((p.pos[0], yb, TOP + TCP_H + LIFT), t=1.2, label="lift off the floor", contact=True)
     together(*plans)
     for p in plans:
         yb = p.pos[1] + off

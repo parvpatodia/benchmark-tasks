@@ -24,15 +24,18 @@ The gauge can be held only by its two solid end blocks: everywhere between them 
 40 mm in front and 16 to 48 mm behind, so a gripper closing across the frame would push fingers, and the frame is 252 mm long
 along the other axis. Pushed in from one end block, the fingers' hold (31 fingers in contact, about 4.7 N in all,
 Forces) acts at their centroid, 0.17 m from the right end block and 0.11 m from the left, so one hand alone must hold
-0.5 to 0.8 N m of turn through a pinch on a 30 mm block while the fingers are being set. ONE_ARM_RESULT
+0.5 to 0.8 N m of turn through a pinch on a 30 mm block while the fingers are being set. Tried in the simulator
+(mode `one_arm`: the right hand alone, same moves): the frame turned 3 deg and stopped 6 mm short of the copy, so the
+fingers over the wall never reached it, and the gauge then hung 6 deg off level from its one end in the carry. No copy,
+score 0. That is one scripted try, not a proof that no one-handed way exists.
 
 ## The real objects
 
 | part | real (source, saved in `src/`) | model |
 |---|---|---|
-| contour gauge | General 833, 10 in, plastic: "3 in. deep fingers can measure profiles up to 1-1/4 in." (distributor listing `penntool_833.txt`; the maker's own site refused automated fetches, HTTP 429) | frame 252 x 20 x 12 mm, 42 fingers 76.2 mm long, 31.8 mm travel, two 30 mm end blocks, about 100 g in all |
+| contour gauge | General 833, 10 in, plastic: "3 in. deep fingers can measure profiles up to 1-1/4 in. long" (distributor listing `penntool_833.txt`; the maker's own site refused automated fetches, HTTP 429) | frame 252 x 20 x 12 mm [EST], 42 fingers 76.2 mm long and 4 mm wide [EST] at 6 mm pitch, 31.8 mm travel, fingertips 40 mm out of the frame at rest [EST], two 30 mm end blocks [EST], about 100 g in all [EST]; measure the estimates on the real gauge with calipers and a kitchen scale |
 | casing | made from 1x3 pine stock, 3/4 x 2-1/2 in dressed, 19 x 64 mm (`lumber_wikipedia.txt`, North American dressed sizes), cut as below | three fixed boxes, 70 mm tall, on a wall and jamb mock-up |
-| vinyl sheet | an offcut of 1/8 in sheet vinyl or vinyl tile, cut to 135 x 170 mm, with 1/2 in masking tape on the wall line | loose box 135 x 170 x 3.2 mm, 120 g |
+| vinyl sheet | an offcut of 1/8 in sheet vinyl or vinyl tile, cut to 135 x 170 mm, with 1/2 in masking tape on the wall line | loose box 135 x 170 x 3.2 mm, 120 g [EST: weigh it] |
 
 **The casing, made the same way every time.** Crosscut a 70 mm length of 1x3 pine (19.1 x 63.5 mm). On a table saw,
 cut a 1/4 x 1/4 in (6.4 x 6.4 mm) rabbet along its doorway edge and a 5/8 in wide, 3/8 in deep (15.9 x 9.5 mm) rabbet
@@ -59,8 +62,10 @@ arm, not the gauge.
 | quantity | value | basis |
 |---|---|---|
 | force to slide one finger | 0.15 N | Estimated, not measured. Measure: lay the gauge flat, push one finger along its slot with a 0 to 2 N spring scale, read the peak; repeat on 5 fingers |
-| push to copy | about 4.7 N (31 fingers that meet casing or wall, x 0.15 N) | arithmetic; with both hands, about 2.4 N each, far under the YAM's limits |
-| grip | 15 N a finger on each end block | demo; the trace shows each hand within 2.3 mm of the frame through the push (no slip) |
+| push to copy | about 4.7 N (31 fingers that meet casing or wall, x 0.15 N) | arithmetic; with both hands, about 2.4 N each |
+| friction, gauge plastic on pine and vinyl | 0.40 static, 0.35 sliding | Estimated, not measured. Measure: set the gauge on a pine board and on the vinyl, tilt until it slides (static = tan of the angle), or drag it with the spring scale |
+| friction, vinyl on the bench | 0.50 static, 0.45 sliding | Estimated, not measured; measured the same way |
+| grip | 15 N a finger on each end block | demo; through the press the trace shows each hand within 1.6 mm of its end block along the push and 0.4 mm across it, with the gauge under 1.2 deg off level (no slip) |
 
 If the measured finger force is up to 3 times the estimate (14 N push), each hand still pushes 7 N; the real trial
 starts with the measurement, and the model's F_HOLD is set to it.
@@ -89,7 +94,7 @@ Judged at the end. A finger's push is read from its joint; a fingertip is judged
 
 The cut line, in the sheet's own frame: the tape's near edge where the sheet meets bare wall, and that edge set back by
 the casing's outline (12.7, 19.1, 9.6 mm) over the first 63.5 mm from the sheet's doorway edge. Each fingertip is judged by its distance, on the sheet, to that line with its
-steps drawn in, so a tip 1 mm beside a step is 1 mm off. Fingers judged: those whose tip centres lie 2.5 mm (half a
+steps drawn in, so a tip 1 mm beside a step is 1 mm off. Fingers judged: those whose tip centres lie 2.5 mm (over half a
 finger) or more inside the sheet's side edges. Real trial: photograph from above with a steel rule on the tape edge, or measure each tip's distance from
 the tape edge with the rule (0.5 mm graduations, so it separates 3 mm from 6 mm); the copy check uses the same rule
 against the frame. Thresholds: 3 mm is 1/8 in, half the model's finger pitch; 6 mm is 1/4 in, what a cut would leave as
@@ -101,9 +106,17 @@ a visible gap at the casing.
       -E control_hz=20 --instruction "<instruction from task.json>" --scorer task_score --max-steps 1200
 
 One fixed layout, `object_jitter=0`, no seed needed. The demo reads only scene constants and the arms' own joints.
-Modes (environment variable TASK_DEMO): MODES_TABLE
+Modes (environment variable TASK_DEMO), each scored on GPU in one simulator session:
 
-The copy works for any frame-front to wall distance from 26 to 39 mm (fingers neither bottomed nor short of the
+| mode | what it does | score |
+|---|---|---|
+| demo | both hands copy the casing, carry the gauge back and lay it on the sheet in register | 1.0 |
+| nothing | no motion | 0 |
+| one_arm | the right hand alone, same moves | 0 |
+| no_press | the demo without the press, the gauge laid on the sheet uncopied | 0 |
+| off_line | the demo laid 12 mm sideways on the sheet | 0.5 |
+
+The copy works for any frame-front to wall distance from 27.5 to 38.5 mm (fingers neither bottomed nor short of the
 wall); the demo aims at 32 mm.
 
 Offline: `PYTHONPATH=<yam_arena source> python3 test_contour_gauge.py` (scoring tiers, fakes, the hold model, the
@@ -111,4 +124,6 @@ copy window, gates). All modes in one simulator session: `fastrun.py contour_gau
 
 ## Runtime
 
-RUNTIME_LINE
+The demo ends at 651 control steps (32.6 s of the 60 s limit). In the simulator on one GPU it runs at about 2 steps a
+second, so a trial takes about 5.5 minutes plus about 20 s for the reset. A real trial takes about 2 minutes, plus
+resetting the gauge (push every finger back flush against a straight edge) and the sheet.
