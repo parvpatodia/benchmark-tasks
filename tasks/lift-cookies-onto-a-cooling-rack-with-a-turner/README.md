@@ -74,8 +74,8 @@ cookie's rim, the edge rides up the blade, and the mat holds the cookie back (0.
 rack the blade turns 60 degrees and tips 22 degrees nose-down, 4 mm over the wires, and the cookie slides off.
 
 Simplified: the stand-ins are rigid and cannot break, so the two things that spoil a real cookie during this step, a
-robot part on it and a drop, are what the scorer checks. The 86 mm blade is wider than the 66.7 mm cookie, so a carried
-cookie never overhangs its sides. Touches are a distance from the arm links' collision meshes (3 mm), not a measured
+robot part on it and a drop, are what the scorer checks. The 86 mm blade is wider than the 66.7 mm cookie, so a cookie
+centred on it does not overhang its sides. Touches are a distance from the arm links' collision meshes (3 mm), not a measured
 force.
 
 ## Scoring
@@ -85,7 +85,7 @@ layer (its underside within 3 mm of the wire tops), with its whole outline over 
 blade, at rest, never touched and never dropped, scores 0.25. Carried: at some step its centre was over the blade and
 its underside within 3 mm of the blade's top, 10 mm or more over the mat, so a cookie pushed, tipped or flicked onto the
 rack does not count. Off the blade: not lying on it (centre within a radius of the blade, underside within 5 mm of its
-top). Touched: any point of either arm's link collision meshes, from link 2 (the upper arm) to the finger tips, within 3
+top). Touched: any point of either arm's link collision meshes, every link but the base and link 1, to the finger tips, within 3
 mm of the cookie at any step (the base and link 1 stay at the arm's foot, far from the cookies). Dropped: falling faster
 than 0.6 m/s (a free fall of about 18 mm), or 18 mm lower than 0.1 s before (two control steps, which the 20 Hz speed
 samples can miss); the demo lowers a cookie at most 5.9 mm in 0.1 s (results below). A touched or dropped cookie never
