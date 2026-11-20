@@ -57,6 +57,9 @@ def clear_latches():
         v.clear()
     M.CARRIED.clear()
     M.UNREAD[0] = False
+    M.SHEET_DISTURBED[0] = False
+    for v in M.TOUCHED_BY.values():
+        v.clear()
 
 
 def start_states():
@@ -91,15 +94,17 @@ def goal_states():
 
 def end_states(mode):
     """Where each mode's plan leaves the parts (the planned end, as the README's mode table says), with the latches
-    the scorer would hold: touch presses the middle cookie, drop drops every cookie, shove leaves them on the sheet."""
+    the scorer would hold: touch presses the middle cookie with the gripper, wrist the first one with the left wrist,
+    drop drops every cookie, miss leaves them on the sheet."""
     if mode == "demo":
         return goal_states()
     clear_latches()
-    if mode in ("nothing", "shove"):
+    if mode in ("nothing", "miss"):
         return start_states()
     s = goal_states()
-    for n in (["cookie_1"] if mode == "touch" else M.NAMES):
-        M.SPOILED[n].add("touched" if mode == "touch" else "dropped")
+    hit = {"touch": ["cookie_1"], "wrist": ["cookie_0"]}.get(mode, M.NAMES)
+    for n in hit:
+        M.SPOILED[n].add("dropped" if mode == "drop" else "touched")
     return s
 # -- end of EDIT --------------------------------------------------------------------------------------------------------
 
@@ -132,8 +137,18 @@ class Task(unittest.TestCase):
             self.assertAlmostEqual(score_of(end_states(mode)), want, msg=mode)
 
     def test_offline_gates(self):
-        for gate, ok, detail in checkkit.check(HERE / "cookies.py", M.MODES, (0,)):
+        for gate, ok, detail in checkkit.check(HERE / "cookies.py", [m for m in M.MODES if m != "wrist"], (0,)):
             self.assertTrue(ok, f"{gate}: {detail}")
+
+    def test_offline_gates_wrist(self):
+        """Mode wrist brings a left wrist link inside the 3 mm part floor of cookie_0 on purpose (CHECK_SKIP only
+        exempts hand links), so its only clearance miss must be exactly that; every other gate passes."""
+        for gate, ok, detail in checkkit.check(HERE / "cookies.py", ["wrist"], (0,), verbose=True):
+            if gate != "CLEARANCE":
+                self.assertTrue(ok, f"{gate}: {detail}")
+                continue
+            self.assertTrue(detail.startswith("1 under floor"), detail)
+            self.assertRegex(detail.splitlines()[0], r"left link\d vs cookie_0 wrist s0 left t [\d.]+ 'wrist: ")
 
     def test_hands_clear_at_end(self):
         """Each arm's last planned pose: every hand point CLEAR (or 35 mm) from every free part's goal box."""
@@ -190,6 +205,48 @@ class Cookies(unittest.TestCase):
         far = np.asarray(c.pos) + [M.R + M.TOUCH + 0.002, 0.0, M.THICK / 2]
         M.note_step(s, {"left": None, "right": far[None, :]})
         self.assertEqual(M.SPOILED["cookie_1"], set())
+
+    def test_arm_link_touch_latches(self):
+        """A wrist link, not only the gripper, spoils a cookie it comes within TOUCH of."""
+        self.assertTrue({"link2", "link3", "link4", "link5", "gripper", "tip_left", "tip_right"} <= set(M.TOUCH_LINKS))
+        s = goal_states()
+        c = np.asarray(s["cookie_1"].pos)
+        on_top = c + [0.0, 0.0, M.THICK + 0.002] + np.array([[dx, 0.0, 0.0] for dx in (-0.01, 0.0, 0.01)])
+        M.note_step(s, {"left": {"link5": on_top}, "right": {"gripper": FAR["right"]}})
+        self.assertIn("touched", M.SPOILED["cookie_1"])
+        self.assertEqual(M.TOUCHED_BY["cookie_1"], {"left:link5"})
+        self.assertAlmostEqual(score_of(s), 0.5)     # the other two still count; no full score
+        clear_latches()
+        s = goal_states()
+        M.note_step(s, {"left": {"link5": on_top + [0.0, 0.0, M.TOUCH + 0.001]}, "right": {"gripper": FAR["right"]}})
+        self.assertEqual(M.SPOILED["cookie_1"], set())
+        self.assertEqual(score_of(s), 1.0)
+
+    def test_sheet_tipped_not_full(self):
+        s = goal_states()
+        a = math.radians(M.SHEET_TILT + 1)
+        sh = s["sheet"]
+        s2 = {**s, "sheet": ObjectState(pos=sh.pos, quat_xyzw=np.array([math.sin(a / 2), 0, 0, math.cos(a / 2)]),
+                                        lin_vel=np.zeros(3), ang_vel=np.zeros(3), low=sh.low, high=sh.high)}
+        M.note_step(s2, FAR)
+        self.assertAlmostEqual(score_of(s), 0.75)    # back flat now, but it was tipped
+        clear_latches()
+        s = goal_states()
+        M.note_step({**s, "sheet": state("sheet", (M.SHEET_XY[0], M.SHEET_XY[1], M.TOP + M.SHEET_LIFT + 0.002))}, FAR)
+        self.assertAlmostEqual(score_of(s), 0.75)
+        clear_latches()
+        s = goal_states()
+        M.note_step(s, FAR)
+        self.assertEqual(score_of(s), 1.0)
+
+    def test_rest_reference_is_the_handle_middle(self):
+        self.assertAlmostEqual(M.HANDLE_MID, (M.HANDLE[0] + M.HANDLE[1]) / 2)
+        mx, my = M.handle_middle(state("turner"))
+        self.assertAlmostEqual(mx, M.REST_MID[0], places=4)
+        self.assertAlmostEqual(my, M.REST_MID[1], places=4)
+        spec = json.loads((HERE / "task.json").read_text())
+        self.assertIn("at x %.3f, y %.3f" % M.REST_MID, spec["setup"])
+        self.assertGreater(M.BLADE[2], 2 * M.R)       # the blade is wider than the cookie
 
     def test_drop_latches(self):
         s = goal_states()
@@ -301,9 +358,9 @@ class Cookies(unittest.TestCase):
         self.assertAlmostEqual(score_of(s), 0.75)
 
     def test_cookie_numbers(self):
-        self.assertAlmostEqual(M.COOKIE_KG, 0.0329, places=3)
+        self.assertAlmostEqual(M.COOKIE_KG, 0.015, places=4)
         readme = (HERE / "README.md").read_text()
-        for txt in ("%.0f g" % (M.COOKIE_KG * 1000), "%d mm across" % round(2000 * M.R), "%d mm thick" % round(1000 * M.THICK)):
+        for txt in ("%.0f g" % (M.COOKIE_KG * 1000), "%.1f mm across" % (2000 * M.R), "%d mm thick" % round(1000 * M.THICK)):
             self.assertIn(txt, readme)
 
 

@@ -1,6 +1,6 @@
 """Three cookie stand-ins lie on a silicone mat on a rimless aluminium cookie sheet. A stainless offset turner lies on
 its rest beside a wire cooling rack. Lift each cookie off the sheet with the turner and set it flat on the rack, in one
-layer, without a gripper touching a cookie and without dropping one; then put the turner back on its rest.
+layer, without the robot touching a cookie and without dropping one; then put the turner back on its rest.
 
 The stand-ins are 3D-printed PLA discs at a baked cookie's size and weight (README "The cookies"), so trials reset
 without food on the rig.
@@ -14,18 +14,20 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import numpy as np  # noqa: E402
 from mechanism import Shape, body, on_reset, on_step, run_seed  # noqa: E402,F401
 from motionkit import HAND, Plan, SagCorrector, as_grip, box_distance, down, install, mode, plans_out  # noqa: E402
+from motionkit import _np, _rot_xyzw, link_points  # noqa: E402
 from yam_arena.constants import FINGER_OPEN as FINGER_OPEN_  # noqa: E402
 from yam_arena.task_file import TABLE_TOP, Box  # noqa: E402
 
 SCENE = "station"
 SCORE_OVER = "end"
 SUCCESS_HOLD_S = 1.0
-RUN_LIMIT_STEPS = 1600           # 80 s at 20 Hz
+RUN_LIMIT_STEPS = 2000           # 100 s at 20 Hz
 TOP = TABLE_TOP[SCENE]
-MODES = ("demo", "nothing", "touch", "drop", "shove")
-EXPECT = {"demo": 1.0, "nothing": 0.0, "touch": 0.5, "drop": 0.0, "shove": 0.0}
+MODES = ("demo", "nothing", "touch", "wrist", "drop", "miss")
+EXPECT = {"demo": 1.0, "nothing": 0.0, "touch": 0.5, "wrist": 0.5, "drop": 0.0, "miss": 0.0}
 CHECK_SKIP = {("right", "turner"): ("take turner:", "rest turner:"),   # the hand closes on and lets go of the handle
-              ("right", "cookie_1"): ("touch:",)}                          # mode touch presses a cookie by design
+              ("right", "cookie_1"): ("touch:",),                          # mode touch presses a cookie by design
+              ("left", "cookie_0"): ("wrist:",)}                           # mode wrist lowers a wrist link onto one
 
 # Every number: [SOURCE] quoted in the README (saved page in src/), [ARITH] derived, [EST] estimate with a way to
 # measure it in the README, [CHOICE] design choice. World: x forward from the arm bases, y left, z up.
@@ -40,11 +42,13 @@ TAN, ALU, MAT_C, STEEL_C, BLACK, WOOD = (0.78, 0.55, 0.30), (0.80, 0.80, 0.82), 
     (0.62, 0.63, 0.66), (0.10, 0.10, 0.11), (0.55, 0.42, 0.30)
 
 # -- the cookie stand-ins: PLA discs, frame at the bottom centre ---------------------------------------------------------
-R = 0.038                        # radius: 76 mm across [CHOICE: a 3 in drop cookie, README "The cookies"]
-THICK = 0.006                    # [CHOICE]
+R = 0.03335                      # radius: 66.7 mm across [SOURCE: USDA FoodData Central 172807, oatmeal cookie,
+#                                  "1 cookie (2-5/8\" dia)", src/usda_fdc_172807_oatmeal_cookie.json]
+THICK = 0.006                    # [EST: a thin, crisp oatmeal cookie; USDA gives no thickness]
+COOKIE_KG = 0.015                # [SOURCE: the same USDA entry, 15 g a cookie]
 EDGE_IN, EDGE_UP = 0.004, 0.0015  # the underside edge is eased: the flat bottom ends 4 mm in and the edge rises 1.5 mm
 #                                  [CHOICE: as a baked cookie's rounded edge; it lets the blade in]
-PLA_RHO = 1240.0                 # kg/m3 [EST: printed solid; weigh each disc, README]
+#                                  (the stand-in is printed with its infill set so it weighs 15 g, README)
 N_RING = 24
 
 
@@ -58,7 +62,7 @@ def _frustum_vol(r1, r2, h):
 
 EDGE_VOL = _frustum_vol(R - EDGE_IN, R, EDGE_UP)           # [ARITH]
 TOP_VOL = math.pi * R * R * (THICK - EDGE_UP)              # [ARITH]
-COOKIE_KG = PLA_RHO * (EDGE_VOL + TOP_VOL)                 # [ARITH: 32.9 g]
+PLA_RHO = COOKIE_KG / (EDGE_VOL + TOP_VOL)                 # effective density of the part-infill print [ARITH: 727 kg/m3]
 
 
 def cookie_shapes():
@@ -78,8 +82,8 @@ MAT = (0.240, 0.300, 0.00075)    # [CHOICE size; EST thickness, calipers]
 SHEET_KG, MAT_KG = 0.34, 0.06    # [ARITH: 260 x 320 x 1.5 mm at 2,700 kg/m3; EST mat: kitchen scale]
 MAT_TOP = TOP + SHEET[2] + MAT[2]
 COOKIE_X = 0.360                 # cookie centres [CHOICE]
-COOKIE_Y = (0.050, -0.040, -0.130)   # 90 mm apart: 14 mm between cookies [CHOICE: the 65 mm blade passes a
-#                                  neighbour by 20 mm]
+COOKIE_Y = (0.050, -0.040, -0.130)   # 90 mm apart: 23 mm between cookies [CHOICE: the 86 mm blade passes a
+#                                  neighbour by 14 mm]
 
 
 def sheet_shapes():
@@ -125,14 +129,18 @@ def rack_shapes():
                   material="steel", mass=RACK_KG * float(np.prod(np.subtract(hi, lo))) / vol) for lo, hi in boxes]
 
 
-# -- the offset turner (loose): frame at the middle of the handle, where the hand holds it; x toward the blade's tip ------
-OFF = 0.035                      # blade underside below the handle's middle [EST: ruler]
+# -- the offset turner (loose): frame where the hand holds it, 20 mm behind the handle's front end; x toward the tip -----
+OFF = 0.035                      # blade underside below the handle's axis [EST: ruler]
 HANDLE = (-0.080, 0.020, 0.022, 0.014)   # x from, x to, width, height [EST: ruler]
-BLADE = (0.035, 0.125, 0.065)    # x from, x to, width: a 90 x 65 mm blade [EST: ruler]
+BLADE = (0.035, 0.125, 0.086)    # x from, x to, width: a 90 x 86 mm blade, wider than the 66.7 mm cookie [CHOICE: inside
+#                                  the 2 3/4 in to 4 in blade widths of two stocked turners, src/webstaurant_*.txt]
 BLADE_T = (0.0010, 0.0003)       # thickness at the neck and at the tip edge, ground thin to the edge [EST: calipers]
-HANDLE_KG, NECK_KG, BLADE_KG = 0.025, 0.008, 0.030   # [EST: kitchen scale]
+HANDLE_KG, NECK_KG, BLADE_KG = 0.025, 0.008, 0.040   # [EST: kitchen scale; ARITH blade: 0.6 mm mean stainless, 90 x 86 mm]
 TIP = np.array([BLADE[1], 0.0, -OFF])   # the blade's tip edge, underside, in the turner frame
-REST_XY = (0.100, -0.600)        # the handle's middle on the rest [CHOICE: right of the rack, checkkit IK]
+REST_XY = (0.100, -0.600)        # the turner frame (hand hold) on the rest [CHOICE: right of the rack, checkkit IK]
+HANDLE_MID = (HANDLE[0] + HANDLE[1]) / 2   # the handle's middle in the turner frame: x -0.030
+REST_MID = (REST_XY[0] + HANDLE_MID, REST_XY[1])   # where the handle's middle lies on the rest: x 0.070, y -0.600,
+#                                  the reference point in task.json's setup and scoring [ARITH]
 REST_BLOCK = (-0.075, -0.045, 0.030, OFF - HANDLE[3] / 2)   # x from, x to (turner frame), width, height [CHOICE]
 
 
@@ -212,15 +220,23 @@ REST_TOL, REST_YAW = 0.020, 15.0  # turner back on its rest: handle middle withi
 REST_Z = 0.010                   # ... and lying there (not held over it) [CHOICE]
 SHEET_TOL = 0.030                # the sheet within 30 mm of its place [CHOICE: tape outline]
 RACK_MOVE = 0.030                # the rack within 30 mm of its place [CHOICE: tape outline]
+SHEET_TILT, SHEET_LIFT = 5.0, 0.005   # the sheet never tilted over 5 deg nor raised 5 mm at any step: tipping the
+#                                  cookies off with the free arm gets no full score [CHOICE: side video, a ruler]
 CARRY_UP = 0.010                 # a cookie counts as carried on the blade when its underside is within 3 mm of the
 #                                  blade's top, its centre over the blade, and it is 10 mm over the mat [CHOICE]
 ON_BLADE = 0.003
 CLEAR = 0.030                    # every hand point 30 mm from the cookies and the turner at the end [CHOICE]
 PER_COOKIE = 0.25                # [CHOICE]
-_HANDS = {"left": None, "right": None}
+_HANDS = {"left": None, "right": None}     # gripper points (housing and tips): the end-of-trial clearance check
+TOUCH_LINKS = ("link2", "link3", "link4", "link5", "gripper", "tip_left", "tip_right")
+#                                  every arm link but the base and link1, which stay at the arm's foot, far from the
+#                                  cookies: any of them within TOUCH of a cookie is a touch [CHOICE]
+_ARMS = {"left": None, "right": None}      # {link: points} of TOUCH_LINKS per arm, read every step
+TOUCHED_BY = {n: set() for n in NAMES}     # the links that touched each cookie (trace only)
 SPOILED = {n: set() for n in NAMES}   # cookie -> reasons ("touched", "dropped"), latched for the trial
 CARRIED = set()                          # cookies seen carried on the turner's blade, latched
 UNREAD = [False]                         # a hand could not be read at some step: no full score
+SHEET_DISTURBED = [False]                # the sheet tilted or was raised at some step: no full score
 _Z = {n: [] for n in NAMES}              # each cookie's last three heights, one per control step
 
 
@@ -232,12 +248,16 @@ def set_hands(points):
 @on_reset
 def _reset():
     _HANDS.update({"left": None, "right": None})
+    _ARMS.update({"left": None, "right": None})
+    for v in TOUCHED_BY.values():
+        v.clear()
     for v in SPOILED.values():
         v.clear()
     for v in _Z.values():
         v.clear()
     CARRIED.clear()
     UNREAD[0] = False
+    SHEET_DISTURBED[0] = False
 
 
 def blade_frame(turner):
@@ -256,11 +276,30 @@ def over_blade(st, turner, slack=0.0):
     return bool(inside), float(c[2] - top)
 
 
+def arm_from_env(env, side):
+    """{link: world points} of one arm's TOUCH_LINKS colliders now, from the simulator's link poses (Isaac Lab 3.0,
+    quaternions xyzw), env origin removed. Reads the robot only."""
+    base = env.unwrapped
+    origin = _np(base.scene.env_origins)[0]
+    rob = base.scene[f"{side}_robot"]
+    poses = _np(rob.data.body_link_pose_w)[0]
+    names = list(rob.body_names)
+    out = {}
+    for k in TOUCH_LINKS:
+        p = poses[names.index(k)]
+        out[k] = link_points(k, HAND.step) @ _rot_xyzw(p[3:7]).T + (p[:3] - origin)
+    return out
+
+
 def note_step(objects, hands):
-    """Latch every cookie a hand point comes within TOUCH of, and every cookie falling faster than DROP_V or DROP_H
-    in two steps."""
+    """Latch every cookie a robot point comes within TOUCH of, and every cookie falling faster than DROP_V or DROP_H
+    in two steps. `hands`: per arm, an (n, 3) array of points or {link: (n, 3)} (the simulator passes every link in
+    TOUCH_LINKS); None is an unread arm."""
     if any(hands.get(s) is None for s in ("left", "right")):
         UNREAD[0] = True
+    sh = objects.get("sheet")
+    if sh is not None and (tilt_deg(sh) > SHEET_TILT or float(sh.pos[2]) - TOP > SHEET_LIFT):
+        SHEET_DISTURBED[0] = True
     turner = objects["turner"]
     for n in NAMES:
         st = objects[n]
@@ -273,14 +312,17 @@ def note_step(objects, hands):
         if float(st.lin_vel[2]) < -DROP_V or (len(z) == 3 and z[0] - z[2] > DROP_H):
             SPOILED[n].add("dropped")
         pts = cookie_points(st)
+        lo, hi = pts.min(0) - 0.01, pts.max(0) + 0.01
         for side in ("left", "right"):
             h = hands.get(side)
             if h is None:
                 continue
-            h = np.asarray(h, float)
-            near = np.all((h > pts.min(0) - 0.01) & (h < pts.max(0) + 0.01), axis=1)
-            if near.any() and _cookie_distance(h[near], st).min() < TOUCH:
-                SPOILED[n].add("touched")
+            for link, lp in (h.items() if isinstance(h, dict) else (("hand", h),)):
+                lp = np.asarray(lp, float)
+                near = np.all((lp > lo) & (lp < hi), axis=1)
+                if near.any() and _cookie_distance(lp[near], st).min() < TOUCH:
+                    SPOILED[n].add("touched")
+                    TOUCHED_BY[n].add(f"{side}:{link}")
 
 
 def _cookie_distance(points, st):
@@ -299,8 +341,12 @@ def read_hands(env):
     except Exception:  # noqa: BLE001  WHY: never stop the run; unread hands count as not clear
         _HANDS.update({"left": None, "right": None})
     try:
+        _ARMS.update({side: arm_from_env(env, side) for side in ("left", "right")})
+    except Exception:  # noqa: BLE001  WHY: never stop the run; an unread arm blocks the full score (UNREAD)
+        _ARMS.update({"left": None, "right": None})
+    try:
         from yam_arena import scene as _scene
-        note_step(_scene.object_states(env, NAMES + ["turner"]), _HANDS)   # WHY: the carry latch needs the blade
+        note_step(_scene.object_states(env, NAMES + ["turner", "sheet"]), _ARMS)   # WHY: the carry latch needs the blade
     except Exception:  # noqa: BLE001  WHY: never stop the run; a failed read is retried next step
         pass
 
@@ -329,8 +375,15 @@ def good(objects):
             and not resting_on_blade(objects[n], t)]
 
 
+def handle_middle(st):
+    """World x, y of the middle of the turner's handle (the setup's reference point)."""
+    m = np.asarray(st.pos, float) + _rot(st.quat_xyzw) @ np.array([HANDLE_MID, 0.0, 0.0])
+    return float(m[0]), float(m[1])
+
+
 def turner_on_rest(st):
-    off = math.hypot(float(st.pos[0]) - REST_XY[0], float(st.pos[1]) - REST_XY[1])
+    mx, my = handle_middle(st)
+    off = math.hypot(mx - REST_MID[0], my - REST_MID[1])
     return bool(off <= REST_TOL and abs(yaw_deg(st)) <= REST_YAW and abs(float(st.pos[2]) - (TOP + OFF)) <= REST_Z
                 and st.resting())
 
@@ -359,13 +412,13 @@ def rack_in_place(st):
 
 
 def score(objects):
-    """0.25 for each cookie carried there on the blade and lying flat on the rack in one layer, never touched by a
-    gripper and never dropped. 1.0 with all three, the turner back on its rest, the sheet and rack in place, everything
-    still and both hands 30 mm clear."""
+    """0.25 for each cookie carried there on the blade and lying flat on the rack in one layer, never touched by an arm
+    link (TOUCH_LINKS) and never dropped. 1.0 with all three, the turner back on its rest, the sheet and rack in place
+    and the sheet never tipped, everything still, both grippers 30 mm clear and every arm read at every step."""
     g = good(objects)
     if len(g) == len(NAMES) and turner_on_rest(objects["turner"]) and sheet_in_place(objects["sheet"]) \
             and rack_in_place(objects["rack"]) and all(objects[n].resting() for n in ("sheet", "rack")) \
-            and hands_clear(objects) and not UNREAD[0]:
+            and hands_clear(objects) and not UNREAD[0] and not SHEET_DISTURBED[0]:
         return 1.0
     return round(PER_COOKIE * len(g), 6)
 
@@ -388,7 +441,9 @@ def trace_row(env):
         row[f"{n}_vz"] = round(float(st[n].lin_vel[2]), 3)
         row[f"{n}_tilt"] = round(tilt_deg(st[n]), 1)
         row[f"{n}_carried"] = int(n in CARRIED)
+        row[f"{n}_touched_by"] = "+".join(sorted(TOUCHED_BY[n])) or "-"
     row["turner_tilt"] = round(tilt_deg(st["turner"]), 1)
+    row["sheet_disturbed"] = int(SHEET_DISTURBED[0])
     return row
 
 
@@ -407,7 +462,10 @@ OFF_TIP = (0.290, (-0.250, -0.360, -0.470))   # tip x and y over the rack for ea
 #                                  past the tip (PhysX trace), on the rack, checked in the sim]
 OFF_UP = 0.004                   # tip over the wires when tilted [CHOICE]
 DROP_UP = 0.040                  # mode drop: tilted off this high instead [CHOICE]
-SHOVE_UP = 0.005                 # mode shove: the blade held this far over the mat [CHOICE]
+MISS_UP = 0.020                  # mode miss: the blade passes level this far over the mat, over the 6 mm cookies, and
+#                                  carries nothing: every cookie is left on the sheet. (A blade held 3 or 5 mm up still
+#                                  scooped them in GPU runs: the turner hangs about 5 deg nose-down in the grip, so its
+#                                  tip reaches the mat; that is why this stem is not a near miss.) [CHOICE]
 FORCE = 20.0                     # N a finger on the handle [CHOICE: under the 40 N per-finger limit]
 HIGH = 0.12                      # TCP height of an empty-hand transit [CHOICE]
 
@@ -447,8 +505,8 @@ def _take_turner(p):
 
 def _lift_cookie(p, y, mode_name):
     tip0 = np.array([COOKIE_X - R - START_GAP, y, MAT_TOP - PRESS])
-    if mode_name == "shove":
-        tip0[2], pitch = MAT_TOP + SHOVE_UP, 0.0
+    if mode_name == "miss":
+        tip0[2], pitch = MAT_TOP + MISS_UP, 0.0
     else:
         pitch = PITCH_IN
     p.move(tcp_for_tip(tip0 + [0, 0, 0.040], pitch, 0), grip=grip(pitch, 0), label="scoop: over")
@@ -503,10 +561,47 @@ def _touch(p):
     p.move(p.pos, finger=FINGER_OPEN_, t=0.5, label="touch: open")
 
 
+WRIST_UP = 10.0                  # mode wrist: the free (left) gripper lies on its side, tips raised 10 deg, so its
+#                                  upper arm and wrist (links 3 and 4) hang lowest, 55 mm under the gripper's lowest
+#                                  point at the cookie [CHOICE: offline search over headings and tilts, checkkit IK]
+WRIST_GAP = 0.0015               # ... with their lowest point 1.5 mm over the first cookie's top: inside TOUCH [CHOICE]
+WRIST_PARK = (0.200, 0.300, 0.150)   # where the left hand waits afterwards (x, y, height) [CHOICE]
+
+
+def wrist_grip():
+    u = math.radians(WRIST_UP)
+    az = np.array([math.cos(u), 0.0, math.sin(u)])     # approach: forward, tips raised
+    yv = np.array([math.sin(u), 0.0, -math.cos(u)])    # pad axis: down
+    return as_grip(np.column_stack([np.cross(yv, az), yv, az]))
+
+
+def _wrist(p):
+    """Mode wrist: the left arm lowers its wrist, not its gripper, onto the first cookie, then parks; the right arm
+    runs the full demo after it. A touch by any arm link spoils that cookie."""
+    from motionkit import arm_points
+    g = wrist_grip()
+    probe = Plan("left")
+    probe.move((0.30, 0.20, TOP + 0.20), grip=g, finger=0.0)
+    pts, names = arm_points("left", probe.q, 0.0, links=("link3", "link4", "link5"))
+    low = pts[int(np.argmin(pts[:, 2]))] - probe.pos            # the arm's lowest point, from the TCP
+    goal = np.array([COOKIE_X, COOKIE_Y[0], MAT_TOP + THICK + WRIST_GAP]) - low
+    p.move(goal + [0.0, 0.0, 0.060], grip=g, finger=0.0, label="wrist: over")
+    p.hold(0.4, "wrist: line up")
+    p.move(goal, t=1.5, label="wrist: down", contact=True)
+    p.hold(0.5, "wrist: hold", contact=True)
+    p.move(goal + [0.0, 0.0, 0.080], t=1.2, label="wrist: up")
+    p.move((WRIST_PARK[0], WRIST_PARK[1], TOP + WRIST_PARK[2]), grip=down(0), finger=FINGER_OPEN_, label="wrist: park")
+
+
 def plan(seed=None, mode_name="demo"):
     if mode_name == "nothing":
         return {}
     p = Plan("right")
+    left = None
+    if mode_name == "wrist":
+        left = Plan("left")
+        _wrist(left)
+        p.hold(left.duration, "wait for the left arm")
     if mode_name == "touch":
         _touch(p)
     _take_turner(p)
@@ -514,7 +609,7 @@ def plan(seed=None, mode_name="demo"):
         _lift_cookie(p, y, mode_name)
         _set_on_rack(p, k, mode_name)
     _rest_turner(p)
-    return plans_out(p)
+    return plans_out(p, left) if left is not None else plans_out(p)
 
 
 def demo():
