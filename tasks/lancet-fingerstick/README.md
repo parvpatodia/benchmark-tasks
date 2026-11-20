@@ -574,9 +574,9 @@ quoted. One traced run of the previous revision is, below, for what it measured.
 were run on the files here, in the camera harness (`sim/film.sh`, `sim/run.sh`, 2026-11-20) [RUN].
 
 yam_arena, `--seed 0` (the first row under Seeds), `object_jitter=0`, 20 Hz, 1,200-step limit. The film scored 1.0, success at step
-801 (40.05 s), in 305 s of wall time [RUN]; its hashes of the three files match the files here.
-DREAM_PENDING Both runs hash `lancet_fingerstick.py`, `mechanism.py` and `task.json` before starting (`sim/film.sh`,
-`sim/dream.sh`), to be checked against the files here (`task.json` as it was before its `scores` line was filled in).
+801 (40.05 s), in 305 s of wall time [RUN].
+Dream-1 scored 0 over the 1,200 steps (stopped at the step limit), in 992 s of wall time [RUN]. Both runs hash `lancet_fingerstick.py`, `mechanism.py` and `task.json` before starting (`sim/film.sh`,
+`sim/dream.sh`); both hashes match the files here (`task.json` as it was before its `scores` line was filled in).
 Expected for the film: 1.0 inside the 1,200 steps; the left's half-gap (`lf` in the trace) inside 6.40 to 8.20 mm
 from the touch until 0.5 s after the click; and the base's height (`Hz` in the trace) steady while the left lifts.
 

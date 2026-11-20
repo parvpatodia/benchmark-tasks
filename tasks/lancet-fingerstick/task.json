@@ -17,5 +17,5 @@
   "run_limit": "1,200 steps (60 s at 20 Hz)",
   "reset_notes": "A new lancet in the cup each trial (a used one is spent; its tab stays in the post's slot and is removed); the ring finger back on its top stop; the base placed by seed; the container emptied of the trial's lancet.",
   "fidelity": "Approximate. The lancet's drive is a sprung shield that fires at a set force; needle, puncture and blood are not simulated. The tab is a sprung turn that breaks at 45 deg either way. A real finger's give at its joints, wrist and arm is one vertical sprung slide behind its knuckle. The base is fixed (clamped in the rig). The lancet's size, fire force, tab torque and the slide's spring are estimates, measured before trials; the hold's 7.9 mm on-finger half-gap is checked on the film.",
-  "scores": "Dream-1 run: pending; demo: pending"
+  "scores": "Dream-1 run: 0 (1,200 steps); demo: 1.0 (success at 40.05 s, step 801)"
 }
