@@ -572,6 +572,19 @@ A traced PhysX run of the previous revision (the t00 copy, `--seed 0`) scored 1.
   0.14 rad on joint 6 during the twist and at most 0.044 rad from the touch until 0.5 s after the click. The press
   still landed 2.4 deg from square with a 0.43 mm slide, so no plan was changed for it.
 
+PhysX runs of the next revision (the held window and touch rule here, the lancet's housing still at the plastic's
+0.5/0.4 friction) [RUN]: the demo at corners 126748, 84277 and 100825 scored 0, 0 and 1.0; the stems o00, j00, x00,
+w00, a00, g00 and y00 scored 0, all "not held still", latched before the fire, as their rows expect; k00 0.5 as
+expected; f00 1.0 and c00 0, both against their rows. The traces give one cause for all four misses: the right's grip
+let the housing slide up its pads at 5 to 6 N, under the 8 N fire. In the stand (f00) the press peaked at 5.3 N, so
+it never fired there, and the stem went on to finish the demo. On the skin the housing slid 1 to 10 mm up the pads
+and the lancet rocked (up to 10 deg in c00), so the face moved 1.0 to 4.7 mm on the skin before the click, a slide by
+the scorer's 1.0 mm rule. The held window and the touch were not involved: the left read 7.89 to 7.94 mm and no
+fault was "not held". The fix is in the lancet, not the scorer: its housing now has yam_arena's grasped-object
+friction, 1.2/1.0 (`MATERIALS["housing"]`), which the real grip must match anyway (check 7: 15 N with no slip). The
+three corners, f00, c00 and k00 are re-run on the files here; the other stems latched before the grip slipped and
+are not.
+
 The film is run on the files here.
 
 More PhysX runs of the scripted policy, each on a copy that `sim/mk.sh` makes of this `lancet_fingerstick.py` with a
@@ -634,7 +647,7 @@ demo's hold, is what those two runs show.
 
 ## Tests
 
-`python3 test_lancet_fingerstick.py` (with yam_arena on PYTHONPATH) runs 74 offline tests: the shield and the site
+`python3 test_lancet_fingerstick.py` (with yam_arena on PYTHONPATH) runs 75 offline tests: the shield and the site
 (the demo's site and its 48 deg press; the pad's middle, too far round, past the pad or short of 8 mm, the index), the
 tab either way, a good press, no fire under 8 N, a placement needing the finger held (a trace field, not a rung), a
 touch off the ring finger not starting the window, the touch read 0.3 mm off the skin, a brush before the hold, a hold
@@ -642,7 +655,7 @@ beside the press that also reads as holding the lancet, either gripper carrying 
 tilted lancet, the finger giving way, the jab window past the click and from first touch, the held rule (index, palm,
 open, on nothing, past the distal joint, behind the knuckle, on air beside and above the finger, short of the axis, wider than its half-gap window),
 squareness against the local normal at every site on both sides, fires off the hand and in the stand, a drop and the
-container, a slipped or deep grasp still held, the yield sweep (its friction limit, and a design that fails it), the
+container, a slipped or deep grasp still held, the housing's grip friction, the yield sweep (its friction limit, and a design that fails it), the
 scorer (a model that stops, the base dragged, lifted, turned or tipped, the ladder in order along the demo), both arms'
 demo replayed at the 8 corners of the layout box, on `--seed` 0 to 19 and on every seed in the table, the layout's
 draw, a plan replayed on another seed's layout failing, the base clear of the stand and the container, the board on the

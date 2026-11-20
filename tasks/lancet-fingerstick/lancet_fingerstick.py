@@ -132,6 +132,12 @@ SLIDE_MAX = 0.0010               # m: the face moving more on the skin from firs
 
 MATERIALS = {"default": (1.2, 1.0),
              "plastic": (0.5, 0.4),
+             "housing": (1.2, 1.0),       # the lancet's housing where the gripper holds it. WHY not "plastic": at 0.5/0.4
+             #                              the right's grip let the housing slide up its pads at 5 to 6 N in PhysX, under
+             #                              the 8 N fire, so the press slid on the skin (t00 seeds 126748, 84277; c00) and
+             #                              never fired in the stand (f00, 5.3 N peak) [RUN, 2026-11-20]. 1.2/1.0 is
+             #                              yam_arena's GRIPPY_FRICTION for grasped objects; BD's housing has moulded grip
+             #                              ribs, and check 7 requires the real grip to hold 15 N [CHOICE]
              "skin": (0.5, 0.4),          # #1837: hand friction 0.5/0.4
              "trainer": (1.0, 0.9),       # the ring finger's silicone skin [CHOICE: silicone on a gripper pad]
              "foam": (1.0, 0.9),
@@ -340,7 +346,7 @@ def hand_parts():
 
 def lancet_parts():
     """The lancet tip down: the housing (with its rear cap) and the contact shield on its spring."""
-    base = (_box((-L_W / 2, -L_T / 2, SHIELD_OUT), (L_W / 2, L_T / 2, SHIELD_OUT + L_LEN), PINK),
+    base = (_box((-L_W / 2, -L_T / 2, SHIELD_OUT), (L_W / 2, L_T / 2, SHIELD_OUT + L_LEN), PINK, material="housing"),
             _box((-L_W / 2 + 0.001, -L_T / 2 - 0.0003, SHIELD_OUT + 0.012), (L_W / 2 - 0.001, L_T / 2 + 0.0003,
                  SHIELD_OUT + 0.022), WHITE, collide=False))   # the grip indentations, drawn
     shield = Link("shield", LANCET_KG[1], (_cyl((0.0, 0.0, 0.004), SHIELD_R, 0.008, WHITE),), com=(0.0, 0.0, 0.004))
@@ -898,7 +904,8 @@ TIP = 0.013                      # PAD_TIP_PAST_TCP: the pad tips sit 13 mm past
 PAD_TIP_L = 0.018                # the pad tips this far up the lancet from its frame (the socket's rim is at 10 mm)
 OPEN_F = -0.040
 GRIP_L = -(L_T / 2 - 0.004)      # 4 mm into the housing's 10 mm: 20 N a finger at 5000 N/m. WHY: at 2.5 mm the housing
-#                                  slid up the pads at 7.9 N, under the 8 N fire (friction about 0.34) [RUN]
+#                                  slid up the pads at 7.9 N, under the 8 N fire (friction about 0.34) [RUN]; on the
+#                                  0.5/0.4 plastic even 4 mm slid at 5 to 6 N, hence MATERIALS["housing"]
 TWIST = math.radians(70)         # the demo turns the lancet this far in the socket (the tab breaks at 45 deg)
 PRESS_DZ = 0.020                 # the press aims this far past contact along the lancet's axis. WHY: the arm is about
 #                                  0.5 N/mm at the TCP [EST: from yam_arena's joint stiffnesses, J K^-1 J^T], so 20 mm

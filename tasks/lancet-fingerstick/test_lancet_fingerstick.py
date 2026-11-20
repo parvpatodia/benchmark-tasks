@@ -1111,6 +1111,13 @@ class Geometry(unittest.TestCase):
         face = M.RELEASE_Z - M.tcp_over_lancet()
         self.assertGreater(face, M.TOP + M.SH_H + 0.005)
 
+    def test_housing_grip_friction(self):
+        """The housing the right holds has yam_arena's grasped-object friction: on the 0.5/0.4 plastic its grip slid at
+        5 to 6 N in PhysX, under the 8 N fire (f00, c00, t00 corners 126748 and 84277) [RUN]."""
+        housing = M.lancet_parts()[0].shapes[0]
+        self.assertEqual(housing.material, "housing")
+        self.assertEqual(M.MATERIALS["housing"], (1.2, 1.0))
+
     def test_forces_under_the_finger_budget(self):
         """Every working force at or under 40 N a YAM finger, with margin (G16)."""
         grip = 5000.0 * (M.L_T / 2 + M.GRIP_L)  # N a finger: 4 mm into the housing at 5000 N/m
