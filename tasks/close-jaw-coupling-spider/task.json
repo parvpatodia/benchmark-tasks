@@ -1,0 +1,21 @@
+{
+  "title": "Close a Lovejoy L100 jaw coupling: seat the spider, turn the driven shaft to mesh, slide the loose hub to its line",
+  "category": "Impact on jobs",
+  "keywords": [
+    "machine assembly",
+    "shaft coupling",
+    "phase alignment",
+    "keyed slide",
+    "maintenance",
+    "millwright"
+  ],
+  "instruction": "Put the spider into the jaws of the fixed hub on the gearbox shaft, turn the driven shaft until the loose hub's jaws line up with the spider's open gaps, slide the loose hub along its shaft until its back face reaches the line scribed on the shaft, then take both hands away.",
+  "context": "Closing a jaw coupling between a drive and a driven machine is routine reassembly for industrial machinery mechanics and maintenance workers (O*NET 49-9041.00, 446,900 employees, task \"Reassemble equipment after completion of inspections, testing, or repairs.\"; 49-9071.00, 1,621,800 employees). The maker's install guide has the fitter insert the spider into one hub and move the hubs to the catalogue G gap. The loose hub only goes on when its jaws are turned to the spider's free gaps.",
+  "setup": "World x forward from the arm bases, y to the robot's left, heights over the bench top. One shaft axis along x, 75 mm over the bench, at y 0. (1) Drive: a worm reducer housing, 82 x 110 x 120 mm, fixed to the bench, x 0.043 to 0.125; its output shaft carries the fixed hub of a Lovejoy L100 jaw coupling (2.54 in OD, 1.38 in long, steel, 0.69 kg), held by the reducer (does not turn by hand), its face at x 0.175 and its three jaws pointing toward +x. (2) Driven side: a cast frame fixed to the bench with two pillow blocks (centres x 0.317 and 0.402) carrying a 5/8 in steel shaft (0.32 kg) from x 0.214 to 0.420 that turns freely. On it the loose L100 hub (0.69 kg) slides on the key: it starts with its face at x 0.243 (50 mm back from home) and its jaws turned 40 degrees past mesh. A line is scribed round the shaft at x 0.228, where the hub's back face stands when the faces are G = 0.71 in (18.0 mm) apart. (3) Spider: a Lovejoy L099/L100 open-centre spider (6 legs, 2.54 in across, 0.61 in wide, 28 g), standing on edge (axis along x, two legs level along y) between two 12 x 50 x 14 mm wood blocks fixed to the bench either side of x 0.220, y 0.170. Both arms start in the ready pose.",
+  "scoring": "Stages, from the end state. 0.25: the spider is seated in the fixed hub (its centre within 1.5 mm of the shaft axis, its axis within 5 degrees of the shaft's, its far face within 1.0 mm of the fixed hub's face) and every point of both grippers is 30 mm or more from it. 0.5: also the loose hub's jaw tips stand 3 mm or more past the spider's near face (they are in its gaps: a hub pushed on without turning stops with its tips on the leg ends at 0 mm). 0.75: also the hub faces are G apart within 1.0 mm (the back face on the scribed line). 1.0: also the spider, shaft and loose hub are at rest and every gripper point is 30 mm or more from the spider, the loose hub and the driven shaft, held for 1 s. Any state without the spider seated scores 0, so sliding the hub home without the spider, or knocking the fixed hub, scores 0. Real trial: a feeler gauge across the hub faces for G and the spider face, a straightedge across the two hub ODs for the axis, and the video for the hands.",
+  "run_limit": "1,200 steps (60 s at 20 Hz)",
+  "reset_notes": "Nothing is consumed. Slide the loose hub back to 50 mm off home and turn the driven shaft 40 degrees out of mesh against a mark on the pillow block, pull the spider and stand it in its holder.",
+  "fidelity": "Rigid PhysX bodies at catalogue size. The elastomer spider is rigid, so its give is replaced by 1.0 mm play from each leg to each jaw flank and a 1.2 mm chamfer on the jaw tips. The key is a prismatic joint on the shaft with viscous drag in place of the slip fit's dry friction; the reducer's output is a stiff joint with 0.002 rad of play. Set screws and torques are out of scope.",
+  "scores": "Dream-1 run: not yet run; scripted demo: not yet run",
+  "media": ""
+}

@@ -1,0 +1,426 @@
+                                                                                                           Jaw Couplings
+                                                                                              L-Line (L, AL, SS, C, H)
+                                                                                               Installation Guide
+1.0 INTRODUCTION:
+
+The following document is intended for the explicit use of Lovejoy
+customers to aid in the installation of Lovejoy power transmission
+products. The information may be considered privileged and should
+only be disseminated as an active part of conducting business with
+Lovejoy, Inc.
+
+Although the coupling may have been properly specified during the
+design and selection process before the coupling was ordered,
+operational conditions could possibly have changed prior to
+installation. Lovejoy, Inc. provides the information and technical
+support necessary to ensure the appropriate coupling selection was
+made relative to the product specifications and limitations of
+Lovejoy’s power transmission products. The end user is ultimately
+responsible for verifying the suitability of the final coupling selection
+based on the actual service conditions at the time of the coupling
+installation.
+
+Correct installation and alignment practices will ensure longer
+coupling life, trouble free operation, and a safer operating
+environment for the coupling. Please thoroughly review all of the
+following instructions prior to installing this coupling and placing it in
+operation. Proper safety guidelines and practices should always be
+followed during every phase of the installation.
+
+This installation document is considered part of the purchased
+                                                                               3.0 PRODUCT INSPECTION:
+product and should be retained for future reference.
+                                                                               Prior to installation, the coupling should be examined for signs of
+                                                                               damage that may have occurred as a result of shipping or handling.
+2.0 SAFETY:                                                                    Refer to the following chart to ensure all the ordered parts are
+                                                                               present.
+Accidents involving rotating equipment may result in loss of life,
+serious bodily harm, or property damage. The purchaser of this
+equipment must assure that the equipment is properly assembled,
+installed, safeguarded, operated, and maintained. The coupling or               Table 1 - Components List
+equipment should never be operated under or subjected to conditions
+that exceed manufacturers’ specifications.                                            Standard Coupling                                   Collar
+                                                                                                                          Spider or
+Consult all applicable Federal, State, and local laws and regulations                    Type / Size              Hubs    Cushions      w/screws
+covering the safe operation and maintenance of equipment,
+including, without limitation, the USDOL-OSHA “Lockout / Tag-out”                L/AL/SS 035 - L/AL/SS 276          2          1            --
+procedure set forth in 29 CFR 1910.147.                                                 C 226 – C 295               2          6            1
+                                                                                           C 2955                   2         10            1
+Because of the possible danger to persons or property from
+accidents which may result from the improper use or unapproved                         H 3067 – H 4567              2         14            1
+modifications of the product, this product must be installed,
+maintained and operated in accordance with the procedures,
+standards, and engineering specifications specified in the product             For maximum protection, the coupling and all components should be
+literature. To assure safe operation, this product should be inspected         stored in the original packaging. All parts should be measured prior
+in accordance with the instructions described in this document.                to installation to ensure correctness of parts to meet the application
+Proper guards and any suitable safety equipment or procedures as               requirements; such as the hub bore diameter, shaft diameter, shaft
+may be necessary, or as may be specified in safety codes, should be            separation, key sizes, etc. The BSE (shaft separation) dimension
+installed by the user. Safety equipment, coupling guards, and shields          should be measured from the end of one shaft to the end of the other
+are not provided by, nor are they the responsibility of Lovejoy, Inc.          shaft, not to hub faces or pilots.
+Symbols and text format used in this document may contain safety
+                                                                               Lovejoy manufactures couplings based on the shaft data provided by
+information and will appear similar to the following:
+                                                                               the purchaser. Lovejoy will not be responsible for inaccurate or
+                                                                               incomplete information supplied by the purchaser. Check all shaft
+                                                                               dimensions.
+      Warning!       This symbol indicates safety measures which
+                     must be observed to avoid personal injury.                It is the responsibility of the purchaser to assure the interface
+                                                                               connections (flanges, bolts, keys, hydraulic fits, etc.) between the
+      Caution!       This symbol indicates safety measures which               coupling and connected equipment are capable of handling the
+                     must be observed to avoid damage to coupling.             anticipated loads.
+
+
+
+
+                                                                        Page 1 of 7
+3.0 PRODUCT INSPECTION (Continued):                                          5.0 COUPLING AND COMPONENT PREPARATION (CONT’D):
+
+                                                                             5.9 Lovejoy machines the bore in all Lovejoy Jaw style hubs
+     Warning!      Before beginning the coupling installation, make sure     with splines based on information provided by the customer.
+                   the machinery is made safe. Disconnect and lock           Standard spline meet specifications set forth in ANSI B92.1A for
+                   out all power to the equipment. No part of the            Class 5 fits, and DIN 5480 for metric splines. If the spline utilizes the
+                                                                             L-LOC shaft locking feature, see section 7.0 for assistance in
+                   installation should be performed on moving, non           installing hubs with this feature.
+                   secure, or unstable equipment.
+                                                                             5.10 For all Lovejoy Jaw style hubs with taper bores and taper
+4.0 REQUIRED TOOLS:                                                          bores with keyways, Lovejoy manufactures these hubs with bores
+                                                                             using tolerances and specifications as supplied by the customer.
+        Calibrated Torque Wrench and Allen sockets                          Taper bores will be tested with plug gauges usually supplied by the
+        Phillips head screw driver (C and H)                                customer or included in the cost of the coupling.
+        Alignment Equipment (dial indicator, laser, straight edge)
+        Appropriate tooling for repositioning equipment                     6.0 COUPLING INSTALLATION (L, AL, SS, C, and H):
+
+                                                                             6.1 Identify if the spider
+5.0 COUPLING AND COMPONENT PREPARATION:                                      is a standard L-style spider,
+                                                                             C or H style cushions, or
+5.1 All exposed surfaces of the coupling and components,                     a Snap Wrap style wrap
+including hubs, spiders, cushions, spacers, collars, and any other           around spider. All three
+Lovejoy supplied subassemblies should be thoroughly cleaned prior            types are shown in the photo
+to installation to remove any protective coatings that may have been         to the right.
+applied by Lovejoy as corrosion protection for the coupling surfaces
+during shipping. All coupling parts, equipment components, shafts,           6.2 Couplings with Snap Wrap style spiders are provided with
+and keyways must be clean and free of any foreign materials prior to         either retaining rings or collars. Please review the specific installation
+attempting assembly or installation. A clean cloth dampened with a           guide for either Snap Wrap (SW Style) or Collar Style (LC Style)
+nonflammable solvent should be sufficient for this cleaning.                 couplings found at http://www.lovejoy-inc.com .
+
+5.2 All sleeves, seals, hub bores, shafts, keys, and keyways                 6.3 For C-Style and H-Style couplings, identify which of the hubs
+must be checked for raised metal, nicks, burrs, dents, gouges, etc.,         has threaded holes for the screws that will hold the cushion retaining
+and should be dressed or repaired accordingly prior to installation.         collar in place. Slide the cushion retaining collar onto the shaft where
+                                                                             this hub will be mounted.
+5.3 Prior to removing any existing coupling, establish and record
+the Distance Between Shaft Ends (BSE), or Gap (G) between the                6.4 Prior to mounting the hubs, place the keys in the shaft
+driver and driven and compare this value with the ‘G’ dimension for          keyways. The key should fit snuggly in the keyway with minimal side
+Lovejoy Jaw Couplings in Table-4 to verify fit of the coupling.              to side movement. Standard keys should be the same length or
+                                                                             slightly longer than the keyway in the hub. Woodruff keys are usually
+5.4 Once all necessary measurements have been taken and all                  shorter and may not transmit the same amount of torque. For hubs
+components are verified as correct, remove any existing coupling and         with splines and the L-LOC spline clamping feature, see section 7.0
+dress the shafts on the driver and driven equipment.                         for instructions on installing hubs with splines.
+
+5.5 If the actual shaft BSE is the same as the specified gap for             6.5 Slide the appropriate hub on each of the shafts over the keys
+the Lovejoy Jaw coupling (see Table-4), then the hubs can be                 and align the face of the hub with the end of the shaft. Lovejoy jaw
+mounted flush with the ends of the driver and driven shafts.                 coupling hubs are machined with a clearance, or slip fit and should
+                                                                             slide onto the shaft with little or no difficulty. Using a calibrated
+5.6 If the actual shaft BSE is different than the specified gap for          torque wrench, tighten the set screw in one hub to the torque value
+the Lovejoy Jaw coupling, then the hubs must be mounted on the               specified in Table-2. Lightly tighten the second set screw to allow for
+driver and driven shafts so that the dimension between the hub faces         possible axial adjustments after the equipment has been moved.
+matches the ‘G’ dimension, or gap as specified in Table-4.
+                                                                             6.6 If using a spider, insert the spider into one of the hubs at this
+Note: Hubs must be mounted on the driver and driven shafts                   time. If either shaft needs to extend into the center of an open
+with the jaws facing each other.                                             center spider, the hub may not align with the end of the shaft. If
+                                                                             using cushions, they will be installed after the equipment has been
+5.7 Lovejoy machines the bore in all Lovejoy Jaw style hubs                  moved into position. If the shaft will extend into the spider, check
+with ‘inch’ dimensioned straight bores and keyways to meet the               Table-6 to ensure the shaft will fit in the open center in the spider.
+industry accepted ANSI/AGMA 9002-B04 Standards’ tolerance for
+common keyways and clearance fit bores unless otherwise specified.           6.7 Move the equipment into the proper location to achieve the
+Tapered and spline bores may require special manufacturing and               ‘G’ gap dimension between hub faces as specified in Table-4. The
+installation consideration.                                                  hubs could be moved back on the shafts or overhung slightly to
+                                                                             compensate for discrepancies in shaft separation. Ideally, the
+5.8 Lovejoy machines the bore in all Lovejoy Jaw style hubs                  amount of hub engagement on the shaft should be equal to the
+with ‘metric’ dimensioned straight bores and keyways to meet the             diameter of the shaft. When the hubs are tightened in place, the
+industry accepted ANSI/AGMA 9112-A04 Standards’ tolerance for                hubs should be touching the side of the spider or cushions without
+common keyways and clearance fit bores unless otherwise specified.           any excess pressure. If the hubs are pressed too together tightly
+Tapered and spline bores may require special manufacturing and               against the spider, the coupling could lose some of its capability to
+installation consideration.                                                  accommodate misalignment.
+
+
+
+   Lovejoy, Inc.
+   World Headquarters
+   2655 Wisconsin Avenue
+                                                                                                                www.lovejoy-inc.com
+   Downers Grove, IL 60515
+   630-852-0500                                                                                                     ISO 9001:2008 Certified
+   630-852-2120 Fax
+   info@lovejoy-inc.com                                                                                        Version Date: 23-July-2012
+                                                                      Page 2 of 7
+6.8 Check alignment using either “straight edge method” or a dial         hubs contains a spline with the Lovejoy L-LOC feature, see section
+indicator taking measurements at four locations 90º apart to ensure       7.0 regarding Splined Hub Installation for the specified set screw
+alignment does not exceed the allowable misalignment as specified         torque.
+in Table-4.
+                                                                          6.11 Recheck axial, parallel, and angular alignment for accuracy.
+6.9 If installing a C-Style or H-Style coupling, the cushions can be
+inserted between the jaws in each hub. Any tightness in the inserts       6.12 Remove any tooling and material away from the shafting and
+should be between the jaws, not between the faces of the hubs. If         coupling.     Install the appropriate coupling guard per OSHA
+the hubs are pressed too together tightly against the spider or           requirements and remove the Lockout / Tagout kit from the power
+cushions, the coupling could lose some of its capability to               supply. The equipment can then be started up and tested. The
+accommodate misalignment. Again, check the gap between the                coupling and equipment should run smoothly. If vibration is detected
+faces of the hubs to ensure that dimension matches the “G’ or Gap         it could indicate there is an issue with alignment or other problems.
+dimension in Table-4.                                                     This could point to problems related to the motor, coupling, or driven
+                                                                          equipment and should be resolved prior to placing this coupling into
+6.10 Using a calibrated torque wrench, tighten set screw in the           operation.
+second hub to the torque specified in Table-2. If one or both of the
+
+
+
+Table 2 - Set Screw Size and Tightening Torque                                                         (for L, AL, SS, C, and H Hubs)
+                                                                                                                              2
+                                      Inch Set Screws                                                Metric Set Screws
+   CPLG              Set Screw - inch              Tightening Torque                    Set Screw - mm           Tightening Torque
+          1
+   Size            Size          Length              in-lbs               Nm          Size        Length             in-lbs            Nm
+                                  3/32                 3-4             0.34-0.45                     3                4.4              0.5
+                                                                                      M3
+   L 035          6-32             1/8                 7-8              0.8-0.9                   4 & up              5.3              0.6
+                                3/16 & up             9-10              1.0-1.1
+ L/AL 050                                                                             M4          3 & up              18                2
+ L/AL 070                          3/16              45-50              5.0-5.6
+                 1/4-20                                                                             4-6               44                5
+ L/AL 075                        1/4 & up            78-87               9-10         M6
+                                                                                                  8 & up             58-62            6.6-7
+ L/AL 090
+ L/AL 095
+ L/AL 099                           1/4              80-90               9-10                       5-8              84-88           9.5-10
+ L/AL 100
+                5/16-18                                                               M8
+ L/AL 110                       5/16 & up           150-160             17-19                    10 & up           142-150            16-17
+   L 150
+  AL 150
+   L 190
+                                                                                                  8-12             372-396            42-45
+   L 225         1/2-13          1/2 & up           540-600             61-68        M12
+                                                                                                 14 & up           504-528            57-60
+   L 276
+   C 226
+                                                                                                  8-12             372-396            42-45
+   C 276         1/2-13          1/2 & up           540-600             61-68        M12
+                                                                                                 14 & up           504-528            57-60
+   C 280
+   C 285
+                                                                                                   16              756-792           86-90
+   C 295         5/8-11          5/8 & up          1100-1200           124-136       M16
+                                                                                                 18 & up          1260-1320         142-150
+  C 2955
+  H 3067                                                                                           16              756-792           86-90
+                 5/8-11          5/8 & up          1100-1200           124-136       M16
+  H 3567                                                                                         18 & up          1260-1320         142-150
+  H 3667
+                                                                                                   20             1200-1240         133-140
+  H 4067         3/4-10          3/4 & up          1800-2000           203-226       M20
+                                                                                                 25 & up          2520-2650         285-300
+  H 4567
+  Notes        1. Coupling types include aluminum and stainless steel hubs
+               2. In some countries, set screws may be referred to as "Grub screws"
+
+
+ Lovejoy, Inc.
+ World Headquarters
+ 2655 Wisconsin Avenue
+                                                                                                          www.lovejoy-inc.com
+ Downers Grove, IL 60515
+ 630-852-0500                                                                                                ISO 9001:2008 Certified
+ 630-852-2120 Fax
+ info@lovejoy-inc.com                                                                                   Version Date: 23-July-2012
+                                                                Page 3 of 7
+ 7.0 SPLINE HUB INSTALLATION (L and C):
+
+ 7.1 When installing a hub with a spline and L-LOC (see holes next to
+ the spline in the photo to the right), ensure the spline shaft is fully
+ engaged and extends completely under BOTH L-LOC set screws.
+ Some hubs may only have a single set screw and the spline MUST
+ extend completely under that set screw.
+
+
+      Warning!       If the spline shaft does not extend fully under one of
+                     the L-LOC set screws, DO NOT tighten that set
+                     screw.
+
+ 7.2 Identify if the hub is a standard powder metal hub, or a hub
+ manufactured from steel (1045, 1018, or equivalent) and tighten the set
+ screws as specified in Table-3 below. If assistance is required to confirm
+ the hub is powder metal, feel free to contact Lovejoy Customer Service.
+
+
+ Table 3 - LLOC Set Screw Tightening Torque
+                                                                   Inch L-LOC Set Screws 1
+    CPLG              PM Hubs 2                    Tightening Torque            Steel Hubs 2                Tightening Torque
+                       Set Screw                                                 Set Screw
+     Size             Size (inch)            ft-lbs       in-lbs       Nm       Size (inch)        ft-lbs        in-lbs         Nm
+    L 090               3/8 - 16              23           276          31       5/16 - 18          13            156           18
+    L 095               3/8 - 16              23           276          31       5/16 - 18          13            156           18
+    L 099               5/16 - 18             13           156          18        3/8 - 16          23            276           31
+    L 100               3/8 - 16              23           276          31        3/8 - 16          23            276           31
+    L 110               3/8 - 16              23           276          31        1/2 - 13          48            576           65
+    L 150               3/8 - 16              23           276          31        1/2 - 13          48            576           65
+    L 190               1/2 - 13              48           576          65        1/2 - 13          48            576           65
+    L 225               1/2 - 13              48           576          65        1/2 - 13          48            576           65
+    L 276               1/2 - 13              48           576          65        1/2 - 13          48            576           65
+              Cast Iron Hubs                                                    Steel Hubs
+    C 226               5/8 - 11              96          1152         130        5/8 - 11          96            1152          130
+    C 276               1/2 - 13              48           576          65        1/2 - 13          48            576           65
+    C 280               5/8 - 11              96          1152         130        5/8 - 11          96            1152          130
+    C 285               5/8 - 11              96          1152         130        5/8 - 11          96            1152          130
+    C 295               5/8 - 11              96          1152         130        5/8 - 11          96            1152          130
+    Notes:       1. Contact Lovejoy Technical Support for Metric LLOC set screws.
+                 2. PM = Powder Metal. Most hubs thru size L276 are PM (Powder Metal) by default
+
+
+
+
+Lovejoy, Inc.
+World Headquarters
+2655 Wisconsin Avenue
+                                                                                                         www.lovejoy-inc.com
+Downers Grove, IL 60515
+630-852-0500                                                                                                ISO 9001:2008 Certified
+630-852-2120 Fax
+info@lovejoy-inc.com                                                                                 Version Date: 23-July-2012
+                                                                 Page 4 of 7
+               Style 1
+                                                                                Style 2                                                  Style 3
+
+Table 4 - Jaw Couplings Allowable Misalignment
+                                                                                                                                     1
+                         Gap 'G'                                   Allowable Misalignment at 3,600 RPM or Slower
+                          (BSE)            NBR or Urethane up to L225                           Hytrel                                    Bronze 2
+                          Width         Parallel              Angular                Parallel            Angular             Parallel              Angular
+   Size       Style         In             in         Degrees       Δ 'G' in              in    Degrees        Δ 'G' in         in        Degrees        Δ 'G' in
+  L 035         1         0.281          0.015           1°             0.010             --       --               --          --           --              --
+ L/AL 050       1         0.469          0.015           1°             0.018         0.015       1/2°             0.012      0.010         1/2°         0.012
+ L/AL 070       1         0.500          0.015           1°             0.022         0.015       1/2°             0.012      0.010         1/2°         0.012
+ L/AL 075       1         0.500          0.015           1°             0.030         0.015       1/2°             0.015      0.010         1/2°         0.015
+ L/AL 090       1         0.500          0.015           1°             0.035         0.015       1/2°             0.018      0.010         1/2°         0.018
+ L/AL 095       1         0.500          0.015           1°             0.035         0.015       1/2°             0.018      0.010         1/2°         0.018
+ L/AL 099       1         0.750          0.015           1°             0.040         0.015       1/2°             0.022      0.010         1/2°         0.022
+ L/AL 100       1         0.750          0.015           1°             0.040         0.015       1/2°             0.022      0.010         1/2°         0.022
+ L/AL 110       1         0.875          0.015           1°             0.055         0.015       1/2°             0.030      0.010         1/2°         0.030
+  L 150         1         1.000          0.015           1°             0.065         0.015       1/2°             0.033      0.010         1/2°         0.033
+          3
+ AL 150         1         1.000          0.015           1°             0.070             --       --               --          --           --              --
+  L 190         2         1.000          0.015           1°             0.075         0.015       1/2°             0.040      0.010         1/2°         0.040
+  L 225         2         1.000          0.015           1°             0.085         0.015       1/2°             0.044      0.010         1/2°         0.044
+  L 276         2         1.625          0.015           1°             0.100             --       --               --          --          1/2°             --
+  C 226         3         1.500          0.015           1°             0.090         0.015       1/2°             0.046      0.010         1/2°         0.046
+  C 276         3         1.625          0.015           1°             0.100         0.015       1/2°             0.054        --           --              --
+  C 280         3         1.625          0.015           1°             0.130         0.015       1/2°             0.065        --           --              --
+  C 285         3         1.625          0.015           1°             0.145         0.015       1/2°             0.075        --           --              --
+  C 295         3         1.875          0.015           1°             0.160         0.015       1/2°             0.080      0.010         1/2°         0.080
+ C 2955         3         1.875          0.015           1°             0.160         0.015       1/2°             0.080      0.010         1/2°         0.080
+ H 3067         3         2.125          0.015           1°             0.180         0.015       1/2°             0.090      0.010         1/2°         0.090
+ H 3567         3         2.375          0.015           1°             0.195         0.015       1/2°             0.100      0.010         1/2°         0.100
+ H 3667         3         2.625          0.015           1°             0.210         0.015       1/2°             0.105      0.010         1/2°         0.105
+ H 4067         3         2.875          0.015           1°             0.235         0.015       1/2°             0.120      0.010         1/2°         0.120
+ H 4567         3         3.125          0.015           1°             0.265         0.015       1/2°             0.135      0.010         1/2°         0.135
+  Notes       1. Maximum speed for all L-Line Hytrel L050 through L276 is 3,600 RPM. See catalog for larger sizes.
+              2. Maximum speed for all Bronze spiders or cushions is 250 RPM regardless of size
+              3. AL150 couplings are dimensionally larger in size than the standard L150. AL150 spiders have more legs than L150
+
+
+
+
+  Lovejoy, Inc.
+  World Headquarters
+  2655 Wisconsin Avenue
+                                                                                                                           www.lovejoy-inc.com
+  Downers Grove, IL 60515
+  630-852-0500                                                                                                              ISO 9001:2008 Certified
+  630-852-2120 Fax
+  info@lovejoy-inc.com                                                                                                   Version Date: 23-July-2012
+                                                                         Page 5 of 7
+Table 5 - Performance Details for Jaw Couplings
+     Size       Maximum Bore       Maximum                             Torque Capacity by Spider Material
+                                          1
+  L / AL / SS                       RPM              SOX (NBR)               Hytrel          Urethane             Bronze
+  RRS / RRC        in        mm    NBR only       in-lbs     Nm         in-lbs      Nm     in-lbs  Nm        in-lbs      Nm
+    L 035         0.375      10     31,000         3.5         0.4        --         --      --      --        --        --
+                        3
+   L/AL 050      0.625       16     18,000        26.3         3.0        50       5.6       39     4.5        50       5.6
+   L/AL 070       0.750      19     14,000        43.2         4.9       114       12.9      65     7.3       114       12.9
+   L/AL 075       0.875      22     11,000          90        10.2       227       25.6     135    15.3       227       25.6
+   L/AL 090       1.000      25      9,000         144        16.3       401       45.3     216    24.4       401       45.3
+   L/AL 095       1.125      28      9,000         194        21.9       561       63.4     291    32.9       561       63.4
+   L/AL 099       1.188      30      7,000         318        35.9       792       89.5     477    53.9       792       89.5
+   L/AL 100       1.375      35      7,000         417        47.1      1,134      128      626    70.7      1,134      128
+   L/AL 110       1.625      42      5,000         792        89.5      2,268      256     1,188   134.0     2,268      256
+     L 150        1.875      48      5,000        1,240       140.0     3,708      419     1,860   210.0     3,708      419
+            2
+   AL 150         1.875      48      5,000        1,450       163.8       --        --       --      --       --         --
+    L 190         2.125      55      5,000        1,728       195.0     4,680      529     2,592   293.0    4,680       529
+    L 225         2.625      65      4,200        2,340       264.0     6,228      704     3,510   397.0    6,228       704
+    L 276         2.875      73      1,800        4,716       533.0       --        --       --      --     12,500     1,412
+   C 226          2.500       64     4,800       2,988         338      5,940       671      --      --     5,940       671
+   C 276          2.875       73     4,200       4,716         533      9,432      1,066     --      --       --         --
+   C 280          3.000       76     3,500       7,560         854      13,866     1,567     --      --       --         --
+   C 285          4.000      102     3,200       9,182        1,038     16,680     1,882     --      --       --         --
+   C 295          3.500       89     2,300       11,340       1,281     22,680     2,563     --      --     22,680     2,563
+   C 2955         4.000      102     2,300       18,900       2,136     37,800     4,271     --      --     37,800     4,271
+ H 3067 NBR       4.500      114     2,300       33,395      3,774        --        --       --      --        --        --
+H 3067 Hytrel     4.000      102     2,300          --         --      47,196     5,333      --      --     47,196     5,333
+ H 3567 NBR       5.000      127     2,100       46,632      5,269        --        --       --      --        --        --
+H 3567 Hytrel     4.500      114     2,100          --         --      63,000     7,119      --      --     63,000     7,119
+ H 3667 NBR       5.625      143     1,900       64,812      7,323        --        --       --      --        --        --
+H 3667 Hytrel     5.000      127     1,900          --         --      88,200     9,966      --      --     88,200     9,966
+ H 4067 NBR       6.250      159     1,800       88,224      9,969        --        --       --      --        --        --
+H 4067 Hytrel     5.500      140     1,800          --         --      126,000    14,237     --      --     126,000    14,237
+ H 4567 NBR       7.000      178     1,500       119,700     13,525       --        --       --      --        --        --
+H 4567 Hytrel     6.000      152     1,500          --         --      170,000    19,209     --      --     170,000    19,209
+    Notes:      1. Maximum speed is for closed center spiders - NBR (SOX) Spiders Only
+                   Maximum speed for all open center spiders is 1,800 RPM
+                   Maximum speed for all Hytrel spiders, size L050 - L276 is 3,600 RPM
+                   Maximum speed for all Bronze spiders is 250 RPM with no exceptions
+                2. The AL 150 coupling has a unique SOX (NBR) spider that is not interchangable with standard L150 couplings
+                3. Maximum bore is without a keyway (L/AL 050 hubs)
+
+
+
+
+   Lovejoy, Inc.
+   World Headquarters
+   2655 Wisconsin Avenue
+                                                                                            www.lovejoy-inc.com
+   Downers Grove, IL 60515
+   630-852-0500                                                                               ISO 9001:2008 Certified
+   630-852-2120 Fax
+   info@lovejoy-inc.com                                                                    Version Date: 23-July-2012
+                                                         Page 6 of 7
+  Table 6 - Standard Spider Dimensions
+                      A - Diameter         W - Width       H & HH - Center Hole Diameter    DC - NBR Solid Center
+                 Std (A)      SW (AA)        width        Std Spiders (H) SW Spiders (HH)      Recess Depth
+     Size       in     mm     in     mm     in    mm        in     mm       in      mm         in         mm
+    L 035      0.62    16     --      --   0.28   7.1       --      --      --      --         --          --
+  L/AL 050     1.07    27     --      --   0.42   10.7     0.31    7.9      --      --         --          --
+  L/AL 070     1.38    35     --      --   0.42   10.7     0.50    12.7     --      --         --          --
+  L/AL 075     1.75    44     --      --   0.44   11.2     0.75    19.1     --      --         --          --
+  L/AL 090     2.12    54    2.56    65    0.44   11.2     0.88    22.4    1.06    26.9       0.18        4.5
+  L/AL 095     2.12    54    2.56    65    0.44   11.2     0.88    22.4    1.06    26.9       0.18        4.5
+  L/AL 099     2.54    65    3.08    78    0.61   15.5     1.03    26.2    1.37    34.8       0.25        6.4
+  L/AL 100     2.54    65    3.08    78    0.61   15.5     1.03    26.2    1.37    34.8       0.25        6..4
+  L/AL 110     3.31    84    3.87    98    0.75   19.1     1.18    30.0    1.50    38.1       0.25        6.4
+    L 150      3.75    95    4.56    116   0.88   22.4     1.25    31.8    1.75    44.5       0.31        7.9
+   AL 150 3    4.25    108    --      --   0.88   22.4     1.25    31.8     --      --        0.31         7.9
+    L 190      4.50    114   5.18    132   0.88   22.4     1.38    35.1    2.25    57.2       0.31         7.9
+    L 225      4.98    126   5.44    138   0.88   22.4     1.75    44.5    2.75    69.9       0.38         9.5
+    L 276      6.19    157    --      --   1.45   36.8     1.75    44.5     --      --         --           --
+
+
+
+
+Lovejoy, Inc.
+World Headquarters
+2655 Wisconsin Avenue
+                                                                                    www.lovejoy-inc.com
+Downers Grove, IL 60515
+630-852-0500                                                                          ISO 9001:2008 Certified
+630-852-2120 Fax
+info@lovejoy-inc.com                                                              Version Date: 23-July-2012
+                                                     Page 7 of 7
+
