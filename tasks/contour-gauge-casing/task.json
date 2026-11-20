@@ -15,6 +15,6 @@
   "run_limit": "1,200 steps (60 s at 20 Hz)",
   "fidelity": "Gauge fingers are 42 prismatic joints at 6 mm pitch (the real pins are finer), each held by a spring whose target follows it past 0.15 N (estimated finger force, to be measured with a spring scale), so a finger stays where it is pushed. The wall and casing are a 70 mm mock-up because the YAM's forearm reaches past the wall face at the copy. The pencil trace is not modelled; the task ends with the gauge set in place to trace. Frictions and masses are estimates.",
   "scores": "Dream-1 run: 0 (1,200 steps); demo: 1.0 (success at 32.55 s, step 651)",
-  "media": "",
+  "media": "M-HQVTJ9",
   "reset_notes": "Set the gauge's fingers straight by pressing them against a flat board before each trial."
 }
