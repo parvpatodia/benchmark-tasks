@@ -16,6 +16,6 @@
   "run_limit": "2,000 steps (100 s at 20 Hz)",
   "reset_notes": "Nothing is consumed or worn. Set the three stand-ins flat on the mat on their marks (eased edge down), the sheet and rack on their tape outlines, and the turner on its rest. Before each session, wipe the mat, blade and stand-ins clean and repeat the tilt test in the README.",
   "fidelity": "True-size rigid bodies in PhysX with real contact; the 1 mm tapered blade is a collider and gets under each stand-in through its eased edge. Friction is fixed: PLA on the mat 0.75, on steel 0.25. The stand-ins are rigid and cannot break, so touches and drops, which spoil a real cookie, are scored instead; the blade is wider than the cookie, so a cookie centred on it does not overhang it. Touches are a distance from the arm's link collision models, not a contact force.",
-  "scores": "Dream-1 run: not yet run; scripted demo: 1.0",
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0",
   "media": ""
 }

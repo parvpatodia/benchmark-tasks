@@ -109,9 +109,7 @@ with those tools.
 
 | Mode | Seed | Score | Steps | Ends | What it does |
 |---|---|---|---|---|---|
-| demo | 0 | 1.00 | 1,435 | success held 1 s | the full plan: take the turner, lift each cookie onto the rack, put the turner back |
-| demo | 1 | 1.00 | 1,435 | success held 1 s | same |
-| demo | 2 | 1.00 | 1,435 | success held 1 s | same |
+| demo | 0, 1, 2 | 1.00 each | 1,435 | success held 1 s | the full plan: take the turner, lift each cookie onto the rack, put the turner back |
 | nothing | 0 | 0.00 | 61 | policy stop at 61 (plan ended) | the arms stay in the ready pose |
 | touch | 0 | 0.50 | 1,601 | policy stop at 1,601 (plan ended) | the closed right gripper comes down on the middle cookie on the sheet, then the full plan; the trace shows that cookie touched by both finger tips |
 | wrist | 0 | 0.50 | 1,639 | policy stop at 1,639 (plan ended) | the left arm lowers its upper arm and wrist (gripper on its side, tips raised) onto the first cookie, then parks; the right arm runs the full plan; the trace shows that cookie touched by link 3 only (offline kinematics put the gripper 55 mm from it) |
@@ -119,7 +117,9 @@ with those tools.
 | miss | 0 | 0.00 | 1,489 | policy stop at 1,489 (plan ended) | the blade passes level 20 mm over the mat, over the cookies: none is ever carried and all three are left on the sheet |
 
 In every run the sheet moved 0.0 mm and stayed inside the 5 degree and 5 mm limits (traces). The largest two-step fall
-of a cookie: 5.9 mm in the demos, 7.2 mm in touch, 27.1 mm in drop (limit 18 mm).
+of a cookie: 5.9 mm in the demos, 7.2 mm in touch, 27.1 mm in drop (limit 18 mm). Dream-1 (`--policy dream`, seed 0,
+the same `.py` files, hash 4173e345 after `task.json` text edits): `task_score: 0` after all 2,000 steps; no cookie left the sheet and the turner
+never left its rest.
 
 ## Real-trial safety
 
