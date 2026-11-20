@@ -584,7 +584,7 @@ A traced PhysX run of the previous revision (the t00 copy, `--seed 0`) scored 1.
 [RUN]. That revision differs from these files in the held window and the touch rule only, and its trace set both.
 
 - The left's reading closed on the finger: 7.89 to 7.94 mm from the touch until 0.5 s after the click, against the
-  7.2 mm planned. `HOLD_GAP_ON` is now 7.93 mm, and the window's top is 0.15 mm over it.
+  7.2 mm planned. `HOLD_GAP_ON` is now 7.90 mm, and the window's top is 0.30 mm over it (The model, Held).
 - The touch: the face within 0.3 mm of the skin at step 450, the shield off its stop at step 460, 0.5 s later. Under
   the rule here, the window starts at step 450; the left read 7.93 mm from step 450 on, so the hold covers it.
 - The base: its root at the layout pose (0.2529, -0.1265, 0.8475) at every traced step, equal to `layout()` within
@@ -599,8 +599,8 @@ PhysX runs of the next revision (the held window and touch rule here, the lancet
 0.5/0.4 friction) [RUN]: the demo at corners 126748, 84277 and 100825 scored 0, 0 and 1.0; the stems o00, j00, x00,
 w00, a00, g00 and y00 scored 0, all "not held still", latched before the fire, as their rows expect; k00 0.5 as
 expected; f00 1.0 and c00 0, both against their rows. The traces give one cause for all four misses: the right's grip
-let the housing slide up its pads at 5 to 6 N, under the 8 N fire. In the stand (f00) the press peaked at 5.3 N, so
-it never fired there, and the stem went on to finish the demo. On the skin the housing slid 1 to 10 mm up the pads
+let the housing slide up its pads at 5 to 6 N, under the 8 N fire. In the stand (f00) the press peaked at 5.26 N while the housing slid 3.5 mm
+up the pads (run rr_1120_0020, `trace_f00_1415158438.csv`, steps 176 to 194), so it never fired there, and the stem went on to finish the demo. On the skin the housing slid 1 to 10 mm up the pads
 and the lancet rocked (up to 10 deg in c00), so the face moved 1.0 to 4.7 mm on the skin before the click, a slide by
 the scorer's 1.0 mm rule. The held window and the touch were not involved: the left read 7.89 to 7.94 mm and no
 fault was "not held". The fix is in the lancet, not the scorer: its housing now has yam_arena's grasped-object
@@ -619,7 +619,9 @@ goes in two stages to 9 N; the lancet is turned back in the socket before it is 
 housing weighs 20 g in the sim (The model, the lancet); and the last 4 mm comes in slowly (2.5 s, 1.0 s steady,
 1.6 s on), where the faster approach let the face swing 2 to 8 deg round the finger. The held window's top moved
 from 0.15 to 0.3 mm over the left's reading, from the traces (Held). On the files here the demo at `--seed` 0, 1, 2
-and corners 126748 and 100825 scored 1.0 each, in each of two runs (the two gave the same numbers), at every one with: the slide 0.28 to
+and corners 126748 and 100825 scored 1.0 each, success at step 801, in each of two fastruns (fr8 and fr9, one
+result.json per seed; the two gave the same numbers; the copy differs from these files in comments only), at every
+one with: the slide 0.28 to
 0.30 mm (limit 1.0), the tilt at the click 0.2 to 4.1 deg (limit 10), the finger's drop 0.0 mm (limit 2.0), the site
 10.4 to 11.4 mm back (8 to 15) and 41.7 to 46.9 deg round (15 to 60), the left's half-gap 7.82 to 7.96 mm (6.40 to
 8.20), and the housing's slip in the grip 0.1 mm.
@@ -637,7 +639,7 @@ per-step trace appended (`sim/log_snippet.py`, which writes `sim/out/trace_<copy
 | one arm: left parked, a 0.15 s jab | 0 | j00 | 0, not held still (or fired with no gripper holding the ring finger) | 0 at step 864, not held still (2.4 mm) |
 | one arm: left parked, a jab 30 mm past contact in one control step (0.05 s) | 0 | x00 | 0, not held still (or fired with no gripper holding the ring finger) | 0 at step 862, not held still (6.5 mm) |
 | one arm: left parked, a press 8.5 mm from the apex driven 10 deg toward the knuckle | 0 | w00 | 0, not held still (or slid, or fired with no gripper holding the ring finger) | 0 at step 881, not held still (2.2 mm) |
-| both arms: the lancet pressed down in the stand after the twist | 0 | f00 | 1.0, success (in the sim the press in the stand cannot fire; below) | 1.0, success at step 843; the shield peaked at 3.95 N in the stand |
+| both arms: the lancet pressed down in the stand after the twist | 0 | f00 | 1.0, success (in the sim the press in the stand cannot fire; below) | 1.0, success at step 843; in the stand the shield peaked at 3.99 N, 0.75 mm (run rr_1120_0646, `trace_f00_1415158438.csv`, step 192) |
 | both arms: after firing, the lancet held inside the container, never let go | 0 | k00 | 0.5 | 0.5 at step 949 (fired well, never let go) |
 | both arms: the tab twisted the other way (-70 deg) | 0 | c00 | 1.0, success | 1.0, success at step 801 |
 | both arms: the left closed to 5 mm on air 26 mm above the ring finger's axis, and a jab 30 mm past contact in one step | 0 | a00 | 0, not held still (or fired with no gripper holding the ring finger) | 0 at step 862, not held still (6.5 mm) |
@@ -653,13 +655,17 @@ found. g00 and y00 test the hold itself in PhysX: the offline replay holds the f
 assumed stiffness, so whether PhysX lets the press through a grip that does not lift, or a 60 mm jab through the
 demo's hold, is what those two runs show: neither did.
 
-f00 is a limit of the sim, not a hole in the scorer. In the sim the housing lands on the socket's floor after about
-1 mm of shield travel, so a press in the stand peaks near 5.3 N and cannot reach the 8 N fire. The shield stopped at
-1.05 mm while the arm drove 28.6 mm and then 60 mm down, at 5.2 and 5.4 N; the joints' errors put about 11 N down on
-the lancet [RUN: fastrun traces of f00, 2026-11-20; ARITH: K (q_target minus q) through the Jacobian]. That the housing
-meets the socket is inference from those numbers, not a contact read. The stem therefore finishes the demo. The rule
-itself (a lancet, its tab off, fired in the stand scores 0) is checked by `test_fired_in_the_stand_latches`, which puts
-8.1 N on the shield in the stand.
+f00 does not fire in the stand in the sim, so it finishes the demo; this is a limit of the sim, not of the scorer.
+The filmed copy's press (20 mm down over 1.5 s) peaked at 3.99 N, 0.75 mm (run rr_1120_0646, step 192). Three debug
+fastruns of f00 logged every body's height (a logger not shipped; the task files unchanged) [RUN, 2026-11-20]: the
+filmed press; one 28.6 mm deep, aimed at 12 N and held 0.5 s; and a 30 mm jab in one control step. The deeper two
+stopped at the same place: the shield at 1.05 mm, 5.2 N; the shield's face 1.9 mm down into the 2 mm tab cap it
+stands on; and the housing's front 0.05 mm above the cap's top, where it bears the rest of the push. With the face
+that deep, the housing's 3 mm stand off leaves the shield about 1 mm of travel, under the 1.75 mm the fire needs.
+Proven by those heights: the housing's front meets the tab cap. Not proven: why the face sinks into the cap (the
+contact between the 2 g shield and the 4 g socket in PhysX; not checked). The rule itself (a lancet, its tab off,
+fired in the stand scores 0) is checked by `test_fired_in_the_stand_latches`, which puts 8.1 N on the shield in the
+stand.
 
 ## Sim against real
 
@@ -723,7 +729,7 @@ sharps container; `tools/grippers.py` the arms against each other, the trainer, 
 | Grip the ring finger without lifting it | 0 | the press meets only the spring and the arm's stiffness; "not held still" (stem g00) |
 | Push the ring finger down to its lower stop, then press | 0 | it is 10 mm down; "not held still" |
 | Pull the lancet straight out, no twist | 0 | "lifted out of the stand with its tab still on" |
-| Twist, then press the lancet down in the stand | 0 | "fired in the stand" |
+| Twist, then press the lancet down in the stand | 0 if it fires | "fired in the stand" (`test_fired_in_the_stand_latches`); in the sim the housing meets the tab cap first and it does not fire (stem f00, Sim results) |
 | Press on the index fingertip | 0 | "not the side of the ring fingertip" |
 | Press on the pad's middle line | 0 | "on the middle of the ring's pad, not its side" |
 | Hand the armed lancet to the left and fire it on the right's gripper | 0 | off the hand: "fired not on the hand" |
