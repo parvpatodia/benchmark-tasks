@@ -392,7 +392,7 @@ TRAVEL = 0.150                   # TCP height for an empty hand's transit [CHOIC
 #                                  limit going to n, checkkit IK]
 OVER_TOTE = 0.180                # TCP height to cross the tote's rim [CHOICE: the board's underside 161 mm up, 46 mm
 #                                  over the rim; 200 mm put the right arm 1.7 deg from a joint limit, checkkit IK]
-GRIP_N = -0.040                  # the nailed board is held 40 mm from its middle, away from the nail [CHOICE: 110 mm
+GRIP_N = -0.040                  # the nailed board is held 40 mm from its middle, away from the nail [CHOICE: 100 mm
 #                                  from the nail]
 DROP = 0.002                     # a board is set down 2 mm over its support [CHOICE]
 FORCE = 20.0                     # N a finger [CHOICE: under the 40 N per-finger limit]

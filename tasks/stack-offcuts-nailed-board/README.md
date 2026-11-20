@@ -28,7 +28,7 @@ World frame: x forward from the arm bases, y left, z up, metres in code, mm here
 | DENAIL sign | yellow polypropylene 310 x 100 x 3 mm, 85 g [ARITH at 910 kg/m3, EST density], along the near rim, sloping down toward the robot 40 deg below level; black capitals 64 mm tall, strokes 13 mm | its upper edge on the near rim |
 | offcuts a, b, c | loose 2x2 spruce (38 x 38 mm, `src/lumber_wikipedia.txt`: "2x2s (1-1/2 by 1-1/2 in or 38 by 38 mm)"), 200 mm long, 450 kg/m3 [EST], 0.13 kg | a (165, +300) yaw -4 deg; b (420, +280) yaw +6 deg; c (425, -280) yaw -5 deg |
 | offcut n | the same stock, 220 mm long, with the nail | (200, -300) yaw +4 deg |
-| nail | 16d common steel, 89 mm (`src/nail_wikipedia.txt`, penny table "16d 3 1/2 89"); shank 4.1 mm, head 8.7 mm [EST: calipers]; 10 g [EST] | driven 30 mm into the middle of n's top face (the point stays in the 38 mm wood), 50 mm from its +x end, head up, 59 mm proud |
+| nail | 16d common steel, 89 mm (`src/nail_wikipedia.txt`, penny table "16d 3 1/2 89"); shank 4.1 mm, head 8.7 mm [EST: calipers]; 10 g [EST] | driven 30 mm into n's top face on its centreline (the point stays in the 38 mm wood), 50 mm from its +x end (60 mm from its centre), head up, 59 mm proud |
 
 Two YAM arms with parallel grippers, bases at (0, +305) and (0, -305). Yaw is from +x, positive toward +y. One fixed
 layout; `object_jitter=0`.
@@ -47,7 +47,7 @@ from an end, head up. Make the pallet section from 2x4 and 1x3 offcuts, screwed,
 offcuts' outlines and the tote's footprint on the bench.
 
 **Pads.** The nail's exposed end is its head (blunt); its point stays in the wood. The demo grips n 40 mm from its
-middle, 110 mm from the nail. For real trials, cover each finger pad with a strip of cloth tape, replaced whenever it
+middle, 100 mm from the nail. For real trials, cover each finger pad with a strip of cloth tape, replaced whenever it
 is marked, so a pad that does hit the nail is protected.
 
 ## Forces
@@ -75,7 +75,7 @@ The final state, from a photo above and a tape measure.
 | plus the nailed offcut in the tote: centre inside the inside outline (3 mm tolerance), all its wood at most 5 mm over the rim, the tote within 15 deg of upright and standing on the bench (floor within 5 mm of it), the offcut still | +0.35 |
 | all three stacked, the nailed one in the tote, every offcut and the tote still (under 1 cm/s), every point of both grippers 30 mm from every offcut, the nail and the tote's walls, held 1 s | 1.0 (ends the trial) |
 
-Partial scores top out at 0.8. A nailed offcut left where it lay, or dropped on the bench, costs nothing and earns
+Partial scores top out at 0.8. A nailed offcut left where it lay, dropped on the bench, or knocked off the bench, costs nothing and earns
 nothing. Dumping every offcut in the tote earns 0.35. Each threshold is a tape reading: 10 mm of underside gap and 10
 deg of tilt separate a board lying on the stack from one propped on an edge; the 5 mm grown outline counts a board
 touching the deck's edge as on it; 30 mm is a hand visibly off the wood in the photo. In simulation "still" is under 1
@@ -112,7 +112,7 @@ The first ran 416 steps, then the service refused: "DA-4000 BAD_REQUEST (malform
 scene, refused: The container clearly warns DENAIL to remove hazardous nails before handling." A second attempt ran 224
 steps and was refused with "The wood offcuts contain nails, posing a puncture or injury hazard." The submitted model
 video is the first attempt's 416 steps, up to the refusal. The refusal comes from the service's scene check, not from
-the scorer; it is itself a reading of the hazard the task is about.
+the scorer.
 
 ## Run it
 
