@@ -17,5 +17,5 @@
   "run_limit": "1,200 steps (60 s at 20 Hz)",
   "reset_notes": "Nothing consumed. Take the wrench out of the tote and lay it on the bench under the hole for the seed's pose (rule from the hole's centre), then set the cover in place with its handle along x or y as the seed says, cleats in the hole. Safety: the heaviest drop is the 1.33 kg cover from about 70 mm; nobody reaches in while the arms run, and the e-stop stays in reach.",
   "fidelity": "Rigid deck, cover, wrench and tote at real size; masses from the maker's sheet (wrench) and estimated wood densities (cover). The deck is one solid block, not plywood on sleepers; the wrench is three boxes without its box end's offset or its jaws' shapes; the tote is fixed to the deck. Friction is estimated. The hole is open to the bench, not to a floor below; nothing in the trial is above bench height.",
-  "scores": "Dream-1 run: not run; demo: not run in the sim (offline checks only)"
+  "scores": "Dream-1 run: 0 (1,200 steps); demo: 1.0 (success at 34.75 s, step 695)"
 }

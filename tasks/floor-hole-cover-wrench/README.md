@@ -11,6 +11,12 @@ loose multi-shape bodies and the step hooks), `test_floor_hole_cover.py` (offlin
 clearance and arm sag checks; `gen_taskjson.py` writes `task.json` from the code's constants), `sim/` (run scripts and
 the stem copies' maker), `src/` (saved sources).
 
+Origin, disclosed. The idea comes from the earlier pull request #2593 (get a wrench out from under a floor-hole cover
+and put it away). It was not accepted on 2026-11-19 at 01:37 UTC; its 48 h hold ends 2026-11-21 at 01:37 UTC, and this task is
+submitted only after that, with no revision pushed to #2593. The code,
+scene, scorer, demo, stems, layout and text here are our own, written for this task. The review's point, that a wrench
+held above the tote floor must not earn full credit, is met here by the resting check and its tests (Scoring).
+
 ## Why it matters
 
 A hole in a working floor is a fall or a broken ankle for the next person who walks there. US construction rules
@@ -96,7 +102,8 @@ still on it; a wrench resting on the floor with a hand still on it scores 0.75, 
 
 ## Stems (`VARIANT` in `floor_hole_cover.py`; `sim/mk.sh` makes one copy each)
 
-Expected scores, from the planned end states (`test_planned_end_states`); not yet run in the sim.
+Expected scores, from the planned end states (`test_planned_end_states`). Every stem gave its expected score in
+PhysX (Sim results).
 
 | Stem | What the hands do | Expected |
 |---|---|---|
@@ -151,9 +158,43 @@ with `I` set to task.json's instruction (as `sim/run.sh` does).
 `sim/mk.sh` makes the traced copies (`t00` and each stem, with `sim/log_snippet.py` appended, which writes a per-step
 CSV of every quantity the score reads). `sim/run.sh <stem> <max steps> <lock a|b|c> [seed]` runs one, `sim/film.sh
 <lock>` films the demo on the task file itself, `sim/dream.sh <lock>` runs Dream-1 once. The lock names and the
-environment file are set with `LOCKS`, `LOCK_BASE` and `ARENA_ENV`. Wall time per trial is not measured yet.
+environment file are set with `LOCKS`, `LOCK_BASE` and `ARENA_ENV`. Wall time per trial [RUN], on a shared GPU:
+133 to 136 s for a traced scripted demo without frames, 404 s for the filmed demo, 586 s for the Dream-1 run.
 
 Seeds: the CLI `--seed` sets the layout (see The scene). The demo was planned and checked offline for seeds 0 to 9.
+
+## Sim results
+
+Filmed demo [RUN]: `sim/film.sh` on `floor_hole_cover.py` itself (no trace), yam_scripted, the seed-0 layout (reset
+seed 1415158438), 1,200-step limit. Score 1.0, success at step 695 (34.75 s); 404 s of wall time on a shared GPU.
+This is `demo.mp4` and the screenshot.
+
+Dream-1 [RUN]: one run, `sim/dream.sh`, the same layout and limit. Score 0; it ran to the 1,200-step limit; 586 s of
+wall time. This is the model video.
+
+Both runs hashed `floor_hole_cover.py`, `mechanism.py` and `task.json` before starting. The hashes match the files here, with
+`task.json` as it was before its `scores` line was filled in: after both runs, `task.json` changed only in that line
+(set from the two results above), and nothing else the runs read has changed.
+
+Stems and seeds [RUN]: PhysX (Isaac Lab, yam_arena, `sim/run.sh`, traced copies made by `sim/mk.sh`), run
+after commit 59d5928, the last change to `floor_hole_cover.py`, so on the code here; these traced runs did not hash
+their files. Every stem scored what the Stems table expects.
+Lengths in mm; the wrench's lowest point is measured from the tote floor; corner offset is the largest plate corner's
+distance from its centred position.
+
+| Stem | Seed | Score | Steps | End state |
+|---|---|---|---|---|
+| t00 | 0 | 1.0 | 695 | success; cover seated (corner offset 1.6), wrench resting in the tote (lowest point 0.0), both hands clear |
+| t00 | 1 | 1.0 | 696 | success; corner offset 3.1 |
+| t00 | 2 | 1.0 | 695 | success; corner offset 2.9 |
+| s_nothing | 0 | 0.0 | 61 | wrench still in the hole, cover seated |
+| s_held | 0 | 0.5 | 1,063 | cover seated; wrench in the tote's walls but 19.9 over its floor, still gripped |
+| s_drop | 0 | 1.0 | 695 | success; the dropped wrench landed and rests in the tote (lowest point 0.0) |
+| s_slid_off | 0 | 0.0 | 616 | latched: the cover tipped off the deck's left edge (a plate corner 20 or more below the deck top); wrench in the tote |
+| s_aside | 0 | 0.25 | 859 | wrench resting in the tote; cover standing on its cleats on the deck, 298 off its seat |
+| s_on_deck | 0 | 0.5 | 821 | cover seated; wrench on the deck outside the tote |
+| s_touch | 0 | 0.75 | 1,075 | cover seated; wrench resting on the tote floor, still gripped |
+| s_back | 0 | 0.0 | 708 | cover seated again; wrench left in the hole |
 
 ## Real-trial safety
 
@@ -173,6 +214,6 @@ centre), then seat the cover with its handle along x or y as the seed says.
 - The wrench is three boxes: no jaws, no ring, no 15 deg box-end offset.
 - The tote is fixed to the deck; in a real trial it is taped down.
 - Densities, the beam's section, the tote's size and all friction values are estimates.
-- Not yet checked in PhysX on this layout (hole at (0.25, -0.015), 5 mm play): the pinch on the 6 mm beam on the
-  bench, the cleats dropping in with a 5 mm chamfer, the cover standing on its cleats when set aside, and the s_drop
-  wrench landing inside the tote. The earlier layout (6 mm play, hole at (0.27, 0)) reached 1.0 on seed 0 in PhysX.
+- Checked in PhysX on this layout (Sim results): the pinch on the 6 mm beam on the bench, the cleats dropping in with
+  a 5 mm chamfer, the cover standing on its cleats when set aside (`s_aside`), and the `s_drop` wrench landing inside
+  the tote. Not checked: any seed beyond 0 to 2, and any real trial.
