@@ -14,7 +14,7 @@
   "scoring": "Judged at the end. 0 unless the fingers hold a copy: over the casing and 20 mm of wall past it every finger is pushed at least 1 mm and the pushes match the casing outline within 3 mm at every finger (best place along the gauge, straight-line fit, up to 5 deg turn). 0.25: a copy. 0.5: also lying flat and still on the sheet (within 3 deg of level, frame bottom within 2 mm over the sheet top, centre over the sheet, under 0.02 m/s). 0.75: also every fingertip on the sheet (tip centres 2.5 mm inside its side edges, at least 26 fingers) within 6 mm, measured on the sheet, of the cut line with its steps drawn in: the tape's near edge over bare wall, set back by the casing outline (12.7, 19.1, 9.6 mm) over the 63.5 mm from the doorway edge. 1.0: every such fingertip within 3 mm, and both hands at least 20 mm from the gauge. Real trial: steel rule and a photo from above.",
   "run_limit": "1,200 steps (60 s at 20 Hz)",
   "fidelity": "Gauge fingers are 42 prismatic joints at 6 mm pitch (the real pins are finer), each held by a spring whose target follows it past 0.15 N (estimated finger force, to be measured with a spring scale), so a finger stays where it is pushed. The wall and casing are a 70 mm mock-up because the YAM's forearm reaches past the wall face at the copy. The pencil trace is not modelled; the task ends with the gauge set in place to trace. Frictions and masses are estimates.",
-  "scores": "Dream-1 run: not yet run; demo: 1.0",
+  "scores": "Dream-1 run: 0 (1,200 steps); demo: 1.0 (success at 32.55 s, step 651)",
   "media": "",
   "reset_notes": "Set the gauge's fingers straight by pressing them against a flat board before each trial."
 }

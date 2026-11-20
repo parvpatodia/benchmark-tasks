@@ -122,6 +122,14 @@ wall); the demo aims at 32 mm.
 Offline: `PYTHONPATH=<yam_arena source> python3 test_contour_gauge.py` (scoring tiers, fakes, the hold model, the
 copy window, gates). All modes in one simulator session: `fastrun.py contour_gauge.py OUT --trace`.
 
+## Sim results
+
+yam_arena, `object_jitter=0`, 20 Hz, 1,200-step limit, stock `inspect-robots run` with stored frames. The filmed scripted demo scored 1.0, success at step 651 (32.55 s), 396 s of wall time on a shared GPU. The one Dream-1 run scored 0 over all 1,200 steps. Both runs hashed `contour_gauge.py`, `mechanism.py` and `task.json` before starting, and the hashes match the files here (`task.json` as it was before its `scores` line was filled in). The mode scores in the table above come from one GPU session with cameras off (`fastrun.py`).
+
+## Origin
+
+The idea comes from an earlier submission whose review was not accepted and whose 48 h revision hold lapsed with no revision. This implementation, its scene, scorer, demo and text, is new, and answers each point of that review: the gauge lies flat with its copied tips on the sheet in the marking position, the score checks where the copied contour sits for the cut rather than the gauge's pose, the casing stands in its doorway with its approach constraints, the casing profile is a stocked part, and finger friction and press force are stated with how to measure them.
+
 ## Runtime
 
 The demo ends at 651 control steps (32.6 s of the 60 s limit). In the simulator on one GPU it runs at about 2 steps a
