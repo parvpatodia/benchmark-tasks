@@ -11,8 +11,9 @@ face is on the line scribed round the shaft (faces G apart), and takes both hand
 Three steps that only score in order. A part seated against a face. A phase found by turning one shaft about its own
 axis while the other is held by the drive: the loose hub only goes on when its three jaws face the three gaps the
 fixed jaws leave between the spider's six legs, and a hub pushed on without the turn stops with its jaw tips on the
-leg ends (mode no_turn). A slide to a line, stopping on it (mode short stops 8 mm before it). The turn is a grip
-closed across the shaft and turned with the wrist; the push is a closed hand behind the hub's back face.
+leg ends (mode no_turn). A slide to a line, stopping on it (mode short stops 8 mm before it). The turn is closed fingers
+pushing the loose hub's top jaw sideways (the hub turns the shaft through its key); the slide is a closed hand behind
+the hub's back face.
 
 Why it matters (Impact on jobs): closing a coupling between a drive and a driven machine is routine reassembly for
 industrial machinery mechanics (O*NET 49-9041.00, "446,900 employees", task "Reassemble equipment after completion of
@@ -51,8 +52,8 @@ spider's legs flex. Set screws, keys and torques are out of scope (the hub slide
 
 ## Forces
 
-Small. Hub slide about 1.4 N (0.69 kg, slip-fit friction 0.2 [EST]). The right hand closes on the 5/8 in shaft at 20 N
-a finger [CHOICE], torque about 2 x 0.5 x 20 N x 7.9 mm = 0.16 N m [ARITH] against 0.02 N m s drag. The spider is held
+Small. Hub slide about 1.4 N (0.69 kg, slip-fit friction 0.2 [EST]). The turn pushes one jaw against only the shaft's 0.02
+N m s drag: about 0.01 N m at the plan's 0.4 rad/s [ARITH]. The spider is held
 at 15 N a finger on two leg ends.
 
 ## Scoring
@@ -74,7 +75,7 @@ across the hub ODs for the axis, and the video for the hands. Every threshold is
 
 | Mode | Expected | What it does |
 |---|---|---|
-| demo | 1.0 | right turns the shaft 40 degrees; left seats the spider; right lets go; left slides the hub to the line |
+| demo | 1.0 | right pushes the top jaw across, turning hub and shaft 40 degrees, and parks; left seats the spider, then slides the hub to the line |
 | nothing | 0 | arms stay in the ready pose |
 | no_spider | 0 | the turn and the slide, spider left in its holder (the lazy route of skipping the spider) |
 | no_turn | 0.25 | spider seated, hub pushed on without the turn: jaw tips stop on the leg ends |
@@ -84,20 +85,40 @@ across the hub ODs for the axis, and the video for the hands. Every threshold is
 
 ## Results
 
-Not yet run in the simulator. The offline gates pass on every mode at seed 0 (`checkkit.py`: IK with 3 degree joint
-margins, full-link clearance, arm gap, run limit; longest plan demo, 28.9 s + 3 s hold = 638 of 1,200 steps), and
-`test_jaw.py` checks every scoring rule above against the code. Scores here will come only from run `result.json` files.
+All from run `result.json` files on hash 1340836f (sha256 of the sorted `*.py` plus `task.json`, first 8 hex), cameras
+off unless noted. The `.py` files here are byte for byte those runs'; only the `scores` line of `task.json` changed since.
 
-## Demo video (how it will be composed)
+| Mode | Seed | Score | Steps | End |
+|---|---|---|---|---|
+| demo | 0 | 1.0 | 867 | success held 1 s |
+| demo | 1, 2 | 1.0 each | 867 | success held 1 s |
+| no_turn | 0 | 0.25 | 653 | jaw tips stop on the leg ends |
+| part_turn | 0 | 0.25 | 908 | out of the phase window |
+| short | 0 | 0.5 | 909 | hub 8 mm short of the line |
+| no_spider | 0 | 0 | 618 | no seated spider |
+| knock | 0 | 0 | 226 | no seated spider |
+| nothing | 0 | 0 | 61 | |
 
-`sim/film.sh` runs the stock filmed demo (cameras 320 x 176 as the kit films) and, through env `JAW_HD`, records the
-same run's cameras at 1280 x 720 (`jaw.py` HD recorder; scoring and Dream runs never set it). `demo.mp4` will be the
-full top view beside a close-up crop of the coupling upscaled to the same height, H.264:
+Filmed demo (stock kit cameras, 320 x 176): `task_score: 1`, 867 steps. Dream-1 (`--policy dream`, seed 0, the same
+files): `task_score: 0` after all 1,200 steps; it never took the spider from its holder. Its cameras rendered
+washed-out grey frames for about 12 s of that run (steps 575 to 802 and 1,087 to 1,118, all three cameras at once); the
+filmed demo and the HD recording of the same scene have none, so this reads as a renderer fault on a busy GPU.
 
-    ffmpeg -i top_cam.mp4 -filter_complex "[0]split[a][b];[b]crop=480:270:X:Y,scale=1280:720[c];[a][c]hstack" \
-      -c:v libx264 -crf 18 -pix_fmt yuv420p demo.mp4
+In the demo the push leaves the shaft 38.9 degrees round of its 40; the jaw-tip chamfer takes up the rest as the hub
+slides on. `checkkit.py` (IK with 3 degree joint margins, full-link clearance, arm gap, run limit) and `test_jaw.py` (12
+tests, every scoring rule above against the code) pass.
 
-with X, Y set from the first frame so the crop holds both hubs and the spider. `setup.png` is the first HD frame.
+## Demo video
+
+`sim/film.sh` runs the stock filmed demo and, through env `JAW_HD`, records the same run's cameras at 1280 x 720
+(`jaw.py` HD recorder; scoring and Dream runs never set it). `demo.mp4` is a 1920 x 1080 grid: top view, a close-up crop
+of the coupling, and the left and right wrist cameras, H.264:
+
+    ffmpeg -i top_cam.mp4 -i left_cam.mp4 -i right_cam.mp4 -filter_complex "[0]split[a][b];[a]scale=960:540[t];\
+      [b]crop=480:270:330:280,scale=960:540[c];[1]scale=960:540[l];[2]scale=960:540[r];[t][c]hstack[u];\
+      [l][r]hstack[d];[u][d]vstack" -c:v libx264 -crf 20 -pix_fmt yuv420p demo.mp4
+
+`setup.png` is the first HD top frame.
 
 ## Run it
 

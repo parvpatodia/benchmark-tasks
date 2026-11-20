@@ -435,13 +435,15 @@ _REC = _CamRecorder()
 if os.environ.get("JAW_HD"):
     import atexit
     atexit.register(_REC.close)
-    try:   # WHY: render every camera at 1280 x 720 for the film only (the policy still gets its resized frames)
-        import yam_arena.embodiment as _emb
-        _d = list(_emb.BimanualYamEmbodiment.__init__.__defaults__)
-        _d[3], _d[4] = 720, 1280
-        _emb.BimanualYamEmbodiment.__init__.__defaults__ = tuple(_d)
-    except Exception as _e:  # noqa: BLE001
-        print(f"[jaw] HD render size not set: {_e}", flush=True)
+    # WHY: render every camera at 1280 x 720 for the film only (the policy still gets its resized frames). The
+    # embodiment takes its default render size from yam_arena.constants when it is imported, so set the constants
+    # here, before it loads. WHY not import yam_arena.embodiment here: that loads Isaac Lab and USD before the app
+    # starts, and the filmed run then failed at app start ("No to_python converter ... VtValue", film 459b9884, twice)
+    if "yam_arena.embodiment" in sys.modules:
+        print("[jaw] HD render size not set: embodiment already loaded", flush=True)
+    else:
+        import yam_arena.constants as _yc
+        _yc.CAM_RENDER_HEIGHT, _yc.CAM_RENDER_WIDTH = 720, 1280
 
 
 @on_step
@@ -451,29 +453,22 @@ def _record(env):
 
 # -- demo (motionkit; scene constants and the arms' own joint readings only) ----------------------------------------------
 install(SagCorrector())
-GRIP_X = wx(-0.185)  # the right grips the driven shaft between its pillow blocks [CHOICE]
 SPIDER_GRIP_F = 15.0             # N a finger on the leg ends [CHOICE: 0.28 N spider]
-SHAFT_GRIP_F = 20.0              # N a finger on the shaft [CHOICE: torque 2 x 0.5 x 20 N x 7.9 mm = 0.16 N m, ARITH]
 CARRY = 0.085                    # TCP height over the axis while carrying the spider [CHOICE: its legs 54 mm up, 22 mm
 #                                  over the hubs]
 SLOT_X = wx((SHAFT_R1 - GAP) / 2)  # spider centre while it comes down between shaft end and jaw tips [ARITH]
 SEAT_X = wx(-SP_W / 2)           # spider centre when seated [ARITH]
-SEAT_PUSH = 0.0005               # spider pushed this far past its seat [CHOICE: arm compliance, the face stops it;
-#                                  under checkkit PART_OVERLAP 1 mm]
+SEAT_PUSH = 0.0020               # spider pushed this far past its seat [CHOICE: arm compliance, the face stops it]
+# WHY 2 mm, not 0.5: the spider rests 1 mm low on the jaws' lower flanks (its play) and elastomer-on-steel friction
+# stopped it 0.6 to 1.4 mm off the face with a 0.5 mm push (RUN: fastrun 695e1ac4, demo and no_turn), at the edge of
+# SEAT_FACE. checkkit sees the planned spider 2 mm into the face, which the face stops, so its carried-part limit is:
+PART_OVERLAP = -0.0025           # m, checkkit: a carried part may sit this far into another [CHOICE: SEAT_PUSH + 0.5 mm]
 PUSH_Z = 0.026                   # pushing hand's TCP over the axis: tips 13 mm up, 5 mm over the shaft [ARITH]
 PUSH_HALF = 0.0070               # closed fingers' half thickness along x at the hub face's height [RUN: HAND.local]
 LINE_PUSH = 0.0040               # the hub pushed this far past home [CHOICE: its jaw tips on the fixed face stop it]
+PUSH_DEEP = 0.015                # [CHOICE: see _push_go]
 SHORT_BY = 0.008                 # "short" mode stops the hub this far from home [CHOICE]
-TURN_DEG = math.degrees(TURN0)   # the right's turn about world +x, which is the frame's -x [ARITH]
-TURN_START = 15.0                # the right takes the shaft already turned this far [CHOICE: upright, joint 4 sat
-#                                  on its limit at x 0.36, IK]
-TURN_YAW = 0.0                   # [CHOICE: fingers close across the shaft]
 AWAY = {"left": (0.20, 0.28, 0.20), "right": (0.30, -0.28, 0.20)}   # [CHOICE]
-
-
-def turn_grip(deg):
-    """Straight down, fingers across the shaft, turned `deg` about world +x (the shaft turns with it)."""
-    return as_grip(axis_angle_matrix(np.array([1.0, 0.0, 0.0]), math.radians(deg)) @ down(TURN_YAW).rot)
 
 
 def _spider_in(L):
@@ -508,27 +503,40 @@ def _push_ready(L):
 
 def _push_go(L, short=0.0):
     x1 = BACK_HOME - DIR * (PUSH_HALF + short) + DIR * LINE_PUSH * (short == 0.0)
-    L.move((x1, 0.0, AXIS_Z + PUSH_Z), t=max(2.0, abs(x1 - PUSH_X0) / 0.02), label="push: slide", contact=True)
+    # WHY the full push aims PUSH_DEEP past the line: the loose jaws must lift the seated spider out of its 1 mm drop
+    # on their chamfers, and at a target 4 mm past the line the arm stalled 17 mm short with the hub at 36.6 of 50 mm
+    # (RUN: fastrun 629e3235, 36efd5c8, 7bc25add); the slide joint's stop at home ends the hub's travel on the line
+    xp = x1 + DIR * PUSH_DEEP * (short == 0.0)
+    L.move((xp, 0.0, AXIS_Z + PUSH_Z), t=max(2.0, abs(xp - PUSH_X0) / 0.02), label="push: slide", contact=True)
     L.hold(0.8, "push: hold", contact=True)
     L.move((x1 - DIR * 0.015, 0.0, AXIS_Z + PUSH_Z), t=0.8, label="push: back off")
     L.move((x1 - DIR * 0.015, 0.0, AXIS_Z + 0.06), t=1.0, label="push: up")
 
 
+# The turn: closed fingers (closing along the shaft) come down beside the top jaw of the loose hub and push it across,
+# toward -y, at a fixed height; the hub and shaft turn with it (the hub rides the shaft's key). The hand's end point
+# sets the phase. WHY a push, not a wrist turn on a grip: a rigid grasp on a shaft held by two bearings fought the arm
+# (the TCP was shoved 13 mm off the axis) and the shaft rolled between the pads the wrong way (RUN: fastrun 5c422718,
+# 47173125, 10e9daf2: shaft +11 to +48 deg where -40 was wanted); a one-sided push tolerates the arm's mm errors.
+PUSHJ_X = wx(START_FACE + GAP / 2)  # mid-length of the loose hub's jaws at the start, world x [ARITH]
+PUSHJ_Z = 0.033                  # TCP over the axis: finger tips 20 mm up, on the top jaw's flank [CHOICE]
+PUSHJ_Y0 = 0.030                 # start, clear of every jaw [ARITH: 2D sweep of HAND points against jaw_outline]
+PUSHJ_Y = {40.0: -0.0130, 20.0: -0.00175}   # end y for a 40 (mesh) or 20 deg turn [ARITH: same sweep, 0.2 mm steps]
+PUSHJ_GRIP = 90.0                # fingers close along the shaft: 8.8 mm thick along x at the tips, inside the 18 mm jaw
+
+
 def _turn(R, deg):
-    g0 = turn_grip(TURN_START)
-    on = np.array([GRIP_X, 0.0, AXIS_Z])
-    R.move(on - 0.050 * g0.rot[:, 2], grip=g0, finger=-(SHAFT_R + 0.012), label="turn: over")
-    R.hold(0.6, "turn: line up")
-    R.move(on, t=1.5, label="turn: down", contact=True)
-    R.move(on, t=0.8, finger=-(SHAFT_R - SHAFT_GRIP_F / 2000.0), label="turn: close", contact=True)
-    R.hold(0.3, "turn: grip", contact=True)
-    R.move(on, grip=turn_grip(TURN_START + deg), t=max(2.0, abs(deg) / 10.0), label="turn: turn", contact=True)
+    y1 = PUSHJ_Y[deg]
+    R.move((PUSHJ_X, PUSHJ_Y0, AXIS_Z + PUSHJ_Z + 0.04), grip=down(PUSHJ_GRIP), finger=0.0, label="turn: over")
+    R.hold(0.5, "turn: line up")
+    R.move((PUSHJ_X, PUSHJ_Y0, AXIS_Z + PUSHJ_Z), t=1.5, label="turn: down")
+    R.move((PUSHJ_X, y1, AXIS_Z + PUSHJ_Z), t=max(2.0, abs(PUSHJ_Y0 - y1) / 0.008), label="turn: push", contact=True)
     R.hold(0.5, "turn: hold", contact=True)
 
 
 def _turn_off(R):
-    R.move(R.pos, t=0.8, finger=-(SHAFT_R + 0.012), label="turn: let go", contact=True)
-    R.move(R.pos - 0.06 * R.approach(), t=1.2, label="turn: back out")
+    R.move(R.pos + np.array([0.0, 0.004, 0.0]), t=0.8, label="turn: let go", contact=True)
+    R.move(R.pos + np.array([0.0, 0.0, 0.06]), t=1.2, label="turn: back out")
 
 
 CHECK_SKIP = {("left", "driven"): ("push:",), ("right", "driven"): ("turn:",),
@@ -541,9 +549,14 @@ def plan(seed=None, mode_name="demo"):
     if mode_name == "nothing":
         return {}
     L, R = Plan("left"), Plan("right")
-    turned = {"demo": TURN_DEG, "no_spider": TURN_DEG, "short": TURN_DEG, "part_turn": TURN_DEG / 2}.get(mode_name)
+    turned = {"demo": 40.0, "no_spider": 40.0, "short": 40.0, "part_turn": 20.0}.get(mode_name)
     if turned is not None:
+        # WHY the right turns, leaves and parks before the left starts: its hand at the loose hub and the left's
+        # carried spider came within 0.1 mm (checkkit ARMGAP) when they overlapped in time
         _turn(R, turned)
+        _turn_off(R)
+        R.move((AWAY["right"][0], AWAY["right"][1], TOP + AWAY["right"][2]), grip=down(0.0), label="park")
+        together(L, R)
     if mode_name == "knock":
         kx = FX - LTB / 2
         L.move((kx, 0.090, AXIS_Z + 0.06), grip=down(-90.0), finger=0.0, label="knock: over")
@@ -554,11 +567,6 @@ def plan(seed=None, mode_name="demo"):
     else:
         if mode_name != "no_spider":
             _spider_in(L)
-        # WHY the right lets go and backs out before the left comes over: holding the shaft, or backing out while
-        # the left came down, put the forearms 0.1 to 0.2 mm apart (checkkit ARMGAP). The shaft keeps its phase on
-        # its own: nothing turns it while the hub slides
-        if turned is not None:
-            _turn_off(R)
         together(L, R)
         if mode_name == "no_spider":
             # WHY: from its start pose the left's IK reached "push: over" on a branch near joint 4's limit; passing
@@ -566,8 +574,6 @@ def plan(seed=None, mode_name="demo"):
             L.move((SLOT_X, 0.0, AXIS_Z + CARRY), grip=down(0.0), label="carry: across")
         _push_ready(L)
         _push_go(L, SHORT_BY if mode_name == "short" else 0.0)
-    if turned is not None and mode_name == "knock":
-        _turn_off(R)
     if R.waypoints:
         R.move((AWAY["right"][0], AWAY["right"][1], TOP + AWAY["right"][2]), grip=down(0.0), label="away")
     L.move((AWAY["left"][0], AWAY["left"][1], TOP + AWAY["left"][2]), grip=down(0.0), label="away")

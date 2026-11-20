@@ -16,6 +16,6 @@
   "run_limit": "1,200 steps (60 s at 20 Hz)",
   "reset_notes": "Nothing is consumed. Slide the loose hub back to 50 mm off home and turn the driven shaft 40 degrees out of mesh against a mark on the pillow block, pull the spider and stand it in its holder.",
   "fidelity": "Rigid PhysX bodies at catalogue size. The elastomer spider is rigid, so its give is replaced by 1.0 mm play from each leg to each jaw flank and a 1.2 mm chamfer on the jaw tips. The key is a prismatic joint on the shaft with viscous drag in place of the slip fit's dry friction; the reducer's output is a stiff joint with 0.002 rad of play. Set screws and torques are out of scope.",
-  "scores": "Dream-1 run: not yet run; scripted demo: not yet run",
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0",
   "media": ""
 }
