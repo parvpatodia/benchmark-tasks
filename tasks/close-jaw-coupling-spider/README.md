@@ -11,7 +11,8 @@ face is on the line scribed round the shaft (faces G apart), and takes both hand
 Three steps that only score in order. A part seated against a face. A phase found by turning one shaft about its own
 axis while the other is held by the drive: the loose hub only goes on when its three jaws face the three gaps the
 fixed jaws leave between the spider's six legs, and a hub pushed on without the turn stops with its jaw tips on the
-leg ends (mode no_turn). A slide to a line, stopping on it (mode short stops 8 mm before it). The turn is closed fingers
+leg ends (mode no_turn). A slide to a line (mode short stops 8 mm before it). The slide joint's travel ends at home, faces exactly G apart, so
+the hub cannot be pushed past the line or press the spider; the stage tests getting the hub all the way on. The turn is closed fingers
 pushing the loose hub's top jaw sideways (the hub turns the shaft through its key); the slide is a closed hand behind
 the hub's back face.
 
@@ -52,7 +53,7 @@ spider's legs flex. Set screws, keys and torques are out of scope (the hub slide
 
 ## Forces
 
-Small. Hub slide about 1.4 N (0.69 kg, slip-fit friction 0.2 [EST]). The turn pushes one jaw against only the shaft's 0.02
+Small. The hub slide works against 6 N s/m of viscous drag on the key [EST], about 0.1 N at the plan's 14 to 18 mm/s [ARITH]. The turn pushes one jaw against only the shaft's 0.02
 N m s drag: about 0.01 N m at the plan's 0.4 rad/s [ARITH]. The spider is held
 at 15 N a finger on two leg ends.
 
@@ -64,7 +65,7 @@ From the end state, held 1 s:
   fixed hub's face) with every gripper point 30 mm or more from it.
 - 0.5: also the loose jaw tips 3 mm or more past the spider's near face (in its gaps; tips resting on legs read 0 mm).
 - 0.75: also the hub faces G apart within 1.0 mm (back face on the scribed line).
-- 1.0: also spider, shaft and loose hub at rest, every gripper point 30 mm or more from all three.
+- 1.0: also spider, shaft and loose hub at rest (points under 0.01 m/s, spins under 0.5 rad/s), every gripper point 30 mm or more from all three.
 
 No seated spider scores 0, whatever the hub does. Real trial: a feeler gauge for G and the spider face, a straightedge
 across the hub ODs for the axis, and the video for the hands. Every threshold is a [CHOICE] read with those tools.
@@ -81,7 +82,7 @@ across the hub ODs for the axis, and the video for the hands. Every threshold is
 | no_turn | 0.25 | spider seated, hub pushed on without the turn: jaw tips stop on the leg ends |
 | part_turn | 0.25 | only half the turn (20 degrees): out of the phase window |
 | short | 0.5 | full plan, hub stopped 8 mm before its line |
-| knock | 0 | left shoves the fixed hub sideways; no spider |
+| knock | 0 | left shoves the fixed hub sideways (the drive holds it); no spider, so 0 |
 
 ## Results
 
@@ -101,7 +102,7 @@ off unless noted. The `.py` files here are byte for byte those runs'; only the `
 
 Filmed demo (stock kit cameras, 320 x 176): `task_score: 1`, 867 steps. Dream-1 (`--policy dream`, seed 0, the same
 files): `task_score: 0` after all 1,200 steps; it never took the spider from its holder. Its cameras rendered
-washed-out grey frames for about 12 s of that run (steps 575 to 802 and 1,087 to 1,118, all three cameras at once); the
+washed-out grey frames for about 13 s of that run (steps 575 to 802 and 1,087 to 1,118, all three cameras at once); the
 filmed demo and the HD recording of the same scene have none, so this reads as a renderer fault on a busy GPU.
 
 In the demo the push leaves the shaft 38.9 degrees round of its 40; the jaw-tip chamfer takes up the rest as the hub
@@ -111,14 +112,12 @@ tests, every scoring rule above against the code) pass.
 ## Demo video
 
 `sim/film.sh` runs the stock filmed demo and, through env `JAW_HD`, records the same run's cameras at 1280 x 720
-(`jaw.py` HD recorder; scoring and Dream runs never set it). `demo.mp4` is a 1920 x 1080 grid: top view, a close-up crop
-of the coupling, and the left and right wrist cameras, H.264:
-
-    ffmpeg -i top_cam.mp4 -i left_cam.mp4 -i right_cam.mp4 -filter_complex "[0]split[a][b];[a]scale=960:540[t];\
-      [b]crop=480:270:330:280,scale=960:540[c];[1]scale=960:540[l];[2]scale=960:540[r];[t][c]hstack[u];\
-      [l][r]hstack[d];[u][d]vstack" -c:v libx264 -crf 20 -pix_fmt yuv420p demo.mp4
-
-`setup.png` is the first HD top frame.
+(`jaw.py` HD recorder; scoring and Dream runs never set it). `demo.mp4` (1920 x 900, H.264, ffmpeg overlays) has one
+large view and three small ones: the large view is the wrist camera of the working hand (right for the turn, left for
+the spider and the slide) and a close-up of the coupling for the end state; the small views are the top camera, a
+close-up crop of it and the other wrist camera. A caption bar names each step with its time from the plan's labels
+(turn 0 to 12.2 s, take the spider to 23.0 s, seat to 31.5 s, slide to 41.8 s, hands away), and the last frame is held
+2 s. `setup.png` is the first HD top frame.
 
 ## Run it
 
