@@ -56,7 +56,7 @@ d = {
         f"{mm(M.SH_W)} x {mm(M.SH_H)} mm), centred at ({M.SHARPS[0]}, {M.SHARPS[1]}), its lid opening "
         f"{mm(M.SH_OPEN[0])} x {mm(M.SH_OPEN[1])} mm. The stand and the container are taped to the table. Loose: a BD Microtainer contact-activated lancet 366577 (21 G x "
         f"1.8 mm, pink), modelled as a {mm(M.L_W)} x {mm(M.L_T)} x {mm(M.L_LEN)} mm polypropylene housing "
-        f"({g(1000 * sum(M.LANCET_KG))} g) and a {mm(2 * M.SHIELD_R)} mm contact shield standing {mm(M.SHIELD_OUT)} mm "
+        f"({g(M.LANCET_G)} g) and a {mm(2 * M.SHIELD_R)} mm contact shield standing {mm(M.SHIELD_OUT)} mm "
         f"proud on a spring ({g(M.K_SHIELD / 1000)} N/mm, {g(M.F_PRE)} N preload); it fires at {g(M.F_FIRE)} N on the "
         f"shield ({1000 * q_fire:.2f} mm of travel). It stands tip down in the cup. A fingerstick trainer (printed "
         f"PETG, rig.scad) lies palm up on a {mm(M.BOARD_T)} mm plywood board: a plate under the hand and a bar running "

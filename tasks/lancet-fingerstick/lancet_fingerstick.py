@@ -22,7 +22,7 @@ from yam_arena.demo import ArmPlan, Waypoint, grip_rotation  # noqa: E402
 from yam_arena.task_file import TABLE_TOP  # noqa: E402
 
 SCENE = "station"
-RUN_LIMIT_STEPS = 1200           # 60 s at 20 Hz. WHY: the slowest planned path (stem k00) ends at 41.1 s
+RUN_LIMIT_STEPS = 1200           # 60 s at 20 Hz. WHY: the slowest planned path (stem k00) ends at 44.4 s
 TOP = TABLE_TOP[SCENE]
 GRAVITY = 9.81                   # m/s^2 (yam_arena's)
 
@@ -48,8 +48,14 @@ TOUCH_D = 0.0003                 # m: the shield's face this close to the ring f
 #                                  where the face meets the finger, and the camera sees contact, not force. In the t00
 #                                  trace the face sat 0.03 to 0.29 mm off the skin for 0.5 s before the shield left its
 #                                  stop [RUN]
-LANCET_KG = (0.0020, 0.0020)     # housing, shield [EST: 4 g in all]. WHY 2 g on the shield: at 0.5 g (600x lighter than
-#                                  the hand) PhysX let it sink 2.9 mm into the fingertip at 3.8 N, so it never fired [RUN]
+LANCET_G = 4.0                   # g: the lancet's mass [EST], for the setup text
+LANCET_KG = (0.0200, 0.0020)     # sim masses, housing and shield [CHOICE: heavier than the real lancet, for PhysX].
+#                                  WHY 2 g on the shield: at 0.5 g (600x lighter than the hand) PhysX let it sink 2.9 mm
+#                                  into the fingertip at 3.8 N, so it never fired [RUN]. WHY 20 g on the housing: at 2 g
+#                                  the right's 19 N a pad grip (1.2 friction) let the housing slide 1 to 2.6 mm across
+#                                  and up the pads when lifted out of the stand and at 4.6 to 6 N of press, far under
+#                                  friction's 45 N (PhysX, 2026-11-20); a light body's solver slip, our inference. At
+#                                  20 g it held to 0.1 mm [RUN]. Its weight, 0.2 N, is 2% of the press
 
 # -- the stand (its socket holds the tab; the tab's frangible post is a sprung turn) -----------------------------------
 STAND = (0.340, -0.200)          # the stand's centre (world x, y): ahead of the trainer's fingertips, on the right arm's
@@ -247,15 +253,15 @@ HOLD_SEG = (DIP, KNUCKLE_S)      # m along the ring's axis from its apex: where 
 HOLD_R = 0.015                   # m: and at most this far from the finger's axis
 HOLD_ACROSS = 0.004              # m: and at most this far off it along the gripper's closing direction [CHOICE]. WHY:
 #                                  closed on the 15.6 mm finger, both pads touch it only with the finger between them
-HOLD_GAP_ON = 0.00793            # m: the half-gap the left reads closed on the ring finger [RUN: the PhysX t00 seed-0
-#                                  trace of e233a08, 2026-11-19: 7.89 to 7.94 mm (lf) from the touch until 0.5 s after
-#                                  the click, 7.93 in most steps; 0.13 mm over the finger's 7.8 mm radius, so the reading
-#                                  is not the pads' distance from the axis]
-HOLD_GAP = (HOLD_GAP_ON - 0.0015, HOLD_GAP_ON + 0.00015)   # m: from 1.5 mm closer (a squeeze, a thinner print) to
-#                                  0.15 mm wider than that reading. WHY the cap so near it: the reading closed on the
-#                                  finger is its widest; wider, the pads are off the skin (review of e233a08: 8.6 and
-#                                  8.7 mm used to pass with the pads up to 0.9 mm off). 0.15 mm covers the trace's 0.05 mm
-#                                  spread [CHOICE]
+HOLD_GAP_ON = 0.00790            # m: the half-gap the left reads closed on the ring finger [RUN: PhysX traces of the
+#                                  demo, 2026-11-19/20: 7.84 to 7.97 mm (lf) from the touch until 0.5 s after the click
+#                                  over four layouts; 0.1 mm over the finger's 7.8 mm radius, so the reading is not the
+#                                  pads' distance from the axis]
+HOLD_GAP = (HOLD_GAP_ON - 0.0015, HOLD_GAP_ON + 0.0003)   # m: from 1.5 mm closer (a squeeze, a thinner print) to
+#                                  0.3 mm wider than that reading. WHY the cap near it: the reading closed on the finger
+#                                  is its widest; wider, the pads are off the skin (review of e233a08: 8.6 and 8.7 mm
+#                                  used to pass with the pads up to 0.9 mm off). WHY 0.3 and not 0.15: the readings
+#                                  spread 0.07 mm either side of 7.90 across layouts, and 0.15 left 0.11 mm [RUN]
 # the slide (rig.scad; README Real trials): a miniature linear guide behind the ring finger's knuckle. Its rail is
 # screwed to the front of the palm block's post; its block carries a web printed with the finger; two springs on fixed
 # pins push the web's foot up against collars at the pins' tops (the top stop), and the foot lands on a stop post 10 mm
@@ -907,9 +913,7 @@ GRIP_L = -(L_T / 2 - 0.004)      # 4 mm into the housing's 10 mm: 20 N a finger 
 #                                  slid up the pads at 7.9 N, under the 8 N fire (friction about 0.34) [RUN]; on the
 #                                  0.5/0.4 plastic even 4 mm slid at 5 to 6 N, hence MATERIALS["housing"]
 TWIST = math.radians(70)         # the demo turns the lancet this far in the socket (the tab breaks at 45 deg)
-PRESS_DZ = 0.020                 # the press aims this far past contact along the lancet's axis. WHY: the arm is about
-#                                  0.5 N/mm at the TCP [EST: from yam_arena's joint stiffnesses, J K^-1 J^T], so 20 mm
-#                                  is about 10 N, over the 8 N fire after the shield's 1.75 mm
+PRESS_DZ = 0.020                 # a stem's press aims this far past contact (the demo's, press_depth)
 SITE_AIM = 0.0115                # the demo's site: 11.5 mm back from the ring's apex (the middle of 8 to 15)
 SITE_TURN = math.radians(45.0)   # and 45 deg round from the pad's middle line, on the thumb's side (+v), so the lancet
 #                                  comes in 48 deg from vertical [RUN: offline search, README Design]
@@ -1005,14 +1009,101 @@ def hand_world(seed, p, direction=False):
     return np.array([hx, hy, hz]) + Rz @ hand_to_mech(p)
 
 
+PRESS_ROLL = -1                  # the right's fingers close along the ring finger at the press (0: across it).
+#                                  WHY: a parallel grip holds a push on the lancet's face in two ways. A twist about the
+#                                  line through both pads only meets the pads' torsional friction, small; one about any
+#                                  other axis presses one pad's edge harder, held by the pad's normal force. Under the
+#                                  push the wrist gives 0.27 deg/N about the TCP's axis across the finger, 0.09 deg/N
+#                                  about the one along it [ARITH: J K^-1 J^T at every corner]. Closing across the
+#                                  finger (the old pose) put the larger give on the pads' weak axis: at 7 to 8.4 N the
+#                                  lancet rocked 2.5 mm in the grip and the face jumped 3 to 4 mm toward the apex (t00
+#                                  corners 126748 and 100825, PhysX traces 2026-11-20) [RUN]; put back to 0 with the
+#                                  other press changes, the face slid 2 mm and the press never reached 8 N at 2 of 3
+#                                  seeds [RUN]. -1 and not +1: +1 takes joint 6 to 2.01 rad of its 2.09 [RUN: ikcheck]
+
+
 def press_pose(seed, s=SITE_AIM, turn=SITE_TURN):
     """The demo's press: the site on the ring's pad (world), the lancet's pointing direction a (into the skin, along
-    its inward normal), and the right's TCP rotation (its fingers closing across the finger's axis)."""
+    its inward normal), and the right's TCP rotation (its fingers closing along the finger, PRESS_ROLL)."""
     v, u0, _, rd, _ = FINGERS["ring"]
     out = np.array([0.0, math.sin(turn), math.cos(turn)])          # the skin's outward normal (hand frame)
     site = hand_world(seed, np.array([u0 + s, v, 0.0]) + rd * out)
     a = -hand_world(seed, out, direction=True)
-    return site, a, rot_from(a, np.cross(hand_world(seed, (1.0, 0.0, 0.0), direction=True), a))
+    x = hand_world(seed, (1.0, 0.0, 0.0), direction=True)
+    return site, a, rot_from(a, PRESS_ROLL * x if PRESS_ROLL else np.cross(x, a))
+
+
+ARM_K = (80.0, 80.0, 80.0, 10.0, 10.0, 10.0)   # N m/rad: the YAM's joint stiffnesses (yam_arena.constants SHOULDER,
+#                                  WRIST); the arm is a joint-space PD, so these set its compliance at the TCP
+Q_PRESS = (0.1, 1.75, 1.27, -1.3, -0.82, 0.2)   # an IK start near the press pose at every corner [RUN: ikcheck]
+
+
+def _press_give(seed, touch=None, rp=None):
+    """The face's give per N of push on it along +a, at the press pose: its displacement (m/N) and the TCP's rotation
+    (a world rotation vector, rad/N), from the arm's compliance J K^-1 J^T (K the joint stiffnesses). The skin pushes
+    back along -a, so pressed with f N the face moves -f times these."""
+    site, a, rot = press_pose(seed)
+    if touch is None:
+        touch = site - tcp_over_lancet() * a
+    rot = rot if rp is None else rp
+    base = station.BASES["right"]
+    q, _, _ = ik.solve(touch, ik.matrix_to_quat_xyzw(rot), q_init=Q_PRESS, base_pos=base)
+    lever = tcp_over_lancet()
+    x0, r0 = ik.tcp_pose(q, base)
+    f0, h = x0 + lever * r0[:, 2], 1e-6
+    jac = np.zeros((6, 6))
+    for i in range(6):
+        dq = np.array(q, float)
+        dq[i] += h
+        x, r = ik.tcp_pose(dq, base)
+        jac[:3, i] = (x + lever * r[:, 2] - f0) / h
+        w = (r @ r0.T - np.eye(3)) / h
+        jac[3:, i] = (w[2, 1], w[0, 2], w[1, 0])
+    give = jac @ np.diag([1.0 / k for k in ARM_K]) @ jac[:3].T @ a
+    return a, give[:3], give[3:]
+
+
+def press_dir(seed, touch=None, rp=None):
+    """The direction the right drives the press along so that, after its joints give under the press, the force on the
+    skin is along the lancet's axis a: a plus the face's lateral compliance per N over its axial give per N (the arm's
+    and the shield's). WHY: the arm's compliance at the lancet's face (J K^-1 J^T, K the joint stiffnesses) bends a push
+    along a 0.5 to 0.8 of the way sideways [ARITH: 2026-11-20, every corner]. Pressed along a alone, the face is pinned
+    on the skin while the arm pulls it sideways, so the lancet rocked in the grip and slid on the skin (t00 corners
+    126748 and 100825, c00) [RUN]."""
+    a, v, _ = _press_give(seed, touch, rp)
+    axial = float(v @ a)
+    return a + (v - axial * a) / (axial + 1.0 / K_SHIELD)
+
+
+PRESS_F = (5.0, 9.0)             # N: the push the demo's load and press stages aim at. WHY 9: midway from the 8 N
+#                                  fire to the shield bottoming at 9.8 N; past that the push goes into the finger after
+#                                  the click, and the housing slid up the pads at 9 to 9.7 N (PhysX, 2026-11-20) [RUN]
+
+
+def press_depth(seed, f, touch=None, rp=None):
+    """How far past contact (along press_dir) the demo aims for a push of f N: the arm's axial give per N
+    (_press_give, 1.14 to 1.55 mm/N over the layout's corners) and the shield's, in series. WHY per layout: one depth
+    for all gave 8.0 to 9.6 N across the corners, and the softest would not fire with margin. Seed 0 predicts
+    1.39 mm/N; PhysX settled at 5.8 N on 9 mm, 1.34 mm/N [RUN, 2026-11-20]."""
+    a, v, _ = _press_give(seed, touch, rp)
+    return f * float(v @ a) + max(0.0, f - F_PRE) / K_SHIELD
+
+
+def press_rot(seed, rp, f, touch=None):
+    """The right's TCP rotation commanded at a press stage that pushes f N: rp turned back by the turn the wrist gives
+    under f, so that loaded the lancet stands at rp. WHY: the wrist gives 0.27 to 0.31 deg/N [ARITH: _press_give; RUN:
+    the lancet's axis turned 2.4 to 2.6 deg from the touch to the click at 8 N, PhysX 2026-11-20], and at one layout
+    that put the click 5.7 deg from square to the skin against the 10 deg limit [RUN]."""
+    _, _, w = _press_give(seed, touch, rp)
+    v = f * w    # WHY +: w is the turn per N of push along +a, and the skin pushes back along -a, so loaded the wrist
+    #              turns by -f w; commanded ahead by +f w, it ends at rp [RUN: with -f w the lancet turned 4.1 to
+    #              4.5 deg from the touch to the click, against 2.4 to 2.6 deg with no pre-turn, PhysX 2026-11-20]
+    th = float(np.linalg.norm(v))
+    if th < 1e-12:
+        return rp
+    k = v / th
+    K = np.array([[0.0, -k[2], k[1]], [k[2], 0.0, -k[0]], [-k[1], k[0], 0.0]])
+    return (np.eye(3) + math.sin(th) * K + (1.0 - math.cos(th)) * K @ K) @ rp
 
 
 def hold_pose(seed, s=HOLD_AT, tilt=None):
@@ -1047,7 +1138,11 @@ def plan(delay=0.0, seed=None, twist=TWIST):
     R.add(0.6, lg, GRIP_L, "settle")
     R.add(2.0, lg, GRIP_L, "twist the tab off", twist)
     R.add(0.5, lg, GRIP_L, "hold", twist)
-    R.add(1.2, lg + [0, 0, 0.06], GRIP_L, "lift it out of the stand", twist)
+    # WHY turned back before the lift: the socket turns on a spring (K_TAB), and lifted out at the twist's 62 to 70 deg
+    # the socket sprang back while the housing was still in it and dragged the housing up to 2.6 mm across the pads,
+    # so the press landed up to 19 deg round from its aim (PhysX, 2026-11-20) [RUN]
+    R.add(1.0, lg, GRIP_L, "turn it back in the stand", 0.0)
+    R.add(1.2, lg + [0, 0, 0.06], GRIP_L, "lift it out of the stand", 0.0)
     R.add(1.5, WAIT_R, GRIP_L, "out of the left's way", 0.0)   # WHY yaw 0 at the wait: from
     #                                  there the turn to the tilted press stays in reach; from the twist's 70 deg it left
     #                                  joint 4's range on the way (1 to 11 mm off at the corners) [RUN: tools/ikcheck.py]
@@ -1057,11 +1152,23 @@ def plan(delay=0.0, seed=None, twist=TWIST):
     R.add(L_TAKE + 0.2, WAIT_R, GRIP_L, "wait for the finger to be held", 0.0)
     R.add(2.5, touch - PRE_PRESS * a, GRIP_L, "tilt over the site", rot=rp)
     R.add(STEADY, touch - PRE_PRESS * a, GRIP_L, "steady over the site", rot=rp)
-    R.add(1.5, touch - 0.004 * a, GRIP_L, "just off the site", rot=rp)
-    R.add(STEADY, touch - 0.004 * a, GRIP_L, "steady just off the site", rot=rp)
-    R.add(0.8, touch, GRIP_L, "tip on the site", rot=rp)
-    R.add(1.5, touch + PRESS_DZ * a, GRIP_L, "press until it fires", rot=rp)
-    R.add(1.0, touch + PRESS_DZ * a, GRIP_L, "hold the press", rot=rp)
+    # WHY slow from here: run at 1.5 s and 0.8 s, the arm's lag swung the face 2 to 8 deg round the finger on the way
+    # in, so the press landed that far from square to the skin (PhysX, 2026-11-20) [RUN]
+    R.add(2.5, touch - 0.004 * a, GRIP_L, "just off the site", rot=rp)
+    R.add(1.0, touch - 0.004 * a, GRIP_L, "steady just off the site", rot=rp)
+    R.add(1.6, touch, GRIP_L, "tip on the site", rot=rp)
+    ad = press_dir(seed, touch, rp)
+    # WHY in two stages with a settle: pressed straight through, the face slipped on the skin near the fire in PhysX
+    # (0.8 mm at one seed) and the shield bottomed, so the push went on into the finger after the click (1.4 mm of drop
+    # within 0.5 s) [RUN: PhysX, 2026-11-20]. Loaded to about 5 N and let settle, then pressed on to just past the
+    # fire, the load builds quasi-statically and stops a few N past 8 N
+    lever = tcp_over_lancet()
+    for dur, f, label in ((1.0, PRESS_F[0], "load the press"), (0.5, PRESS_F[0], "settle the press"),
+                          (1.0, PRESS_F[1], "press until it fires"), (0.3, PRESS_F[1], "hold the press")):
+        rs = press_rot(seed, rp, f, touch)
+        dz = press_depth(seed, f, touch, rp)
+        # WHY the TCP moved with the turn: the face, not the TCP, is what aims at the site
+        R.add(dur, touch + dz * ad + lever * (a - rs[:, 2]), GRIP_L, label, rot=rs)
     R.add(1.2, touch - PRE_PRESS * a, GRIP_L, "back off along the axis", rot=rp)
     R.add(2.0, WAIT_R, GRIP_L, "back out of the left's way", 0.0)
     t_free = R.t

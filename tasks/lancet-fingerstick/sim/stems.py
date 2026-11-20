@@ -41,7 +41,8 @@ _NEAR_S = 0.0085
 _TILT = math.radians(10.0)
 _KEEP_Z = TOP + 0.181            # the TCP lowered over the opening: the lancet's face 150 mm up, inside (lid 162 mm)
 _PRESS = {"tilt over the site", "steady over the site", "just off the site", "steady just off the site",
-          "tip on the site", "press until it fires", "hold the press", "back off along the axis"}
+          "tip on the site", "load the press", "settle the press", "press until it fires", "hold the press",
+          "back off along the axis"}
 _HOLD = {"beside the ring finger", "steady beside the ring finger", "in round the ring finger", "grip the ring finger",
          "hold it up on its stop", "keep holding through the press", "ease off", "let go of the ring finger",
          "back out"}
@@ -72,7 +73,21 @@ def _no_lift(left, seed):
             for w in left]
 
 
+def _no_load(right):
+    """The press's load and settle stages taken out (their time given to the tip on the site): a jab starts from
+    contact, not from a settled 5 N."""
+    out = []
+    for w in right:
+        if w.label in ("load the press", "settle the press"):
+            out[-1] = _r(out[-1], duration=out[-1].duration + w.duration)
+        else:
+            out.append(w)
+    return out
+
+
 def _stem(right, left, seed):
+    if _STEM in ("j", "x", "a", "y"):
+        right = _no_load(right)
     if _STEM == "j":
         right = [_r(w, duration=_JAB_S) if w.label == "press until it fires" else w for w in right]
     if _STEM in ("x", "a"):

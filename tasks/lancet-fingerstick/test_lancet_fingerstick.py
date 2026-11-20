@@ -43,7 +43,8 @@ GRIP_READ = -(M.L_T / 2 - 0.0003)   # the finger's reading closed on the 10 mm s
 GRIP_R_READ = -M.HOLD_GAP_ON     # a finger closed on the ring finger reads it 0.6 mm in [EST, as HOLD_GAP_ON]
 UP = np.array([0.0, 0.0, 1.0])
 PRESS_LABELS = {"tilt over the site", "steady over the site", "just off the site", "steady just off the site",
-                "tip on the site", "press until it fires", "hold the press", "back off along the axis"}
+                "tip on the site", "load the press", "settle the press", "press until it fires", "hold the press",
+                "back off along the axis"}
 
 
 def trial_seed(cli):
@@ -153,7 +154,20 @@ class Kin:
         hp, hq = ring_link(self.seed, 0.0)
         depth = self._depth(cmd_face, a, hp, M._rot3(hq))
         if depth <= 0.0:
+            self.contact = None
             return 0.0, 0.0, cmd_face
+        # WHY: the demo drives the press along press_dir, off a by the sideways give of the arm under the press; that
+        # sideways part is taken up by the arm's compliance, not by the face, so it is removed here (the face stays on
+        # the point it met). Any other sideways command (a stem's) still moves the face.
+        if getattr(self, "contact", None) is None:
+            self.contact = cmd_face.copy()
+            ad = M.press_dir(self.seed)
+            u = ad - (ad @ a) * a
+            self.u = u / max(np.linalg.norm(u), 1e-9)
+            a0, v, _ = M._press_give(self.seed)
+            self.c_ax = float(v @ a0)     # WHY the task's own J K^-1 J^T: PhysX gave within 4% of it (seed 0)
+        cmd_face = cmd_face - float((cmd_face - self.contact) @ self.u) * self.u
+        depth = self._depth(cmd_face, a, hp, M._rot3(hq))
         on, pull, _, _, _ = self._left_on_finger()
         k_fin = M.K_RING + (K_ARM if on else 0.0)
         pre = M.RING_PRELOAD + pull
@@ -167,7 +181,7 @@ class Kin:
         for _ in range(60):
             f = (lo + hi) / 2
             q, drop = parts(f)
-            lo, hi = (f, hi) if f / K_ARM + q + drop * az < depth else (lo, f)
+            lo, hi = (f, hi) if f * self.c_ax + q + drop * az < depth else (lo, f)
         q, drop = parts(lo)
         # WHY the face stays on the skin point it met, moved down with the finger: friction holds it there and the arm
         # gives across
@@ -634,14 +648,14 @@ class Model(unittest.TestCase):
                               (on(M.HOLD_AT, back=M.TIP + 0.001), GRIP_R_READ, "short of it, pad tips before the axis"),
                               (on(M.HOLD_AT, 0.026), -0.005, "stem a00: on air above the finger")):
             self.assertFalse(M.finger_held((tcp, gap, q), hp, hq), why)
-        # the half-gap window: the trace's readings on the finger pass; wider, the pads are off the skin (review of
-        # e233a08: 8.0, 8.6 and 8.7 mm used to pass). 8.0 is 0.07 mm past the 7.93 mm the left read on the finger in
-        # PhysX, inside the trace's contact reading, so it still passes; 8.1 mm and up do not
-        for gap in (7.89, 7.94, 8.0):
+        # the half-gap window: the traces' readings on the finger pass (7.84 to 7.98 mm over five layouts in PhysX);
+        # wider, the pads are off the skin (review of e233a08: 8.6 and 8.7 mm used to pass). 8.1 is 0.12 mm past the
+        # widest reading, so it still passes; 8.3 mm and up do not
+        for gap in (7.84, 7.98, 8.1):
             self.assertTrue(M.finger_held((hold_grip(0), -gap / 1000, q), hp, hq), gap)
-        for gap in (8.1, 8.6, 8.7):
+        for gap in (8.3, 8.6, 8.7):
             self.assertFalse(M.finger_held((hold_grip(0), -gap / 1000, q), hp, hq), gap)
-        self.assertLess(M.HOLD_GAP[1], M.HOLD_GAP_ON + 0.0002)
+        self.assertLess(M.HOLD_GAP[1], M.HOLD_GAP_ON + 0.0004)
         # turned 90 deg (closing along the finger), the same TCP on the axis is still on it: across is 0 either way,
         # but the gap it reads closed along the finger would be its length, not the 7.8 mm radius
         self.assertTrue(M.finger_held((hold_grip(0), GRIP_R_READ, lq(0, math.pi / 2)), hp, hq))
@@ -1049,7 +1063,11 @@ class LazyRoutes(unittest.TestCase):
                 t = [w for w in d["right"] if w.label == "tip on the site"][0]
                 axis = M.hand_world(seed, (1.0, 0.0, 0.0), direction=True)
                 along = float((np.asarray(f.pos) - np.asarray(t.pos)) @ axis)
-                self.assertAlmostEqual(along, M.PRESS_DZ * math.tan(ns["_TILT"]), places=6)
+                demo = M.plan(0.0, seed)[0]
+                df = [w for w in demo if w.label == "press until it fires"][0]
+                dt_ = [w for w in demo if w.label == "tip on the site"][0]
+                comp = float((np.asarray(df.pos) - np.asarray(dt_.pos)) @ axis)   # the demo's own terms, kept
+                self.assertAlmostEqual(along, M.PRESS_DZ * math.tan(ns["_TILT"]) + comp, places=6)
             if stem == "c":
                 self.assertLess(M._M["tab"], -M.TAB_BREAK)
             if stem == "k":

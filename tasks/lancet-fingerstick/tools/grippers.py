@@ -53,10 +53,13 @@ COVERS = {"left": {k: (SHELL if k in ("gripper", "tip_left", "tip_right", "link5
 #                                  face first, ahead of its own parts, and is not (README Rig protection). `cover=<mm>`
 #                                  on the command line puts that thickness on every link of both arms instead
 HELD = ("grip the housing", "let go")   # the right holds the lancet from the first label up to the second
-AT_STAND = {"down to the lancet", "grip the housing", "settle", "twist the tab off", "hold", "lift it out of the stand",
+AT_STAND = {"down to the lancet", "grip the housing", "settle", "twist the tab off", "hold",
+            "turn it back in the stand", "lift it out of the stand",
             "press it down in the stand", "back up in the stand"}
-ON_SITE = {"tip on the site", "press until it fires", "hold the press", "back off along the axis"}
-PRESSED = {"press until it fires": "tip on the site", "hold the press": "tip on the site",
+ON_SITE = {"tip on the site", "load the press", "settle the press", "press until it fires", "hold the press",
+           "back off along the axis"}
+PRESSED = {"load the press": "tip on the site", "settle the press": "tip on the site",
+           "press until it fires": "tip on the site", "hold the press": "tip on the site",
            "press it down in the stand": "hold"}
 LIFTED = {"hold it up on its stop": "grip the ring finger", "keep holding through the press": "grip the ring finger"}
 HOLDING = {"grip the ring finger", "hold it up on its stop", "keep holding through the press", "ease off",
