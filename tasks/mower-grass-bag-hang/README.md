@@ -10,6 +10,11 @@ Files: `mower_bag.py` (scene, measurement, scorer, scripted demo and stems), `me
 fixed mechanisms, loose multi-shape bodies and the step hooks), `test_mower_bag.py` (offline tests), `tools/` (IK
 check, gripper clearance sweep, arm sag check), `sim/` (run scripts and the stem copies' maker).
 
+Origin, disclosed. The idea comes from the earlier pull request #2489 (hang a mower grass bag under its sprung flap).
+It was not accepted on 2026-11-19 at 00:33 UTC; its 48 h hold ends 2026-11-21 at 00:33 UTC, and this task is
+submitted only after that, with no revision pushed to #2489. The code, scene, scorer,
+demo, stems and text here are our own, written for this task; only the part estimates follow #2489's (Sources).
+
 ## Why it matters
 
 A bagging mower's bag comes off to be emptied and has to go back on correctly. The manual's method uses both hands:
@@ -111,7 +116,8 @@ upside-down bag never counts (test).
 - 1.0: 0.9 held 1 s (yam_arena ends the episode with `success`).
 
 The instruction's "do not lift the mower or slide it sideways" cannot be broken in the sim, which only lets the mower
-roll fore and aft; that part is checked only in real trials.
+roll fore and aft. It is not scored in a real trial either: the score reads only the roll (below), so that clause
+of the instruction is a stated care, not a rung.
 
 Small rolls cost nothing: any roll backward, and up to 60 mm forward, leaves the score as it is (a nudge while fitting
 the bag is normal). There is no history: a hand or a roll earlier in the run does not lower the end score (test). The
@@ -235,15 +241,28 @@ Checked on the repository (state on 2026-11-19):
 | hang-a-blind-headrail-in-gated-brackets | accepted | a rail seated in two brackets | no flap to hold; the brackets' gates are part of the brackets |
 | refit-drawer-past-rear-hooks | accepted | carrying a load past hooks | a drawer on slides; no sprung part to hold |
 | #1277 (self-closing gate), #1699 (piano lid and prop), #1676 (trailer tongue), #1403 (spring flange) | not accepted, final | hold a sprung or heavy part open while the other hand works | none of them seats a part in hooks under the held part or has it close onto the part |
-| #2489, hang a mower grass bag under its sprung flap | not accepted, its hold lapses 2026-11-21 | the same idea | the reviewer's two points are answered by construction: the finite rod is checked at each hook, and the mower's roll is a final, stated safety limit, not a permanent zero |
+| #2489, hang a mower grass bag under its sprung flap | not accepted 2026-11-19 00:33 UTC; its 48 h hold ends 2026-11-21 00:33 UTC, before this submission | the same idea | the reviewer's two points are answered by construction: the finite rod is checked at each hook, and the mower's roll is a final, stated safety limit, not a permanent zero |
 
 Risk, stated: #2385 was closed for overlap with hanging tasks, and #2282 already covers hold-open, place, let shut.
 This task's case rests on the combination, the flap closing onto the hung bag as the manual's fitting step requires.
 
 ## Sim results
 
-PhysX (Isaac Lab, yam_arena, `sim/run.sh`), commit 6fe45f8, CLI seed 0 unless stated, traced [RUN]. Rod centre is
-its height over the bench; seated is 290 mm.
+Filmed demo [RUN]: `sim/film.sh` on `mower_bag.py` itself (no trace), yam_scripted, the seed-0 layout (reset seed
+1415158438), 1,200-step limit, 320 x 176 cameras. Score 1.0, success at step 728 (36.4 s); 140 s of wall time on a
+shared GPU. This is `demo.mp4` and the screenshot.
+
+Dream-1 [RUN]: one run, `sim/dream.sh`, the same layout and limit. Score 0; it ran to the 1,200-step limit; 618 s of
+wall time. This is the model video.
+
+Both runs hashed `mower_bag.py`, `mechanism.py` and `task.json` before starting. The hashes match the files here, with
+`task.json` as it was before its `scores` line was filled in: after both runs, `task.json` changed only in that line
+(set from the two results above), and nothing else the runs read has changed.
+
+Stems and seeds [RUN]: PhysX (Isaac Lab, yam_arena, `sim/run.sh`, traced copies made by `sim/mk.sh`), CLI seed 0
+unless stated. They ran on the code of commit 6fe45f8, whose `mower_bag.py` differs from this one only in
+`ONE_HOOK_DY` (65 mm then, 75 mm now), which only `s_one_hook` reads; `s_one_hook` was re-run on the 75 mm offset.
+These traced runs did not hash their files. Rod centre is its height over the bench; seated is 290 mm.
 
 | Stem | Score | Steps | End state |
 |---|---|---|---|
@@ -253,7 +272,7 @@ its height over the bench; seated is 290 mm.
 | `s_nothing` | 0 | 61 | the bag where it started |
 | `s_one_arm` | 0 | 442 | the rod 49 mm behind the rear face, short of the hooks, the flap shut, roll 33.6 mm |
 | `s_lift` | 0 | 650 | the bag back on the bench, rod 261 mm, flap shut, roll 8.6 mm |
-| `s_one_hook` | 0 | 775 | pending: at 6fe45f8 the rod's left arm landed on the left hook's lip (rod 310 mm), so the finite rod was not tested; the offset is now 75 mm and the stem is re-run |
+| `s_one_hook` | 0 | 775 | re-run at the 75 mm offset: the right hook seated, the left not; rod 290 mm (down at the hooks' floor, not on a lip), yaw 2.5 deg, roll 0.6 mm. At 65 mm (6fe45f8) the rod's left arm had landed on the left hook's lip (rod 310 mm), which is why the offset changed |
 | `s_tips` | 0 | 803 | the rod on the lips' tops, 310 mm |
 | `s_ground` | 0 | 584 | the bag on the bench short of the hooks |
 | `s_hold` | 0.25 | 803 | seated, the right hand still on the bar |
