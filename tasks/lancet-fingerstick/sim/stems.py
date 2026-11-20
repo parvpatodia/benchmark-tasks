@@ -14,7 +14,9 @@
 #        friction then tilts the contact force, the press the yield sweep finds hardest. Expected 0, "not held still"
 #        (or "slid", also 0).
 #   f00  both arms; after the twist the right presses the lancet down in the stand before lifting it. WHY: the real
-#        lancet, its tab off, fires into the stand's post. Expected 0, "fired in the stand".
+#        lancet, its tab off, fires into the stand's post. In the sim the housing lands on the socket after about 1 mm
+#        of shield travel, so the press peaks near 5.3 N and cannot fire: expected 1.0, the demo finished (README Sim
+#        results). The rule is test_fired_in_the_stand_latches.
 #   k00  both arms; after firing the right lowers the lancet into the container's opening and keeps holding it.
 #        Expected 0.5: fired well, never let go.
 #   c00  both arms; the tab twisted the other way (clockwise seen from above). Expected 1.0: either way breaks it.

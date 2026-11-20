@@ -570,10 +570,11 @@ uses the same 1,200 steps. The scripted demo plays its plans as `TiltPlan`s (Des
 ## Sim results
 
 The trainer's pose, the board, the site and the hold changed after the earlier PhysX runs, so none of those is
-quoted. One traced run of the previous revision is, below, for what it measured. The runs in the table are planned on
-the files here; each result is filled in from its run's log once it has run.
+quoted. One traced run of the previous revision is, below, for what it measured. The film and the runs in the table
+were run on the files here, in the camera harness (`sim/film.sh`, `sim/run.sh`, 2026-11-20) [RUN].
 
-yam_arena, `--seed 0` (the first row under Seeds), `object_jitter=0`, 20 Hz, 1,200-step limit. FILM_PENDING
+yam_arena, `--seed 0` (the first row under Seeds), `object_jitter=0`, 20 Hz, 1,200-step limit. The film scored 1.0, success at step
+801 (40.05 s), in 305 s of wall time [RUN]; its hashes of the three files match the files here.
 DREAM_PENDING Both runs hash `lancet_fingerstick.py`, `mechanism.py` and `task.json` before starting (`sim/film.sh`,
 `sim/dream.sh`), to be checked against the files here (`task.json` as it was before its `scores` line was filled in).
 Expected for the film: 1.0 inside the 1,200 steps; the left's half-gap (`lf` in the trace) inside 6.40 to 8.20 mm
@@ -623,7 +624,6 @@ and corners 126748 and 100825 scored 1.0 each, in each of two runs (the two gave
 10.4 to 11.4 mm back (8 to 15) and 41.7 to 46.9 deg round (15 to 60), the left's half-gap 7.82 to 7.96 mm (6.40 to
 8.20), and the housing's slip in the grip 0.1 mm.
 
-The film is run on the files here.
 
 More PhysX runs of the scripted policy, each on a copy that `sim/mk.sh` makes of this `lancet_fingerstick.py` with a
 per-step trace appended (`sim/log_snippet.py`, which writes `sim/out/trace_<copy>_<seed>.csv`), and for the stems
@@ -631,18 +631,18 @@ per-step trace appended (`sim/log_snippet.py`, which writes `sim/out/trace_<copy
 
 | Run | `--seed` | Copy | Expected | PhysX score, steps, fault |
 |---|---|---|---|---|
-| demo at the 7 other layout corners | 126748, 84277, 100825, 5410, 55059, 5673, 58369 | t00 | 1.0, success | STEMS_PENDING |
-| demo with a 0.05 s start delay, corner -x, -y, -turn | 26385 | t05 | 1.0, success | |
-| one arm: left parked, the demo's press | 0 | o00 | 0, not held still (or fired with no gripper holding the ring finger) | |
-| one arm: left parked, a 0.15 s jab | 0 | j00 | 0, not held still (or fired with no gripper holding the ring finger) | |
-| one arm: left parked, a jab 30 mm past contact in one control step (0.05 s) | 0 | x00 | 0, not held still (or fired with no gripper holding the ring finger) | |
-| one arm: left parked, a press 8.5 mm from the apex driven 10 deg toward the knuckle | 0 | w00 | 0, not held still (or slid, or fired with no gripper holding the ring finger) | |
-| both arms: the lancet pressed down in the stand after the twist | 0 | f00 | 0, fired in the stand | |
-| both arms: after firing, the lancet held inside the container, never let go | 0 | k00 | 0.5 | |
-| both arms: the tab twisted the other way (-70 deg) | 0 | c00 | 1.0, success | |
-| both arms: the left closed to 5 mm on air 26 mm above the ring finger's axis, and a jab 30 mm past contact in one step | 0 | a00 | 0, not held still (or fired with no gripper holding the ring finger) | |
-| both arms: the left closes on the ring finger but does not lift it | 0 | g00 | 0, not held still | |
-| both arms: the demo's hold, and a jab 60 mm past contact in one step | 0 | y00 | 0, not held still | |
+| demo at the 7 other layout corners | 126748, 84277, 100825, 5410, 55059, 5673, 58369 | t00 | 1.0, success | 1.0 at 126748, 84277 and 100825 (copies t00, t00b, t00c), success at step 801 each; the other four not run on these files |
+| demo with a 0.05 s start delay, corner -x, -y, -turn | 26385 | t05 | 1.0, success | 1.0, success at step 802 |
+| one arm: left parked, the demo's press | 0 | o00 | 0, not held still (or fired with no gripper holding the ring finger) | 0 at step 881, not held still (gave 2.2 mm under the press) |
+| one arm: left parked, a 0.15 s jab | 0 | j00 | 0, not held still (or fired with no gripper holding the ring finger) | 0 at step 864, not held still (2.4 mm) |
+| one arm: left parked, a jab 30 mm past contact in one control step (0.05 s) | 0 | x00 | 0, not held still (or fired with no gripper holding the ring finger) | 0 at step 862, not held still (6.5 mm) |
+| one arm: left parked, a press 8.5 mm from the apex driven 10 deg toward the knuckle | 0 | w00 | 0, not held still (or slid, or fired with no gripper holding the ring finger) | 0 at step 881, not held still (2.2 mm) |
+| both arms: the lancet pressed down in the stand after the twist | 0 | f00 | 1.0, success (in the sim the press in the stand cannot fire; below) | 1.0, success at step 843; the shield peaked at 3.95 N in the stand |
+| both arms: after firing, the lancet held inside the container, never let go | 0 | k00 | 0.5 | 0.5 at step 949 (fired well, never let go) |
+| both arms: the tab twisted the other way (-70 deg) | 0 | c00 | 1.0, success | 1.0, success at step 801 |
+| both arms: the left closed to 5 mm on air 26 mm above the ring finger's axis, and a jab 30 mm past contact in one step | 0 | a00 | 0, not held still (or fired with no gripper holding the ring finger) | 0 at step 862, not held still (6.5 mm) |
+| both arms: the left closes on the ring finger but does not lift it | 0 | g00 | 0, not held still | 0 at step 881, not held still (2.1 mm) |
+| both arms: the demo's hold, and a jab 60 mm past contact in one step | 0 | y00 | 0, not held still | 0 at step 862, not held still (2.5 mm) |
 
 The stems' plans pass the same reach check as the demo's (`tools/ikcheck.py`). The offline replay is quasi-static, so
 x00 replays as a slow press; whether a PhysX jab fires before the finger moves is what x00 shows, and either way the
@@ -651,7 +651,15 @@ gives way before the fire, "fired with no gripper holding the ring finger" if it
 vertical, with friction, need not push it down; The model, the yield sweep). Whichever PhysX gives is reported as
 found. g00 and y00 test the hold itself in PhysX: the offline replay holds the finger as a joint with the arm's
 assumed stiffness, so whether PhysX lets the press through a grip that does not lift, or a 60 mm jab through the
-demo's hold, is what those two runs show.
+demo's hold, is what those two runs show: neither did.
+
+f00 is a limit of the sim, not a hole in the scorer. In the sim the housing lands on the socket's floor after about
+1 mm of shield travel, so a press in the stand peaks near 5.3 N and cannot reach the 8 N fire. The shield stopped at
+1.05 mm while the arm drove 28.6 mm and then 60 mm down, at 5.2 and 5.4 N; the joints' errors put about 11 N down on
+the lancet [RUN: fastrun traces of f00, 2026-11-20; ARITH: K (q_target minus q) through the Jacobian]. That the housing
+meets the socket is inference from those numbers, not a contact read. The stem therefore finishes the demo. The rule
+itself (a lancet, its tab off, fired in the stand scores 0) is checked by `test_fired_in_the_stand_latches`, which puts
+8.1 N on the shield in the stand.
 
 ## Sim against real
 

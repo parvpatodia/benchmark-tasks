@@ -1019,8 +1019,10 @@ class LazyRoutes(unittest.TestCase):
         want = {"a": (0.0, ("not held",)), "g": (0.0, ("not held still",)), "y": (0.0, ("not held still",)),
                 "o": (0.0, ("not held still",)), "j": (0.0, ("not held still",)),
                 "x": (0.0, ("not held still", "no gripper holding the ring finger")),
-                "w": (0.0, ("not held still", "slid")), "f": (0.0, ("fired in the stand",)), "k": (0.5, (None,)),
-                "c": (1.0, (None,))}
+                "w": (0.0, ("not held still", "slid")), "k": (0.5, (None,)), "c": (1.0, (None,))}
+        # WHY no f00: in PhysX the housing lands on the socket after about 1 mm of shield travel, so its press in the
+        # stand peaks near 5.3 N and never fires (README Sim results); this quasi-static replay has no socket floor
+        # and would fire it. The rule itself is test_fired_in_the_stand_latches.
         seed = trial_seed(0)
         for stem, (score, why) in want.items():
             ns = dict(vars(M))
