@@ -17,5 +17,5 @@
   "reset_notes": "Nothing is consumed. Lay the four offcuts back on their marks, the nailed one nail up, and stand the tote on its mark.",
   "fidelity": "PhysX rigid bodies at real size and mass, 20 Hz control. Offcuts are square-edged boxes; the nailed offcut and its nail are one rigid body (the nail cannot bend or pull out). The pallet is fixed; the tote is loose. Frictions are estimates (wood 0.5/0.4, tote 0.4/0.3). The sign's letters are drawn on it, not modelled as parts.",
   "scores": "Dream-1 run: refused by the Dream service partway (416 steps), nothing scored; demo: 1.0 (success at step 713)",
-  "media": ""
+  "media": "M-DDQJRR"
 }
