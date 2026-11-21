@@ -48,11 +48,12 @@ trial scores 0 (the scorer never fails open).
   (`in_outline` in `chicken.py`; read from the gripper's pose each control step). The counter is not tracked spot by
   spot, so a raw hand on it is ruled unsafe at once; that closes the route where the raw hand touches the counter,
   the clean hand touches the same spot, then a roll.
-- **Also 0, latched:** a raw holder (the tray from the start, the pan once raw) slides more than 5 mm, lifts more than
-  5 mm, or turns or tilts more than 2 degrees from where it was when it turned raw (the tray: where it was set;
-  `off_place`). A raw tray or pan pushed along the counter would leave raw counter behind; within these limits that
-  band is at most 5 mm wide at the holder's edge. The plate and the basket, and a clean pan, may move: a raw hand can
-  only reach their floors by touching them, which already scores 0. In every GPU run below the holders moved
+- **Also 0, latched:** a raw holder (the tray from the start, the pan once raw) slides more than 5 mm or turns more than
+  2 degrees from where it was when it turned raw (the tray: where it was set), lifts more than 5 mm above its set-down
+  height, or tilts more than 2 degrees from level (`off_place`). A raw tray or pan pushed along the counter would leave
+  raw counter behind; within these limits that band is at most 5 mm wide at the holder's edge. The plate and the
+  basket, and a clean pan, may move, but a holder's floor covers the counter only while it rests flat (no more than
+  5 mm above its set-down height, tilted 2 degrees or less): counter under a lifted or tipped holder is bare. In every GPU run below the holders moved
   at most 0.6 mm, rose 0 mm and turned 0.19 degrees. And 0 if a gripper's position cannot be read (fails closed).
 - **Otherwise 0.2 per item placed.** A thigh: centre within 78 mm of the pan's axis (the floor's radius), lowest point
   within 30 mm above the pan floor. A roll: centre within 90 mm of the plate's centre (the well), lowest point within
@@ -63,7 +64,7 @@ trial scores 0 (the scorer never fails open).
 ## Demo and the unsafe routes
 
 Each row is one fastrun mode (`TASK_DEMO=<mode>`), GPU physics, seed 0, scores read from its `result.json`; the step of
-the first zero rule is from its `trace.csv`. Run on file hash e2482253 (`cat $(ls *.py | sort) task.json | shasum -a 256`),
+the first zero rule is from its `trace.csv`. Run on file hash edc45e39 (`cat $(ls *.py | sort) task.json | shasum -a 256`),
 the final files. The filmed demo (cameras on, seed 0: 1.0 in 989 steps) and Dream-1 (`--policy dream`, seed 0: 0
 after all 1,200 steps; it moved its right hand over the tray and placed no item) ran on hash a5d3d0c0. Since then the
 only code changes are the counter rules in `chicken.py` (`in_outline`, `off_place` and `raw_hand_counter`, called by

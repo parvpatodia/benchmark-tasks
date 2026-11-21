@@ -15,8 +15,8 @@ Contamination is read from PhysX contacts (rigid contact views), after every phy
   gripper comes within 3 mm of the counter where no holder's floor covers it (in_outline: tray and basket rectangles,
   the pan's 82 mm floor disc, the plate's 90 mm well), read from the gripper's pose. The counter is not tracked spot by
   spot, so a raw hand on it is ruled unsafe at once, and a clean hand can never pick raw up there. Also 0: a raw holder
-  (the tray; the pan once raw) slides over 5 mm, lifts over 5 mm or turns or tilts over 2 deg from where it turned raw
-  (it would leave raw counter behind), or a hand's pose cannot be read (fails closed).
+  (the tray; the pan once raw) slides over 5 mm or turns over 2 deg from where it turned raw, lifts over 5 mm, or tilts
+  over 2 deg from level (it would leave raw counter behind); a holder's floor covers the counter only while it rests, or a hand's pose cannot be read (fails closed).
 """
 import dataclasses
 import math
@@ -501,7 +501,7 @@ HOLDERS = ("tray", "pan", "basket", "plate")
 
 HOLD_MOVE, HOLD_RISE, HOLD_TURN = 0.005, 0.005, 2.0   # m, m, deg: a RAW holder that slides, lifts or turns more is off
                                  # its place [CHOICE; [RUN] demo seeds 0 to 2 and every mode moved the holders at most
-                                 # 0.60 mm, 0 mm, 0.19 deg (fast_03a125dc traces)]
+                                 # 0.60 mm, 0 mm, 0.19 deg (fast_03a125dc and fast_e2482253 traces)]
 # WHY this tight and raw holders only: a raw tray or pan moved along the counter leaves raw counter that no rule tracks;
 # at 5 mm and 2 deg (the tray's corners sweep 4.4 mm) that band is at most 5 mm wide at the holder's edge. A clean
 # holder may move freely: a raw hand can only reach its floor by touching it, which already scores 0
@@ -524,19 +524,31 @@ def in_outline(name, state, pts):
     raise KeyError(name)
 
 
+def _tilt_deg(state):
+    r = mechanism._rot_xyzw(state.quat_xyzw)
+    return math.degrees(math.acos(max(-1.0, min(1.0, float(r[2, 2])))))
+
+
+def resting_flat(name, state):
+    """The holder sits on the counter as set: no higher than HOLD_RISE over its set-down height, tilted at most
+    HOLD_TURN from level. Only a resting holder's floor covers the counter (in_outline)."""
+    return float(state.pos[2]) - SPEC[name].pos[2] <= HOLD_RISE and _tilt_deg(state) <= HOLD_TURN
+
+
 def off_place(name, state, ref=None):
-    """Why a raw holder is off its place (slid over HOLD_MOVE, lifted over HOLD_RISE, or turned or tilted over HOLD_TURN
-    from ref = (pos, yaw rad), default its set-down pose), or "" if it is in place."""
+    """Why a raw holder is off its place, or "" if it is in place: slid over HOLD_MOVE or turned over HOLD_TURN from
+    ref = (pos, yaw rad), default its set-down pose; lifted over HOLD_RISE above its set-down height; tilted over
+    HOLD_TURN from level."""
     start, yaw0 = ref if ref is not None else (SPEC[name].pos, SPEC[name].yaw)
     p = np.asarray(state.pos, float)
     if math.hypot(p[0] - start[0], p[1] - start[1]) > HOLD_MOVE:
         return f"{name} slid off its place"
-    if p[2] - start[2] > HOLD_RISE:
+    # WHY the set-down height, not ref: a pan that turns raw while lifted must not be set down somewhere new
+    if p[2] - SPEC[name].pos[2] > HOLD_RISE:
         return f"{name} lifted"
     r = mechanism._rot_xyzw(state.quat_xyzw)
     yaw = math.degrees(math.atan2(r[1, 0], r[0, 0])) - math.degrees(yaw0)
-    tilt = math.degrees(math.acos(max(-1.0, min(1.0, float(r[2, 2])))))
-    if abs((yaw + 180) % 360 - 180) > HOLD_TURN or tilt > HOLD_TURN:
+    if abs((yaw + 180) % 360 - 180) > HOLD_TURN or _tilt_deg(state) > HOLD_TURN:
         return f"{name} turned or tilted"
     return ""
 
@@ -565,7 +577,9 @@ def raw_hand_counter(c, hands, holders, step=0):
         p = np.asarray(pts, float)
         out = np.ones(len(p), bool)
         for name, st in holders.items():
-            out &= ~in_outline(name, st, p)
+            # WHY resting only: a lifted or tilted holder's floor no longer covers the counter under it
+            if resting_flat(name, st):
+                out &= ~in_outline(name, st, p)
         if out.any():
             z = float(p[out, 2].min()) - TOP
             least = z if least is None else min(least, z)

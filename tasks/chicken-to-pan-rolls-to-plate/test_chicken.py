@@ -372,6 +372,30 @@ class Contamination(unittest.TestCase):
         M.raw_hand_counter(c, far, tilted, 9)
         self.assertEqual(c.fail, (9, "tray turned or tilted"))
 
+    def test_lifted_or_tilted_holder_covers_nothing(self):
+        """A clean plate lifted 10 mm or a clean basket tilted 5 deg exempts no counter: a raw hand 1 mm over the counter
+        under it latches 0. A raw pan lifted after it turned raw, or turning raw while lifted, latches 0."""
+        far = {"left": FAR["left"], "right": FAR["right"]}
+        lx, ly = SPEC["plate"].pos[:2]
+        bx, by = M.BASKET_C
+        from mechanism import body_state
+        lifted = {n: state(n) for n in M.HOLDERS}
+        lifted["plate"] = state("plate", np.asarray(SPEC["plate"].pos) + (0.0, 0.0, 0.010))
+        q = np.array([math.sin(math.radians(2.5)), 0.0, 0.0, math.cos(math.radians(2.5))])   # 5 deg about x
+        lifted["basket"] = body_state(SPEC["basket"], lifted["basket"].pos, q)
+        for xy, what in (((lx, ly), "under a lifted plate"), ((bx, by), "under a tilted basket")):
+            c = feed([("right", "chicken1")])
+            p = np.array([[xy[0], xy[1], M.TOP + 0.001]])
+            M.raw_hand_counter(c, {"left": FAR["left"], "right": p}, lifted, 7)
+            self.assertEqual(c.fail, (7, "raw right hand touched the counter"), what)
+        c = M.Contamination()
+        held = {n: state(n) for n in M.HOLDERS}
+        held["pan"] = state("pan", np.asarray(SPEC["pan"].pos) + (0.0, 0.0, 0.008))
+        c.raw_set.add("pan")
+        M.raw_hand_counter(c, far, held, 9)
+        self.assertEqual(c.fail, (9, "pan lifted"))
+        self.assertTrue(M.resting_flat("plate", state("plate")))
+
     def test_drawn_pieces_never_collide(self):
         for n in M.ITEMS:
             cols = [sh for sh in SPEC[n].shapes if sh.collide]
