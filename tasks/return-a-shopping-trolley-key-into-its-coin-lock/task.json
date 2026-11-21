@@ -17,5 +17,5 @@
   "reset_notes": "Nothing is consumed. Put the quarter back in the slide and push the slide home until it latches; as on the real lock this frees the key, which then pulls out. Let the key hang still on its chain.",
   "fidelity": "Rigid bodies; lock, quarter, nesting gap and tube at catalogue size. The lock follows EP0427819B1 loosely: a sprung tooth latches the coin slide out, and a sprung pin dropping into the key's hole stands in for the patent's ball, so the homed key stays locked (its release by the re-inserted slide is not modelled). The chain is 11 rigid links, 40 mm short of the listing; the handles are shortened and lowered. Of the baskets only the near rear wall is modelled, not the child seat or front basket.",
   "scores": "Dream-1 run: 0.0; scripted demo: 1.0",
-  "media": ""
+  "media": "M-839G5T"
 }
