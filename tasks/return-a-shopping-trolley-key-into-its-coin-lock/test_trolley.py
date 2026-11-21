@@ -1,6 +1,6 @@
 """Offline tests for trolley.py: loads; the start scores 0; the goal scores 0.75 from score() and is a success; every
 scoring rule against the code, each mode's planned end state against EXPECT, the closed shortcuts (a finger cannot
-reach the plunger, the coin slide cannot come out without the key, the key cannot reach its own lock), the latch
+reach the plunger, the coin slide cannot come out without the key, the near lock's own key scores 0), the latch
 geometry, the kit's offline gates, and the text against the code. No simulator.
 
     PYTHONPATH=<yam_arena source> python3 test_trolley.py
@@ -160,7 +160,17 @@ class Scoring(unittest.TestCase):
         up = (ON_MAT[0], ON_MAT[1], ON_MAT[2] + M.MAT_REST + 0.001)
         self.assertEqual(sc(states(key_at(HOME), near(OUT), coin(up))), 0.5)
         on_edge = (ON_MAT[0], ON_MAT[1], M.TOP + M.MAT[2] + M.COIN_R)
-        self.assertEqual(sc(states(key_at(HOME), near(OUT), coin(on_edge, flat=False))), 0.75)
+        self.assertEqual(sc(states(key_at(HOME), near(OUT), coin(on_edge, flat=False))), 0.5)   # on edge: not laid
+
+    def test_quarter_tilt_limit(self):
+        """The quarter counts only lying within COIN_FLAT_DEG of flat, its lowest rim point on the mat."""
+        for tilt, want in ((M.COIN_FLAT_DEG - 3, 0.75), (M.COIN_FLAT_DEG + 3, 0.5)):
+            r = ry(90 - tilt)                                   # body x (face normal) tilted `tilt` from vertical
+            a = math.radians(tilt)
+            z = M.TOP + M.MAT[2] + M.COIN_R * math.sin(a) + M.COIN_T / 2 * math.cos(a)
+            q = body_state(M.QUARTER, (ON_MAT[0], ON_MAT[1], z), quat(r), Z3)
+            self.assertAlmostEqual(M.coin_low_z(q), M.TOP + M.MAT[2], places=6)
+            self.assertEqual(sc(states(key_at(HOME), near(OUT), q)), want, tilt)
 
     def test_full_needs_still_and_clear(self):
         s = goal()
@@ -221,7 +231,7 @@ class Construct(unittest.TestCase):
         self.assertGreater(M.PIN_K * M.PIN_PRE, 0.0)
 
     def test_not_home_not_retained(self):
-        """Short of home the pin's footprint lies on solid key, so the pin stands 1.25 mm or more up: over PIN_DOWN."""
+        """Short of home the pin's footprint lies on solid key, so the pin stands 2.5 mm or more up: over PIN_DOWN."""
         x0, x1 = M.PIN_X - M.PIN_HX, M.PIN_X + M.PIN_HX
         for d in np.arange(M.ENTER, HOME - 0.0002, 0.0005):
             tip = M.FX - d
@@ -231,6 +241,30 @@ class Construct(unittest.TestCase):
         tip = M.FX - HOME
         self.assertTrue(tip + M.APER_D0 <= x0 + 1e-9 and tip + M.APER_D1 >= x1)   # home: the pin drops in
         self.assertGreaterEqual(M.FX - (x1 - M.APER_D1), M.PLUNGER_IN + M.PLUNGER_STOP)   # to the plunger's stop
+
+    def test_off_centre_key_retained(self):
+        """A key pushed home anywhere in the slot's play is caught: the pin's footprint lies inside the key's hole for
+        a key at either side of the slot, and such a key with the slide out and the pin down scores 0.5."""
+        play = (M.SLOT_W - M.KEY_W) / 2
+        self.assertGreater(play, 0.002)
+        for dy in (-play, 0.0, play):
+            hole = (M.SLOT_Y + dy - M.APER_W / 2, M.SLOT_Y + dy + M.APER_W / 2)
+            pin = (M.SLOT_Y - M.PIN_HY, M.SLOT_Y + M.PIN_HY)
+            self.assertLessEqual(hole[0], pin[0], dy)
+            self.assertGreaterEqual(hole[1], pin[1], dy)
+            self.assertEqual(sc(states(key_at(HOME, dy=dy), near(OUT))), 0.5, dy)
+        self.assertGreaterEqual((M.KEY_W - M.APER_W) / 2, 0.002)            # the key's rails beside the hole stay 2 mm+
+
+    def test_basket_wall_under_handle(self):
+        """The near basket's rear wall stands between the near handle and the hanging key, under the handle, and below
+        the level key's path to the slot."""
+        shapes = M.basket_shapes()
+        top = max(float(sh.bounds()[1][2]) for sh in shapes)
+        self.assertLess(top, M.Z_KEY0 - M.KEY_W / 2 - 0.02)                 # 20 mm under a key turned on edge
+        key_x = M.XF - M.XN + M.ANCHOR[0]                                   # hanging key's line, near lock frame
+        self.assertGreater(M.BASKET_X - M.WIRE_R, M.TUBE_R)
+        self.assertLess(M.BASKET_X + M.WIRE_R, key_x - M.KEY_T - 0.05)
+        self.assertGreater(M.H + M.BASKET_Z0, 0.0)                          # off the bench
 
     def test_key_fits_slot_with_play(self):
         self.assertGreater(M.SLOT_W - M.KEY_W, 0.002)
@@ -258,15 +292,21 @@ class Construct(unittest.TestCase):
         out_edge = M.COIN_Y0 - M.PUSH_TRAVEL + M.COIN_R
         self.assertLess(out_edge, -M.LOCK_L / 2)           # wholly out once released
 
-    def test_key_cannot_reach_its_own_lock(self):
-        """The chain is shorter than the way from its anchor round to the front lock's own slot: the patent's 'cannot
-        be inserted into its own coin lock'."""
+    def test_own_key_scores_zero(self):
+        """The near lock's own key hangs on its own chain. Its chain reaches round to its own slot (a real lock stops
+        this; EP0427819B1 says the key 'cannot be inserted into its own coin lock'), but only the front lock's key
+        counts: the near key home in the near slot with the slide out and the quarter on the mat scores 0."""
         a = np.array(M.ANCHOR)
-        slot_back = np.array([M.FX + M.KEY_L - M.HOME_DEPTH, M.SLOT_Y, M.SLOT_Z])
-        way = abs(a[0] - (-M.LOCK_W / 2)) + M.LOCK_W + (slot_back[0] - M.FX) + abs(slot_back[2] - a[2])
-        self.assertGreater(way, 0.0)
-        reach_to_near = np.linalg.norm((np.array([M.XN, 0, 0]) + slot_back) - (np.array([M.XF, 0, 0]) + a))
-        self.assertLess(reach_to_near, M.CHAIN_N * M.CHAIN_P)    # the near slot is within the chain's reach
+        back = np.array([M.FX + M.KEY_L - M.HOME_DEPTH + M.KEY_EYE, M.SLOT_Y, M.SLOT_Z])
+        way = abs(a[0] - (-M.LOCK_W / 2)) + M.LOCK_W + (back[0] - M.FX) + abs(back[2] - a[2])
+        self.assertLess(way, M.CHAIN_N * M.CHAIN_P)              # it can reach: scoring, not geometry, closes it
+        self.assertIn("nkey", [ln.name for ln in M._own_links])
+        s = states(None, near(OUT, -M.RELEASE_TRAVEL), coin(ON_MAT))
+        r = ry(90)
+        tip = np.array([M.XN + M.FX - HOME, M.YL + M.SLOT_Y, M.TOP + M.H + M.SLOT_Z])
+        s["near_chain"].links["nkey"] = link(tip - r @ np.asarray(M.KEY_TIP), r)
+        self.assertEqual(sc(s), 0.0)
+        self.assertFalse(M.success(s))
 
     def test_key_hangs_free(self):
         tip_z = M.TOP + M.H + M.KEY_TOP - M.KEY_L
@@ -279,7 +319,7 @@ class Construct(unittest.TestCase):
         src = (HERE / "src" / "usmint_quarter.txt").read_text()
         for s in ("24.26 mm", "1.75 mm", "5.670 g"):
             self.assertIn(s, src)
-        self.assertIn("Size:90*70*68mm", (HERE / "src" / "malltek_coinlock.txt").read_text())
+        self.assertIn("Size:90*70*68mm", (HERE / "src" / "supermarket_fixture_coinlock.txt").read_text())
         self.assertIn('Nesting Distance 7"', (HERE / "src" / "unarco_M60TN.txt").read_text())
 
 

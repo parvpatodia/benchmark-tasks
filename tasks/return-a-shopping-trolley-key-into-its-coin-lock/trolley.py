@@ -6,7 +6,7 @@ in the near lock's key slot, then take the quarter that the lock pushes out and 
 Basis: the coin lock mechanism of EP0427819B1 (src/ep0427819.txt): the coupling member (the key) goes in through an
 opening in a side wall, a coin slide runs at right angles to it, and on full insertion the key releases the coin slide,
 which a compression spring pushes out "so that the coin can be removed". Lock size and chain from a coin lock listing
-(src/malltek_coinlock.txt); nesting distance from a tight-nesting cart sheet (src/unarco_M60TN.txt); quarter from the
+(src/supermarket_fixture_coinlock.txt); nesting distance from a tight-nesting cart sheet (src/unarco_M60TN.txt); quarter from the
 US Mint (src/usmint_quarter.txt).
 """
 import math
@@ -38,17 +38,17 @@ EXPECT = {"demo": 1.0, "nothing": 0.0, "partway": 0.25, "pry_coin": 0.0, "key_on
 IN = 0.0254
 # -- trolleys ------------------------------------------------------------------------------------------------------------
 NEST = 7 * IN                    # handle to handle of two nested trolleys [SOURCE: unarco_M60TN.txt, nesting distance 7"]
-TUBE_R = 0.0125                  # handle tube radius [ARITH: the lock fits 25-27 mm handles, SOURCE malltek; 25 mm tube]
+TUBE_R = 0.0125                  # handle tube radius [ARITH: the lock fits 25-27 mm handles, SOURCE supermarket_fixture_coinlock.txt; 25 mm tube]
 HANDLE_LEN = 0.30                # handle section between its side tubes [CHOICE: a real handle is wider; 300 mm keeps
 #                                  the resting left arm and the working right elbow clear of its ends]
 FRAME_RUN = 0.08                 # each side tube runs this far forward (+x) as it falls to the bench [EST]
 H = 0.340                        # handle axis over the bench [CHOICE: the 959 mm real handle lowered into the arms'
-#                                  reach; the key still hangs 66 mm clear of the bench]
+#                                  reach; the key's tip still hangs 66.5 mm clear of the bench]
 XN = 0.150                       # near handle axis, world x [CHOICE]
 XF = XN + NEST                   # front handle axis [ARITH: 0.328]
 YL = 0.050                       # both locks' middles, world y [CHOICE: the near handle's -y end clear of the right
 #                                  arm's elbow when it works at the slot]
-# -- coin lock (malltek_coinlock.txt: "Size:90*70*68mm", 260 mm chain, coins 23-28 mm) ---------------------------------
+# -- coin lock (supermarket_fixture_coinlock.txt: "Size:90*70*68mm", 260 mm chain, coins 23-28 mm) ---------------------------------
 LOCK_L, LOCK_W, LOCK_H = 0.090, 0.070, 0.068   # along the handle, across it, tall [SOURCE]
 LOCK_Z0 = TUBE_R                 # the lock sits on the tube [CHOICE]
 LOCK_Z1 = LOCK_Z0 + LOCK_H       # [ARITH: 0.0805]
@@ -67,12 +67,18 @@ PUSH_TRAVEL = 0.040              # coin slide travel out of the lock's -y end [E
 # the key), "whereas the coupling member 8 is firmly locked by the locking member 18". Here: a pin in the casing over the
 # key's path, sprung down; its +x face slopes so the key coming in lifts it, its -x face is upright so a key pulled back
 # stops on it once the pin has dropped into the key's hole.
-APER_D0, APER_D1, APER_W = 0.006, 0.014, 0.006   # key's hole: from the tip, along the key; across [CHOICE]
-PIN_HX, PIN_HY = 0.0025, 0.002   # pin half sizes along x and y [CHOICE: a 5 x 4 mm pin for the patent's 7 mm ball]
+APER_D0, APER_D1, APER_W = 0.006, 0.014, 0.009   # key's hole: from the tip, along the key; across [CHOICE]
+PIN_HX, PIN_HY = 0.0025, 0.001   # pin half sizes along x and y [CHOICE: a 5 x 2 mm pin for the patent's 7 mm ball]
+# WHY the hole is 9 mm across and the pin 2 mm: the key has (SLOT_W - KEY_W) / 2 = 3 mm of play either side in the slot
+# [ARITH], and the pin drops in whenever the key's centre line is within APER_W / 2 - PIN_HY = 3.5 mm of the slot's
+# [ARITH], so any key pushed home anywhere inside the slot is caught, not only a centred one
 PIN_X = FX - HOME_DEPTH + APER_D0 + PIN_HX   # [ARITH: the hole's tip-side wall meets the pin's upright face at home]
-PIN_Z0 = SLOT_Z - 0.0005         # pin's low edge at rest, lock z [CHOICE: 1.25 mm or more into the key's thickness]
-PIN_RAMP = 0.003                 # its sloped bottom rises this much toward +x [CHOICE: above the slot top]
-PIN_RISE = 0.0035                # pin travel up [ARITH: lifts its low edge clear of a key riding at the slot top]
+PIN_Z0 = SLOT_Z - SLOT_T / 2 + 0.0005   # pin's low edge at rest, lock z [CHOICE: 2.5 mm
+#                                  into a key lying on the slot floor. WHY: with 1.25 mm the 1 mm contact offsets let the
+#                                  chain's pull ride the hole's wall up the pin's corner (RUN, hash 666022d6: pin 1.0 mm
+#                                  up after release)]
+PIN_RAMP = 0.0045                # its sloped bottom rises this much toward +x [CHOICE: 0.5 mm above the slot top]
+PIN_RISE = 0.0045                # pin travel up [ARITH: lifts its low edge 0.5 mm clear of a key at the slot top]
 PIN_K, PIN_PRE = 50.0, 0.004     # N/m, preload [EST: 0.2 to 0.4 N down]
 PLUNGER_K, PLUNGER_PRE = 150.0, 0.001      # N/m and preload stretch [EST: about 0.15 to 0.8 N]
 SLIDE_K, SLIDE_PRE = 30.0, 0.030           # N/m, target 30 mm past the out stop [EST: 2.1 N in, 0.9 N out]
@@ -128,9 +134,32 @@ def frame_shapes():
             *(_side_tube(s * HANDLE_LEN / 2) for s in (-1, 1))]
 
 
+# Near trolley's basket rear wall, lock frame: a wire grid hanging under the handle, just ahead of it, where the front
+# lock's chain hangs into the nested basket. WHY: the brief asks for the structure that limits access; the hand must reach
+# the key over this wall and under the front handle. Its top is BASKET_DROP under the handle axis so the key, turned
+# level, still passes over it to the slot.
+BASKET_X = 0.030                 # wall plane ahead of the handle axis [CHOICE: just clear of the 12.5 mm tube]
+BASKET_DROP = 0.070              # top rail under the handle axis [EST: a basket's top rail sits under the handle]
+BASKET_Z0 = -0.300               # wall's low edge, 40 mm over the bench [CHOICE: the basket floor]
+BASKET_HY = HANDLE_LEN / 2 - 0.010   # wall half width, inside the side tubes [ARITH]
+WIRE_R, WIRE_PITCH = 0.0025, 0.040   # 5 mm wire on a 40 mm grid [EST]
+
+
+def basket_shapes():
+    """Rear wall of the near trolley's basket: horizontal rails and upright wires (lock frame)."""
+    top = -BASKET_DROP
+    rails = [Shape("cylinder", (BASKET_X, 0.0, z), (WIRE_R, 2 * BASKET_HY), TUBE_C, axis="Y", material="steel")
+             for z in (top, (top + BASKET_Z0) / 2, BASKET_Z0)]
+    n = round(2 * BASKET_HY / WIRE_PITCH)   # [ARITH: 7 gaps, 8 wires]
+    ys = [-BASKET_HY + k * (2 * BASKET_HY) / n for k in range(n + 1)]
+    wires = [Shape("cylinder", (BASKET_X, y, (top + BASKET_Z0) / 2), (WIRE_R, top - BASKET_Z0), TUBE_C, axis="Z",
+                   material="steel") for y in ys]
+    return rails + wires
+
+
 # Near lock casing, lock frame. Layers from the bottom: floor; key layer (slot from the front face, plunger behind);
 # cover; coin-slide layer (the slide runs along y and leaves through the -y end); top.
-Z_KEY0, Z_KEY1 = SLOT_Z - SLOT_T / 2, SLOT_Z + SLOT_T / 2   # [ARITH: 0.021, 0.027]
+Z_KEY0, Z_KEY1 = SLOT_Z - SLOT_T / 2, SLOT_Z + SLOT_T / 2   # [ARITH: 0.02175, 0.02625]
 Z_COV1 = 0.031                   # cover top = coin slide floor bottom [CHOICE]
 Z_SLD1 = 0.0745                  # coin-slide layer top [CHOICE: 16 mm over the coin]
 SLD_X = 0.0175                   # slide channel half width [CHOICE]
@@ -242,7 +271,7 @@ _front_links, _front_joints = chain_parts("c")
 FRONT = mechanism("front", (XF, YL, TOP + H), Link("front_frame", 6.0, tuple(frame_shapes()) + (_lock_body, _lock_cap)),
                   _front_links, _front_joints, MATS, color=LOCK_C, self_collide=False)
 NEAR = mechanism(
-    "near", (XN, YL, TOP + H), Link("near_frame", 6.0, tuple(frame_shapes() + casing_shapes())),
+    "near", (XN, YL, TOP + H), Link("near_frame", 6.0, tuple(frame_shapes() + basket_shapes() + casing_shapes())),
     [Link("plunger", 0.004, tuple(plunger_shapes())), Link("slide", 0.012, tuple(slide_shapes())),
      Link("pin", 0.001, tuple(pin_shapes()))],
     [Joint("plunger_j", "prismatic", "plunger", (0.0, 0.0, 0.0), "X", -PLUNGER_STOP, 0.0, stiffness=PLUNGER_K,
@@ -272,8 +301,12 @@ ENTER = 0.005                    # "in the slot": tip 5 mm or more past the mout
 LINE_Y, LINE_Z, LINE_DEG = 0.004, 0.0025, 15.0   # tip within these of the slot's centre line, key within 15 deg of it
 SLIDE_OUT = 0.035                # coin slide out 35 mm or more of its 40 [CHOICE]
 MAT_IN, MAT_REST = 0.005, 0.003  # coin centre 5 mm inside the mat's edge; its lowest point within 3 mm of the mat top
+COIN_FLAT_DEG = 15.0             # "laid": the coin's faces within 15 degrees of level, so one standing on edge fails [CHOICE]
 HOME_TOL = 0.001                 # "home": tip HOME_DEPTH - 1 mm or more [CHOICE]
-PIN_DOWN = 0.001                 # "pin down": within 1 mm of its rest; riding on the key it stands 1.25 mm or more up
+PIN_DOWN = Z_KEY0 + KEY_T - PIN_Z0 - 0.001   # "pin down": its upright face still overlaps a key on the slot floor by
+#                                  1 mm or more, so the key's hole wall stops on it [ARITH: 1.5 mm up from rest]; riding
+#                                  on solid key it stands 2.5 mm up. WHY not 1 mm: under the chain's pull the seated pin
+#                                  stands about 1 mm up with the key still home (RUN, hash 18d431ec: 0.6 to 1.0 mm)
 CLEAR = 0.030                    # every hand point 30 mm from the key and the quarter [CHOICE]
 STILL_V, STILL_W = 0.01, 0.5     # m/s, rad/s
 
@@ -320,7 +353,8 @@ def coin_on_mat(objects):
     st = objects["quarter"]
     c = np.asarray(st.pos, float)
     inside = abs(c[0] - MAT_XY[0]) <= MAT[0] / 2 - MAT_IN and abs(c[1] - MAT_XY[1]) <= MAT[1] / 2 - MAT_IN
-    return bool(inside and abs(coin_low_z(st) - (TOP + MAT[2])) <= MAT_REST)
+    flat = abs(float(_rot(st.quat_xyzw)[2, 0])) >= math.cos(math.radians(COIN_FLAT_DEG))   # face normal (body x) up
+    return bool(inside and flat and abs(coin_low_z(st) - (TOP + MAT[2])) <= MAT_REST)
 
 
 _HANDS = {"left": None, "right": None}
