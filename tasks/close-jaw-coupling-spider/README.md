@@ -11,7 +11,8 @@ face is on the line scribed round the shaft (faces G apart), and takes both hand
 Three steps that only score in order. A part seated against a face. A phase found by turning one shaft about its own
 axis while the other is held by the drive: the loose hub only goes on when its three jaws face the three gaps the
 fixed jaws leave between the spider's six legs, and a hub pushed on without the turn stops with its jaw tips on the
-leg ends (mode no_turn). A slide to a line (mode short stops 8 mm before it). The slide joint's travel ends at home, faces exactly G apart, so
+leg ends (mode no_turn). A slide to a line, through a firm push: the loose jaws must lift the seated spider out of its play on their chamfers
+as they enter, and a push without enough follow-through stops there (mode weak_push). The slide joint's travel ends at home, faces exactly G apart, so
 the hub cannot be pushed past the line or press the spider; the stage tests getting the hub all the way on. The turn is closed fingers
 pushing the loose hub's top jaw sideways (the hub turns the shaft through its key); the slide is a closed hand behind
 the hub's back face.
@@ -59,7 +60,9 @@ at 15 N a finger on two leg ends.
 
 ## Scoring
 
-From the end state, held 1 s:
+From the end state. The 1.0 stage must hold for 1 s; `score()` itself tops out at 0.75 and 1.0 comes only from
+`success()` held `SUCCESS_HOLD_S` (1 s), so a state reached on the last step cannot score 1.0.
+
 
 - 0.25: spider seated (centre within 1.5 mm of the axis, its axis within 5 degrees, far face within 1.0 mm of the
   fixed hub's face) with every gripper point 30 mm or more from it.
@@ -81,32 +84,38 @@ across the hub ODs for the axis, and the video for the hands. Every threshold is
 | no_spider | 0 | the turn and the slide, spider left in its holder (the lazy route of skipping the spider) |
 | no_turn | 0.25 | spider seated, hub pushed on without the turn: jaw tips stop on the leg ends |
 | part_turn | 0.25 | only half the turn (20 degrees): out of the phase window |
-| short | 0.5 | full plan, hub stopped 8 mm before its line |
+| weak_push | 0.25 | full turn and spider, but the slide aimed 8 mm short of the line without the demo's follow-through: the jaw tips jam where they meet the spider |
 | knock | 0 | left shoves the fixed hub sideways (the drive holds it); no spider, so 0 |
 
 ## Results
 
-All from run `result.json` files on hash 1340836f (sha256 of the sorted `*.py` plus `task.json`, first 8 hex), cameras
-off unless noted. The `.py` files here are byte for byte those runs'; only the `scores` line of `task.json` changed since.
+All from run `result.json` files on hash 57d5b0f3 (sha256 of the sorted `*.py` plus `task.json`, first 8 hex), cameras
+off, seed 0, unless noted. Hub travel is the slide joint at the end (50 mm = home, faces G apart).
 
 | Mode | Seed | Score | Steps | End |
 |---|---|---|---|---|
-| demo | 0 | 1.0 | 867 | success held 1 s |
-| demo | 1, 2 | 1.0 each | 867 | success held 1 s |
-| no_turn | 0 | 0.25 | 653 | jaw tips stop on the leg ends |
-| part_turn | 0 | 0.25 | 908 | out of the phase window |
-| short | 0 | 0.5 | 909 | hub 8 mm short of the line |
+| demo | 0 | 1.0 | 867 | success held 1 s; shaft 40.8 degrees, hub home |
+| demo | 1, 2 | 1.0 each | 867 | the same (run on hash 63668945, which differs only in the weak_push mode's name and comments) |
+| no_turn | 0 | 0.25 | 653 | jaw tips stop on the leg ends (hub at 32.0 mm) |
+| part_turn | 0 | 0.25 | 908 | out of the phase window (shaft 23.6 degrees, hub at 34.1 mm) |
+| weak_push | 0 | 0.25 | 909 | tips jam where they meet the spider (hub at 35.6 mm, 1.1 mm in; also on seeds 1 and 2) |
 | no_spider | 0 | 0 | 618 | no seated spider |
 | knock | 0 | 0 | 226 | no seated spider |
 | nothing | 0 | 0 | 61 | |
 
-Filmed demo (stock kit cameras, 320 x 176): `task_score: 1`, 867 steps. Dream-1 (`--policy dream`, seed 0, the same
-files): `task_score: 0` after all 1,200 steps; it never took the spider from its holder. Its cameras rendered
+The filmed demo and the Dream-1 run below ran on hash 1340836f. Since then `task.json` changed only in its `scores`
+line, and the code in two places only:
+`score()` now tops out at 0.75 (1.0 only from `success()` held 1 s, as the scoring text already said), and the
+`short` mode became `weak_push`. The demo plan and the scene are unchanged, and the demo scores 1.0 in 867 steps on
+both hashes.
+
+Filmed demo (stock kit cameras, 320 x 176, hash 1340836f): `task_score: 1`, 867 steps. Dream-1 (`--policy dream`,
+seed 0, hash 1340836f): `task_score: 0` after all 1,200 steps; it never took the spider from its holder. Its cameras rendered
 washed-out grey frames for about 13 s of that run (steps 575 to 802 and 1,087 to 1,118, all three cameras at once); the
 filmed demo and the HD recording of the same scene have none, so this reads as a renderer fault on a busy GPU.
 
 In the demo the push leaves the shaft 38.9 degrees round of its 40; the jaw-tip chamfer takes up the rest as the hub
-slides on. `checkkit.py` (IK with 3 degree joint margins, full-link clearance, arm gap, run limit) and `test_jaw.py` (12
+slides on. `checkkit.py` (IK with 3 degree joint margins, full-link clearance, arm gap, run limit) and `test_jaw.py` (13
 tests, every scoring rule above against the code) pass.
 
 ## Demo video

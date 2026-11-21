@@ -55,9 +55,11 @@ def start_states():
 
 
 def score_of(states, hands=FAR):
+    """The trial score if this state is held to the end: --scorer task_score gives 1.0 when success() held 1 s,
+    else score() at the end."""
     if hasattr(M, "set_hands"):
         M.set_hands(dict(hands))
-    return M.score(states)
+    return 1.0 if M.success(states) else M.score(states)
 
 
 # -- EDIT: the task's own end states ------------------------------------------------------------------------------------
@@ -103,8 +105,8 @@ def end_states(mode):
         return goal_states()
     if mode in ("no_turn", "part_turn"):        # jaw tips stop on the leg ends: hub face at the spider's near face
         return with_hub(M.SLIDE - M.SP_W, turn=0.0)
-    if mode == "short":                         # meshed, stopped SHORT_BY before home
-        return with_hub(M.SLIDE - M.SHORT_BY)
+    if mode == "weak_push":                     # turned, but the tips jam where they meet the spider (RUN: 35.6 mm)
+        return with_hub(M.SLIDE - M.SP_W)
     if mode == "no_spider":                     # hub home, spider still in its holder
         return with_hub(M.SLIDE, spider=None)
     return start_states()                       # nothing; knock (the spider never leaves its holder)
@@ -123,6 +125,12 @@ class Task(unittest.TestCase):
     def test_goal_scores_one(self):
         self.assertEqual(score_of(goal_states()), 1.0)
         self.assertTrue(M.success(goal_states()))
+
+    def test_full_needs_the_hold(self):
+        """score() alone tops out at 0.75: a final state reached on the last step is not the held 1.0."""
+        M.set_hands(dict(FAR)) if hasattr(M, "set_hands") else None
+        self.assertEqual(M.score(goal_states()), 0.75)
+        self.assertEqual(M.SUCCESS_HOLD_S, 1.0)
 
     def test_hands_unread_score_zero(self):
         self.assertEqual(score_of(goal_states(), {"left": None, "right": None}), 0.0)

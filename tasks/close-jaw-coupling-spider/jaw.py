@@ -26,8 +26,8 @@ SCORE_OVER = "end"
 SUCCESS_HOLD_S = 1.0
 RUN_LIMIT_STEPS = 1200           # 60 s at 20 Hz
 TOP = TABLE_TOP[SCENE]
-MODES = ("demo", "nothing", "no_spider", "no_turn", "part_turn", "short", "knock")
-EXPECT = {"demo": 1.0, "nothing": 0.0, "no_spider": 0.0, "no_turn": 0.25, "part_turn": 0.25, "short": 0.5,
+MODES = ("demo", "nothing", "no_spider", "no_turn", "part_turn", "weak_push", "knock")
+EXPECT = {"demo": 1.0, "nothing": 0.0, "no_spider": 0.0, "no_turn": 0.25, "part_turn": 0.25, "weak_push": 0.25,
           "knock": 0.0}
 
 # Every number: [SOURCE] from a saved file in src/, [ARITH] derived, [EST] estimate (measure on the bought part),
@@ -352,13 +352,16 @@ SCORES = (0.0, 0.25, 0.5, 0.75, 1.0)
 
 
 def score(objects):
-    """0.25 spider seated; 0.5 and the loose jaws meshed; 0.75 and the hub at its line (faces G apart); 1.0 and
-    everything still with both hands 30 mm clear. 0 otherwise, including any state with the spider not seated."""
-    return SCORES[stage(objects)]
+    """0.25 spider seated; 0.5 and the loose jaws meshed; 0.75 and the hub at its line (faces G apart). 0 otherwise,
+    including any state with the spider not seated. 1.0 comes only from success() held SUCCESS_HOLD_S: everything
+    still with both hands 30 mm clear for 1 s (the harness then ends the trial with 1.0)."""
+    # WHY capped at 0.75: SCORE_OVER "end" reads score() at the last step only, so a final state reached on the last
+    # step must not score the full 1.0 that the task text reserves for a state held 1 s
+    return SCORES[min(stage(objects), 3)]
 
 
 def success(objects):
-    return score(objects) >= 1.0
+    return stage(objects) == 4
 
 
 def distance(objects):
@@ -467,7 +470,10 @@ PUSH_Z = 0.026                   # pushing hand's TCP over the axis: tips 13 mm 
 PUSH_HALF = 0.0070               # closed fingers' half thickness along x at the hub face's height [RUN: HAND.local]
 LINE_PUSH = 0.0040               # the hub pushed this far past home [CHOICE: its jaw tips on the fixed face stop it]
 PUSH_DEEP = 0.015                # [CHOICE: see _push_go]
-SHORT_BY = 0.008                 # "short" mode stops the hub this far from home [CHOICE]
+SHORT_BY = 0.008                 # "weak_push" mode aims the hub this far short of home, without PUSH_DEEP [CHOICE]
+# WHY weak_push scores 0.25, not 0.5: without PUSH_DEEP the jaw tips jam where they meet the seated spider (hub at 35.6
+# of 50 mm, tips 1.1 mm in; RUN: fastrun 63668945 seeds 0-2); aimed at the line itself it stopped at 35.2 mm (RUN:
+# 966d8520). A push that breaks through runs on to the slide's stop at home, so no pushed end state is meshed but short
 AWAY = {"left": (0.20, 0.28, 0.20), "right": (0.30, -0.28, 0.20)}   # [CHOICE]
 
 
@@ -549,7 +555,7 @@ def plan(seed=None, mode_name="demo"):
     if mode_name == "nothing":
         return {}
     L, R = Plan("left"), Plan("right")
-    turned = {"demo": 40.0, "no_spider": 40.0, "short": 40.0, "part_turn": 20.0}.get(mode_name)
+    turned = {"demo": 40.0, "no_spider": 40.0, "weak_push": 40.0, "part_turn": 20.0}.get(mode_name)
     if turned is not None:
         # WHY the right turns, leaves and parks before the left starts: its hand at the loose hub and the left's
         # carried spider came within 0.1 mm (checkkit ARMGAP) when they overlapped in time
@@ -573,7 +579,7 @@ def plan(seed=None, mode_name="demo"):
             # the carry pose first, as the demo does, keeps it on the demo's branch
             L.move((SLOT_X, 0.0, AXIS_Z + CARRY), grip=down(0.0), label="carry: across")
         _push_ready(L)
-        _push_go(L, SHORT_BY if mode_name == "short" else 0.0)
+        _push_go(L, SHORT_BY if mode_name == "weak_push" else 0.0)
     if R.waypoints:
         R.move((AWAY["right"][0], AWAY["right"][1], TOP + AWAY["right"][2]), grip=down(0.0), label="away")
     L.move((AWAY["left"][0], AWAY["left"][1], TOP + AWAY["left"][2]), grip=down(0.0), label="away")
