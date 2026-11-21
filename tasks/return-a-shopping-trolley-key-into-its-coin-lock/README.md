@@ -123,7 +123,7 @@ Dream-1 ran once on hash eba907ea: 0 at the 1,600-step limit; it never reached t
 run, so its score is for eba907ea. Changed since: key hole 6 to 9 mm wide; pin 4 to 2 mm wide, 1.25 to 2.5 mm into the
 key, "pin down" 1 to 1.5 mm, so a key home anywhere in the slot's play is held; the near basket's rear wall added; the
 quarter must lie flat (within 15 degrees); task.json text for these, the near chain's own key, the key tip at 66.5 mm,
-a shorter fidelity and the Dream-1 score. Its start differs from this one only by the wall and the hole.
+a shorter fidelity and the Dream-1 score. Its start scene differs from this one by the basket wall, the key hole and the pin's size and depth.
 
 `checkkit.py` (IK with 3 degree joint margins, full-link clearance, run limit) and `test_trolley.py` (27 tests:
 every scoring rule above against the code, each mode's end state, the latch and retention geometry including an
