@@ -96,18 +96,18 @@ off, seed 0, unless noted. Hub travel is the slide joint at the end (50 mm = hom
 |---|---|---|---|---|
 | demo | 0 | 1.0 | 867 | success held 1 s; shaft 40.8 degrees, hub home |
 | demo | 1, 2 | 1.0 each | 867 | the same (run on hash 63668945, which differs only in the weak_push mode's name and comments) |
-| no_turn | 0 | 0.25 | 653 | jaw tips stop on the leg ends (hub at 32.0 mm) |
+| no_turn | 0 | 0.25 | 653 | jaw tips stop on the leg ends (hub at 32.0 mm, so the depth measure reads -2.5 mm, not the nominal 0 mm; under 3 mm either way) |
 | part_turn | 0 | 0.25 | 908 | out of the phase window (shaft 23.6 degrees, hub at 34.1 mm) |
 | weak_push | 0 | 0.25 | 909 | tips jam where they meet the spider (hub at 35.6 mm, 1.1 mm in; also on seeds 1 and 2) |
 | no_spider | 0 | 0 | 618 | no seated spider |
 | knock | 0 | 0 | 226 | no seated spider |
 | nothing | 0 | 0 | 61 | |
 
-The filmed demo and the Dream-1 run below ran on hash 1340836f. Since then `task.json` changed only in its `scores`
-line, and the code in two places only:
-`score()` now tops out at 0.75 (1.0 only from `success()` held 1 s, as the scoring text already said), and the
-`short` mode became `weak_push`. The demo plan and the scene are unchanged, and the demo scores 1.0 in 867 steps on
-both hashes.
+The filmed demo and the Dream-1 run below ran on hash 1340836f. Since then the `task.json` text changed (setup,
+scoring, fidelity, media and scores wording; no scene numbers), and the code changed in two places: `score()` now tops
+out at 0.75 (1.0 only from `success()` held 1 s, as the scoring text already said; the logged `distance()`, which is 1
+minus `score()`, so reads 0.25 at the goal), and the `short` mode became `weak_push`. The demo plan and the scene code
+are unchanged, and the demo scores 1.0 in 867 steps on both hashes.
 
 Filmed demo (stock kit cameras, 320 x 176, hash 1340836f): `task_score: 1`, 867 steps. Dream-1 (`--policy dream`,
 seed 0, hash 1340836f): `task_score: 0` after all 1,200 steps; it never took the spider from its holder. Its cameras rendered
