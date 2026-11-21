@@ -55,12 +55,25 @@ LOCK_Z1 = LOCK_Z0 + LOCK_H       # [ARITH: 0.0805]
 FX = LOCK_W / 2                  # front face (toward the trolley in front), lock x [ARITH]
 SLOT_Y, SLOT_Z = -0.030, 0.024   # key slot centre in the front face, lock frame [CHOICE: near the -y end, low (the
 #                                  patent's key slot runs under the coin slide)]
-SLOT_W, SLOT_T = 0.021, 0.006    # slot opening across and tall [CHOICE: 3 and 1.5 mm play a side for a rigid key]
+SLOT_W, SLOT_T = 0.021, 0.0045   # slot opening across and tall [CHOICE: 3 and 0.75 mm play a side for a rigid key]
 PLUNGER_IN = 0.008               # plunger face this far inside the mouth [EST]
 RELEASE_TRAVEL = 0.0045          # plunger travel that frees the coin slide [EST]
 PLUNGER_STOP = 0.006             # plunger travel to its stop [EST]
 HOME_DEPTH = PLUNGER_IN + RELEASE_TRAVEL   # key tip depth when latched: the slide's rail holds the plunger [ARITH 12.5]
+#                                            and the retention pin holds the key [ARITH, below]
 PUSH_TRAVEL = 0.040              # coin slide travel out of the lock's -y end [EST: measure]
+# Key retention, after EP0427819B1 (src/ep0427819.txt): "the spherical locking member 18 drops downwards under the action
+# of gravity, so that it occupies the apertures 19 and 21" (19 in the casing wall over the key, 21 an "elongate hole" in
+# the key), "whereas the coupling member 8 is firmly locked by the locking member 18". Here: a pin in the casing over the
+# key's path, sprung down; its +x face slopes so the key coming in lifts it, its -x face is upright so a key pulled back
+# stops on it once the pin has dropped into the key's hole.
+APER_D0, APER_D1, APER_W = 0.006, 0.014, 0.006   # key's hole: from the tip, along the key; across [CHOICE]
+PIN_HX, PIN_HY = 0.0025, 0.002   # pin half sizes along x and y [CHOICE: a 5 x 4 mm pin for the patent's 7 mm ball]
+PIN_X = FX - HOME_DEPTH + APER_D0 + PIN_HX   # [ARITH: the hole's tip-side wall meets the pin's upright face at home]
+PIN_Z0 = SLOT_Z - 0.0005         # pin's low edge at rest, lock z [CHOICE: 1.25 mm or more into the key's thickness]
+PIN_RAMP = 0.003                 # its sloped bottom rises this much toward +x [CHOICE: above the slot top]
+PIN_RISE = 0.0035                # pin travel up [ARITH: lifts its low edge clear of a key riding at the slot top]
+PIN_K, PIN_PRE = 50.0, 0.004     # N/m, preload [EST: 0.2 to 0.4 N down]
 PLUNGER_K, PLUNGER_PRE = 150.0, 0.001      # N/m and preload stretch [EST: about 0.15 to 0.8 N]
 SLIDE_K, SLIDE_PRE = 30.0, 0.030           # N/m, target 30 mm past the out stop [EST: 2.1 N in, 0.9 N out]
 SLIDE_DAMP = 20.0                # N s/m [CHOICE: the slide comes out in about 0.3 s, not a flick]
@@ -180,6 +193,15 @@ def slide_shapes():
         _box((L_X[0], L_Y[0], SLIDE_FLOOR), (L_X[1], L_Y[1], 0.042), i, "inner")]
 
 
+def pin_shapes():
+    """Retention pin, lock frame: upright -x face, bottom sloping up toward +x, flat top."""
+    x0, x1, y0, y1 = PIN_X - PIN_HX, PIN_X + PIN_HX, SLOT_Y - PIN_HY, SLOT_Y + PIN_HY
+    top = PIN_Z0 + 0.006
+    bot = [(x0, y0, PIN_Z0), (x1, y0, PIN_Z0 + PIN_RAMP), (x1, y1, PIN_Z0 + PIN_RAMP), (x0, y1, PIN_Z0)]
+    up = [(x0, y0, top), (x1, y0, top), (x1, y1, top), (x0, y1, top)]
+    return [hull(bot + up, INNER_C, "inner", contact_offset=0.001)]
+
+
 def chain_parts(prefix):
     """(links, joints) of a chain hanging from ANCHOR and its key: alternate hinge axes so it bends both ways [CHOICE:
     one rigid capsule per link, no twist]; the key hangs flat across x, its width along y, tip down."""
@@ -200,8 +222,12 @@ def chain_parts(prefix):
                (ax - hx * 0.6, ay + hy * 0.6, t0)]
     upring = [(ax - hx, ay - hy, t0 + 0.004), (ax + hx, ay - hy, t0 + 0.004), (ax + hx, ay + hy, t0 + 0.004),
               (ax - hx, ay + hy, t0 + 0.004)]
+    aw = APER_W / 2
     key = Link(f"{prefix}key", KEY_KG, (
-        _box((ax - hx, ay - hy, t0 + 0.004), (ax + hx, ay + hy, KEY_TOP), KEY_C, "steel", offset=0.001),
+        _box((ax - hx, ay - hy, t0 + 0.004), (ax + hx, ay + hy, t0 + APER_D0), KEY_C, "steel", offset=0.001),
+        _box((ax - hx, ay - hy, t0 + APER_D0), (ax + hx, ay - aw, t0 + APER_D1), KEY_C, "steel", offset=0.001),
+        _box((ax - hx, ay + aw, t0 + APER_D0), (ax + hx, ay + hy, t0 + APER_D1), KEY_C, "steel", offset=0.001),
+        _box((ax - hx, ay - hy, t0 + APER_D1), (ax + hx, ay + hy, KEY_TOP), KEY_C, "steel", offset=0.001),
         hull(tipring + upring, KEY_C, "steel", contact_offset=0.001),
         _box((ax - hx, ay - 0.004, KEY_TOP), (ax + hx, ay + 0.004, zk), RED_C, "steel", offset=0.001)))
     links.append(key)
@@ -217,11 +243,14 @@ FRONT = mechanism("front", (XF, YL, TOP + H), Link("front_frame", 6.0, tuple(fra
                   _front_links, _front_joints, MATS, color=LOCK_C, self_collide=False)
 NEAR = mechanism(
     "near", (XN, YL, TOP + H), Link("near_frame", 6.0, tuple(frame_shapes() + casing_shapes())),
-    [Link("plunger", 0.004, tuple(plunger_shapes())), Link("slide", 0.012, tuple(slide_shapes()))],
+    [Link("plunger", 0.004, tuple(plunger_shapes())), Link("slide", 0.012, tuple(slide_shapes())),
+     Link("pin", 0.001, tuple(pin_shapes()))],
     [Joint("plunger_j", "prismatic", "plunger", (0.0, 0.0, 0.0), "X", -PLUNGER_STOP, 0.0, stiffness=PLUNGER_K,
            damping=1.0, target=PLUNGER_PRE),
      Joint("slide_j", "prismatic", "slide", (0.0, 0.0, 0.0), "Y", -PUSH_TRAVEL, 0.0, stiffness=SLIDE_K,
-           damping=SLIDE_DAMP, target=-(PUSH_TRAVEL + SLIDE_PRE))],
+           damping=SLIDE_DAMP, target=-(PUSH_TRAVEL + SLIDE_PRE)),
+     Joint("pin_j", "prismatic", "pin", (0.0, 0.0, 0.0), "Z", 0.0, PIN_RISE, stiffness=PIN_K, damping=0.5,
+           target=-PIN_PRE)],
     MATS, color=LOCK_C, self_collide=True)
 _own_links, _own_joints = chain_parts("n")
 NEAR_CHAIN = mechanism("near_chain", (XN, YL, TOP + H),
@@ -243,6 +272,8 @@ ENTER = 0.005                    # "in the slot": tip 5 mm or more past the mout
 LINE_Y, LINE_Z, LINE_DEG = 0.004, 0.0025, 15.0   # tip within these of the slot's centre line, key within 15 deg of it
 SLIDE_OUT = 0.035                # coin slide out 35 mm or more of its 40 [CHOICE]
 MAT_IN, MAT_REST = 0.005, 0.003  # coin centre 5 mm inside the mat's edge; its lowest point within 3 mm of the mat top
+HOME_TOL = 0.001                 # "home": tip HOME_DEPTH - 1 mm or more [CHOICE]
+PIN_DOWN = 0.001                 # "pin down": within 1 mm of its rest; riding on the key it stands 1.25 mm or more up
 CLEAR = 0.030                    # every hand point 30 mm from the key and the quarter [CHOICE]
 STILL_V, STILL_W = 0.01, 0.5     # m/s, rad/s
 
@@ -271,6 +302,12 @@ def key_in_slot(objects):
     in_line = (abs(t[1] - SLOT_Y) <= LINE_Y and abs(t[2] - SLOT_Z) <= LINE_Z
                and -d[0] >= math.cos(math.radians(LINE_DEG)))
     return FX - t[0], bool(in_line)
+
+
+def retained(objects, depth):
+    """The lock holds the key: its tip home (HOME_DEPTH - 1 mm or more) and the pin down in the key's hole. A key held
+    short by the gripper, or with the pin riding on it, is not retained."""
+    return depth >= HOME_DEPTH - HOME_TOL and objects["near"].joints["pin_j"] <= PIN_DOWN
 
 
 def coin_low_z(st):
@@ -323,32 +360,54 @@ def hands_clear(objects):
     return True
 
 
+_WHY = dict.fromkeys(("quarter", "ckey", "plunger", "slide", "clear", "key_v", "key_w"), 0)   # trace only: last 1.0 checks
+
+
 def still(objects):
-    if not objects["quarter"].resting(STILL_V, STILL_W):
+    ok = True
+    _WHY["quarter"] = objects["quarter"].resting(STILL_V, STILL_W)
+    ok &= _WHY["quarter"]
+    _WHY["ckey"] = key_resting(objects["front"])
+    ok &= _WHY["ckey"]
+    for n in ("plunger", "slide"):
+        ln = objects["near"].links.get(n)
+        _WHY[n] = ln is not None and ln.resting(STILL_V, STILL_W)
+        ok &= _WHY[n]
+    return bool(ok)
+
+
+def key_resting(front):
+    """The key's tip and back end under STILL_V and its spin under STILL_W. WHY: a chain link's velocity is read at its
+    frame origin, which for the key lies in the chain's rest frame about 0.3 m away, so a small wobble of the held key
+    reads there as motion; v + w x r gives the key's own points [ARITH]."""
+    ln = front.links.get("ckey")
+    if ln is None:
         return False
-    for mech, names in (("front", ("ckey",)), ("near", ("plunger", "slide"))):
-        for n in names:
-            ln = objects[mech].links.get(n)
-            if ln is None or not ln.resting(STILL_V, STILL_W):
-                return False
-    return True
+    w, v, p = np.asarray(ln.ang_vel, float), np.asarray(ln.lin_vel, float), np.asarray(ln.pos, float)
+    _WHY["key_w"] = float(np.linalg.norm(w))
+    speeds = [float(np.linalg.norm(v + np.cross(w, q - p))) for q in key_points(front)]
+    _WHY["key_v"] = max(speeds)
+    return bool(max(speeds) < STILL_V and np.linalg.norm(w) < STILL_W)
 
 
 def stage(objects):
-    """0 none (or hands unread); 1 key in the slot, in line, 5 mm in; 2 and the coin
-    slide out; 3 and the quarter resting on the mat; 4 and all still, both hands 30 mm from the key and the quarter."""
+    """0 none (or hands unread); 1 key in the slot, in line, 5 mm in; 2 and the coin slide out and the key retained (home,
+    pin down in its hole); 3 and the quarter resting on the mat; 4 and all still, both hands 30 mm from the key and the
+    quarter."""
     if not hands_read():
         return 0
     depth, in_line = key_in_slot(objects)
     if not (in_line and depth >= ENTER):
         return 0
-    # WHY: the slide comes out only when the key takes the plunger HOME_DEPTH in (a finger reaches 2 mm short, a key
-    # held short stays latched); after that the key may settle a little back, as it is not held by a ball here
-    if objects["near"].joints["slide_j"] > -SLIDE_OUT:
+    # WHY: the slide comes out only when the key takes the plunger HOME_DEPTH in (a finger reaches short of that); the
+    # pin rule makes the lock, not the hand, hold the key
+    if objects["near"].joints["slide_j"] > -SLIDE_OUT or not retained(objects, depth):
         return 1
     if not coin_on_mat(objects):
         return 2
-    if not (still(objects) and hands_clear(objects)):
+    st, cl = still(objects), hands_clear(objects)
+    _WHY["clear"] = cl
+    if not (st and cl):
         return 3
     return 4
 
@@ -381,7 +440,8 @@ def trace_row(env):
         a = sc["near"]
         q = getattr(a.data.joint_pos, "torch", a.data.joint_pos)[0].detach().cpu().numpy()
         jn = list(a.joint_names)
-        for n in ("plunger_j", "slide_j"):
+        out.update({f"ok_{k}": round(float(v), 4) for k, v in _WHY.items()})
+        for n in ("plunger_j", "slide_j", "pin_j"):
             out[n] = float(q[jn.index(n)])
         f = sc["front"]
         poses = getattr(f.data.body_link_pose_w, "torch", f.data.body_link_pose_w)[0].detach().cpu().numpy()
@@ -472,6 +532,9 @@ G_KEY = level(90.0)              # fingers level toward +y, closing along x: the
 G_TURN = as_grip(_ry(90.0) @ G_KEY.rot)   # rolled 90 deg about the finger axis: key tip toward -x, key flat
 G_COIN = tilted(60.0, 90.0)      # fingers 60 deg off vertical toward +y, closing along x on the quarter's faces
 G_PLACE = down(90.0)
+LAY_DEG = -55.0                  # the hand tips the quarter this far from upright before letting go, so it falls flat
+#                                  instead of rolling away on edge [CHOICE; RUN: set down upright it rolled, hash 5f577f54]
+G_LAY = as_grip(_ry(LAY_DEG) @ G_PLACE.rot)
 KEY_X, KEY_Y = XF + ANCHOR[0], YL + ANCHOR[1]          # hanging key's line, world [ARITH]
 GRIP_DOWN = 0.022                # TCP this far below the key's top: fingers clear of the eye [CHOICE]
 GRIP_Z = TOP + H + KEY_TOP - GRIP_DOWN
@@ -502,13 +565,16 @@ def _key_turn(R):
     R.move((KEY_X - 0.04, SLOT_WY, SLOT_WZ - 0.04), grip=G_TURN, t=2.5, label="key: turn")
 
 
-def _key_insert(R, depth):
+def _key_insert(R, depth, keep=False):
     x0 = MOUTH_X + 0.010 + TIP_FROM_TCP
     R.move((x0, SLOT_WY + KEY_DY, SLOT_WZ), t=2.0, label="key: line up at slot")
     R.hold(0.6, "key: steady at slot")
     R.move((MOUTH_X - depth + TIP_FROM_TCP, SLOT_WY + KEY_DY, SLOT_WZ), t=max(2.0, (depth + 0.01) / 0.012),
            label="key: push", contact=True)
     R.hold(0.8, "key: hold in", contact=True)
+    if keep:                     # partway: the hand keeps the key where it stopped (no retention short of home)
+        R.hold(3.0, "key: keep holding", contact=True)
+        return
     R.move(R.pos + np.array([PUSH_PAST + 0.002, 0.0, 0.0]), t=0.6, label="key: ease")   # WHY: back to where the stop
     #                                                                       really holds the hand before letting go
     R.move(R.pos, t=0.8, finger=FINGER_OPEN, label="key: let go", contact=True)
@@ -533,12 +599,16 @@ def _coin_take(R):
 
 
 def _coin_lay(R, tcp, xy, drop=False, hold=False):
-    # The quarter's centre relative to the TCP turns with the grip from G_COIN to G_PLACE [ARITH]
-    rel = G_PLACE.rot @ G_COIN.rot.T @ (np.asarray(COIN_OUT) - tcp)
-    z_set = TOP + MAT[2] + COIN_R + (0.040 if drop else 0.030 if hold else 0.003) - rel[2]
+    # The quarter's centre and face normal turn with the grip from G_COIN to G_LAY; its lowest rim point sets the height
+    g = G_PLACE if drop else G_LAY      # drop_coin lets go upright beside the mat (the tipped grip does not reach there)
+    turn = g.rot @ G_COIN.rot.T
+    rel, n = turn @ (np.asarray(COIN_OUT) - tcp), turn @ np.array([1.0, 0.0, 0.0])
+    low = COIN_R * math.sqrt(max(0.0, 1.0 - n[2] ** 2)) + COIN_T / 2 * abs(n[2])   # [ARITH]
+    z_set = TOP + MAT[2] + low + (0.040 if drop else 0.030 if hold else 0.015) - rel[2]   # [CHOICE: 15 mm keeps the
+    #                                                                     tipped fingertips off the mat]
     R.move((xy[0], R.pos[1], R.pos[2] - 0.08), t=1.5, label="coin: back")   # WHY: over the near handle first, then down
-    R.move((xy[0], xy[1], z_set + 0.08), grip=G_PLACE, t=2.0, label="coin: carry")
-    R.move((xy[0], xy[1], z_set), t=1.5, label="coin: down")
+    R.move((xy[0] - rel[0], xy[1] - rel[1], z_set + 0.08), grip=g, t=2.0, label="coin: carry")
+    R.move((xy[0] - rel[0], xy[1] - rel[1], z_set), t=1.5, label="coin: down")
     if hold:
         R.hold(3.0, "coin: keep holding")
         return
@@ -574,7 +644,8 @@ def plan(seed=None, mode_name="demo"):
         _key_take(R)
         _key_turn(R)
         if mode_name == "partway":
-            _key_insert(R, PLUNGER_IN + 0.002)
+            _key_insert(R, PLUNGER_IN + 0.002, keep=True)
+            return plans_out(R)
         else:
             _key_insert(R, PLUNGER_IN + PLUNGER_STOP + PUSH_PAST)
             if mode_name != "key_only":

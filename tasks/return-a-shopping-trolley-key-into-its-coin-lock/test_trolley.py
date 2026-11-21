@@ -62,10 +62,10 @@ def key_at(depth, dy=0.0, dz=0.0, turn=90.0):
     return front(r, tip - r @ np.asarray(M.KEY_TIP))
 
 
-def near(slide=0.0, plunger=0.0):
+def near(slide=0.0, plunger=0.0, pin=0.0):
     o = np.asarray(M.NEAR.pos, float)
     return MechanismState(pos=o, quat_xyzw=np.array([0, 0, 0, 1.0]), lin_vel=Z3, ang_vel=Z3, low=o, high=o,
-                          joints={"slide_j": slide, "plunger_j": plunger},
+                          joints={"slide_j": slide, "plunger_j": plunger, "pin_j": pin},
                           links={"plunger": link(o), "slide": link(o + (0, slide, 0))})
 
 
@@ -139,8 +139,17 @@ class Scoring(unittest.TestCase):
 
     def test_home_needs_depth_and_slide(self):
         self.assertEqual(sc(states(key_at(HOME), near(OUT))), 0.5)
-        self.assertEqual(sc(states(key_at(M.ENTER + 0.001), near(OUT))), 0.5)   # settled back after the release
+        self.assertEqual(sc(states(key_at(HOME - M.HOME_TOL - 0.0005), near(OUT))), 0.25)   # short of home
         self.assertEqual(sc(states(key_at(M.ENTER - 0.001), near(OUT))), 0.0)
+
+    def test_retention_rule(self):
+        """0.5 and up need the lock to hold the key: home and the pin down in its hole, not the hand holding it."""
+        self.assertEqual(sc(states(key_at(HOME), near(OUT, pin=0.0))), 0.5)
+        self.assertEqual(sc(states(key_at(HOME), near(OUT, pin=M.PIN_DOWN + 0.0002))), 0.25)   # pin riding on the key
+        s = goal()
+        s["near"] = near(OUT, -M.RELEASE_TRAVEL, pin=0.002)
+        self.assertEqual(sc(s), 0.25)
+        self.assertFalse(M.success(s))
         self.assertEqual(sc(states(key_at(HOME), near(-M.SLIDE_OUT + 0.001))), 0.25)
         self.assertEqual(sc(states(None, near(OUT), coin(ON_MAT))), 0.0)        # slide out, quarter on mat, no key
 
@@ -190,9 +199,42 @@ class Construct(unittest.TestCase):
         self.assertLess(M.L_Y[1], M.SLD_Y1)                          # the rail stays inside the casing
         self.assertAlmostEqual(M.HOME_DEPTH, M.PLUNGER_IN + M.RELEASE_TRAVEL)
 
+    def test_retention_geometry(self):
+        """Offline stand-in for 'the key stays in with the fingers open under its chain's pull': at home the key's hole
+        wall meets the pin's upright face; that face is vertical (a pull along the key pushes it sideways, never up);
+        the pin overlaps the key's thickness wherever the key lies in the slot; and the chain's pull (well under 1 N,
+        along +x) has no part that could lift the sprung pin."""
+        tip = M.FX - HOME
+        self.assertAlmostEqual(tip + M.APER_D0, M.PIN_X - M.PIN_HX, places=9)
+        p = checkkit.shape_points(M.pin_shapes()[0])
+        x0 = p[:, 0].min()
+        face = p[np.isclose(p[:, 0], x0)]
+        self.assertAlmostEqual(np.ptp(face[:, 0]), 0.0)                      # upright -x face
+        self.assertLess(face[:, 2].min(), M.Z_KEY0 + M.KEY_T - 0.001)        # key on the slot floor: 1 mm overlap
+        self.assertGreater(face[:, 2].max(), M.Z_KEY1)                       # and the face spans a key at the top
+        self.assertGreaterEqual(M.PIN_Z0, M.Z_KEY0)
+        hi = p[np.isclose(p[:, 0], p[:, 0].max())][:, 2].min()
+        self.assertGreater(hi, M.Z_KEY1)                                     # +x ramp starts above the slot: it lifts
+        self.assertGreater(M.PIN_Z0 + M.PIN_RISE, M.Z_KEY1)                  # the pin lifts clear of any key
+        chain_n = M.CHAIN_N * M.CHAIN_KG * 9.81 + M.KEY_KG * 9.81
+        self.assertLess(chain_n, 1.0)
+        self.assertGreater(M.PIN_K * M.PIN_PRE, 0.0)
+
+    def test_not_home_not_retained(self):
+        """Short of home the pin's footprint lies on solid key, so the pin stands 1.25 mm or more up: over PIN_DOWN."""
+        x0, x1 = M.PIN_X - M.PIN_HX, M.PIN_X + M.PIN_HX
+        for d in np.arange(M.ENTER, HOME - 0.0002, 0.0005):
+            tip = M.FX - d
+            in_hole = tip + M.APER_D0 <= x0 + 1e-9 and tip + M.APER_D1 >= x1 - 1e-9
+            self.assertFalse(in_hole, d)
+        self.assertGreater(M.Z_KEY0 + M.KEY_T - M.PIN_Z0, M.PIN_DOWN)        # riding: pin_j above PIN_DOWN
+        tip = M.FX - HOME
+        self.assertTrue(tip + M.APER_D0 <= x0 + 1e-9 and tip + M.APER_D1 >= x1)   # home: the pin drops in
+        self.assertGreaterEqual(M.FX - (x1 - M.APER_D1), M.PLUNGER_IN + M.PLUNGER_STOP)   # to the plunger's stop
+
     def test_key_fits_slot_with_play(self):
         self.assertGreater(M.SLOT_W - M.KEY_W, 0.002)
-        self.assertGreater(M.SLOT_T - M.KEY_T, 0.002)
+        self.assertGreaterEqual(M.SLOT_T - M.KEY_T, 0.0015 - 1e-9)
 
     def test_finger_cannot_reach_plunger(self):
         """A single open finger, tip first, fits the slot only as deep as its cross-section stays inside it."""
