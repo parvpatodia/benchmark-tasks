@@ -137,6 +137,12 @@ class Scoring(unittest.TestCase):
         self.assertEqual(sc(states(key_at(HOME, turn=-90), near(OUT))), 0.0)   # key backwards: its back end in
         self.assertEqual(sc(states(front(), near(OUT))), 0.0)                 # hanging key
 
+    def test_key_behind_lock_zero(self):
+        """A key held in line with the slot but behind the near lock (tip past its back face) is not in the slot."""
+        self.assertEqual(sc(states(key_at(M.MAX_IN - 0.0005))), 0.25)
+        for depth in (M.MAX_IN + 0.001, M.LOCK_W + 0.002, 0.13, 0.20):
+            self.assertEqual(sc(states(key_at(depth))), 0.0, depth)
+
     def test_home_needs_depth_and_slide(self):
         self.assertEqual(sc(states(key_at(HOME), near(OUT))), 0.5)
         self.assertEqual(sc(states(key_at(HOME - M.HOME_TOL - 0.0005), near(OUT))), 0.25)   # short of home
@@ -360,7 +366,7 @@ class Text(unittest.TestCase):
         tj = json.loads((HERE / "task.json").read_text())
         both = tj["setup"] + tj["scoring"] + (HERE / "README.md").read_text()
         mm = lambda v: f"{round(v * 1000, 1):g} mm"  # noqa: E731
-        for v in (M.ENTER, M.SLIDE_OUT, M.PUSH_TRAVEL, M.MAT_IN, M.MAT_REST, M.CLEAR,
+        for v in (M.ENTER, M.MAX_IN, M.SLIDE_OUT, M.PUSH_TRAVEL, M.MAT_IN, M.MAT_REST, M.CLEAR,
                   M.CHAIN_N * M.CHAIN_P, M.LINE_Y, M.LINE_Z):
             self.assertIn(mm(v), both, mm(v))
         self.assertIn(f"{M.LINE_DEG:g} degrees", both)

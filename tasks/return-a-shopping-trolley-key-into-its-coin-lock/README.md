@@ -16,9 +16,9 @@ pushed 12.5 mm in, past the plunger's spring, the latch and the retaining pin; a
 partway). Then a small coin taken from a slide and laid flat on a mat.
 
 Why it matters (Societal relatability): coin-lock trolleys are returned this way at supermarkets; the coin is the
-deposit the shopper gets back. The mechanism is that of EP0427819B1 (`src/ep0427819.txt`):
-the coupling member goes in through an opening in a side wall, the coin slide runs at right angles to it, and on full
-insertion the coin slide is released and a compression spring pushes it out "so that the coin can be removed".
+deposit the shopper gets back. The mechanism is that of EP0427819B1 (`src/ep0427819.txt`): the coupling member goes in
+through an opening in a side wall, the coin slide runs at right angles to it, and on full insertion the coin slide is
+released and a compression spring pushes it out "so that the coin can be removed".
 
 ## The parts (every number in `trolley.py` carries its basis)
 
@@ -52,25 +52,23 @@ upright -x face; at 12.5 mm the key's hole comes under it, it drops in, and a pu
 9 mm hole catches the 2 mm pin for any key within 3.5 mm of the slot's centre line, more than the key's 3 mm play. The
 near basket's rear wall hangs under its handle, between it and the hanging key: the hand reaches over it.
 
-Simplified: the tooth and rail replace the patent's coin-slide locking member and the pin its ball; the pin's release
-by the re-inserted slide is not modelled. The chain has no twist joint. Handles shortened and lowered (see the table).
+Simplified: the tooth and rail replace the patent's coin-slide locking member and the pin its ball; the pin's release by
+the re-inserted slide is not modelled. The chain has no twist joint. Handles shortened and lowered (see the table).
+Forces are small. Release takes the plunger spring (150 N/m, about 0.8 N at release [ARITH]) plus friction of L on T
+under the slide spring (30 N/m, 2.1 N held in [ARITH]). The key is held at 6 N a finger, the quarter at 4 N.
 
 Closed shortcuts: a finger goes at most 10 mm into the slot, 2 mm short of release (tested on the open finger's
-cross-section); the lug stops the slide being pried out, and nothing scores without the key in line in the slot; 0.5
-and up need the pin down in the key's hole, so a key held short by the hand does not count. The near lock's own key
-can reach round to its own slot (a real lock prevents this), but only the front lock's key scores, so that scores 0.
-
-## Forces
-
-Small. Release takes the plunger spring (150 N/m, about 0.8 N at release [ARITH]) plus friction of L on T under the
-slide spring (30 N/m, 2.1 N held in [ARITH]). The key is held at 6 N a finger, the quarter at 4 N.
+cross-section); the lug stops the slide being pried out, and nothing scores without the key in line in the slot; 0.5 and
+up need the pin down in the key's hole, so a key held short by the hand does not count. The near lock's own key can
+reach round to its own slot (a real lock prevents this), but only the front lock's key scores, so that scores 0. A key
+held in line behind the near lock (tip more than 20 mm past the mouth; the plunger stops it at 14 mm) scores 0.
 
 ## Scoring
 
 From the end state. `score()` tops out at 0.75; 1.0 comes only from `success()` held `SUCCESS_HOLD_S` (1 s).
 
 - 0.25: the front lock's key in the near lock's slot, in line (tip within 4 mm across and 2.5 mm up or down of the slot
-  centre, key within 15 degrees of the slot axis, tip first) and 5 mm or more past the mouth.
+  centre, key within 15 degrees of the slot axis, tip first) and 5 to 20 mm past the mouth.
 - 0.5: also the coin slide out 35 mm or more of its 40 mm travel, and the key held by the lock (tip 11.5 mm or more in,
   retaining pin within 1.5 mm of its rest: in the key's hole, 1 mm or more into its thickness). The slide comes out only
   at 12.5 mm of key depth.
@@ -80,7 +78,8 @@ From the end state. `score()` tops out at 0.75; 1.0 comes only from `success()` 
   from the key and the quarter, held 1 s.
 
 Real trial: a ruler on the slide's travel and the key's exposed length, a 1 N pull on the chain for the retention, a
-photo of the mat and hands.
+photo of the mat and hands. On a real lock whose travel differs, the slide at its out stop and the key held against the
+1 N pull stand for the 35 mm and 11.5 mm marks.
 
 ## Modes
 
@@ -99,8 +98,9 @@ photo of the mat and hands.
 
 ## Results
 
-All from run `result.json` files on hash 527c77b5 (sha256 of the sorted `*.py` plus `task.json`, first 8 hex),
-runs fast_527c77b5_1121_125145 and _130816, cameras off. End state from each run's last trace row.
+From run `result.json` files on hash 527c77b5 (sha256 of the sorted `*.py` plus `task.json`, first 8 hex), runs
+fast_527c77b5_1121_125145 and _130816, cameras off, end states from the last trace row. Since then, scorer and text
+only: a 20 mm depth cap; the plunger stops the key at 14 mm, so the scores stand [ARITH, not re-run]; hash cb8168b4.
 
 | Mode | Seed | Score | Steps | End |
 |---|---|---|---|---|
@@ -125,14 +125,9 @@ key, "pin down" 1 to 1.5 mm, so a key home anywhere in the slot's play is held; 
 quarter must lie flat (within 15 degrees); task.json text for these, the near chain's own key, the key tip at 66.5 mm,
 a shorter fidelity and the Dream-1 score. Its start scene differs from this one by the basket wall, the key hole and the pin's size and depth.
 
-`checkkit.py` (IK with 3 degree joint margins, full-link clearance, run limit) and `test_trolley.py` (27 tests:
+`checkkit.py` (IK with 3 degree joint margins, full-link clearance, run limit) and `test_trolley.py` (28 tests:
 every scoring rule above against the code, each mode's end state, the latch and retention geometry including an
-off-centre key, the basket wall, the finger, the text) pass.
-
-## Demo video
-
-`sim/film.sh` runs the stock filmed demo and, via env `TROLLEY_HD` (never set when scoring), the same run's cameras at
-1280 x 720; demo.mp4 is that top view with the right wrist camera inset, `setup.png` its first frame.
+off-centre key, a key behind the lock, the basket wall, the finger, the text) pass.
 
 ## Run it
 
@@ -142,9 +137,14 @@ off-centre key, the basket wall, the finger, the text) pass.
 
 One fixed layout; the demo is open loop. `fastrun.py` runs every mode in one session without cameras;
 `PYTHONPATH=<yam_arena source> python3 test_trolley.py` runs the offline tests.
+`sim/film.sh` runs the stock filmed demo and, via env `TROLLEY_HD` (never set when scoring), the same run's cameras at
+1280 x 720; demo.mp4 is that top view with the right wrist camera inset, `setup.png` its first frame.
 
 ## Assets and licences
 
-Primitive shapes and hulls only. `mechanism.py`, `motionkit.py`, `checkkit.py` and `fastrun.py` carry MIT notices.
-`src/`: the patent text, the coin lock listing (supermarket-fixture.com), the cart sheet (text plus gzipped PDF) and the
-US Mint coin specifications.
+Task scene: primitive shapes and hulls made in code; `mechanism.py`, `motionkit.py`, `checkkit.py`, `fastrun.py` carry
+MIT notices. Robot (not bundled): the YAM arm and gripper (URDF, meshes, hulls) in the SDK's `yam_arena/assets/yam/`,
+from i2rt (https://github.com/i2rt-robotics/i2rt, commit 120c3c8), MIT, Copyright (c) I2RT Robotics (`LICENSE.i2rt`),
+and its `dream/` link2/link3 colour split (SDK `dream/SOURCE`: "MIT, see ../LICENSE.i2rt"). The SDK's room, lights and
+cameras are code; its README says it has no license yet (ported from YAM-inspect-Isaac). `src/`: the patent text, the
+coin lock listing (supermarket-fixture.com), the cart sheet (text plus gzipped PDF) and the US Mint coin specifications.

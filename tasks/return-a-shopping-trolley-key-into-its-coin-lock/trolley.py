@@ -298,6 +298,8 @@ OBJECTS = [FRONT, NEAR, NEAR_CHAIN, QUARTER, MAT_BOX]
 KEY_TIP = (ANCHOR[0], ANCHOR[1], KEY_TOP - KEY_L)   # key points in the front mechanism's rest frame [ARITH]
 KEY_BACK = (ANCHOR[0], ANCHOR[1], KEY_TOP)
 ENTER = 0.005                    # "in the slot": tip 5 mm or more past the mouth [CHOICE]
+MAX_IN = 0.020                   # and no more than 20 mm: the plunger stops the tip at 14 mm [ARITH]. WHY: without it a
+#                                  key held in line behind the lock's back face read as deep in the slot
 LINE_Y, LINE_Z, LINE_DEG = 0.004, 0.0025, 15.0   # tip within these of the slot's centre line, key within 15 deg of it
 SLIDE_OUT = 0.035                # coin slide out 35 mm or more of its 40 [CHOICE]
 MAT_IN, MAT_REST = 0.005, 0.003  # coin centre 5 mm inside the mat's edge; its lowest point within 3 mm of the mat top
@@ -326,7 +328,7 @@ def key_points(front):
 
 
 def key_in_slot(objects):
-    """(depth of the key tip past the near lock's mouth, in line) in metres."""
+    """(depth of the key tip past the near lock's mouth in metres, in line and at most MAX_IN deep)."""
     tip, back = key_points(objects["front"])
     o = np.asarray(objects["near"].pos, float)
     t = tip - o
@@ -334,7 +336,8 @@ def key_in_slot(objects):
     d = d / max(np.linalg.norm(d), 1e-9)
     in_line = (abs(t[1] - SLOT_Y) <= LINE_Y and abs(t[2] - SLOT_Z) <= LINE_Z
                and -d[0] >= math.cos(math.radians(LINE_DEG)))
-    return FX - t[0], bool(in_line)
+    depth = FX - t[0]
+    return depth, bool(in_line and depth <= MAX_IN)
 
 
 def retained(objects, depth):
