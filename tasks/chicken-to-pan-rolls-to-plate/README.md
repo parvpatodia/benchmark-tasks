@@ -53,8 +53,8 @@ trial scores 0 (the scorer never fails open).
   height, or tilts more than 2 degrees from level (`off_place`). A raw tray or pan pushed along the counter would leave
   raw counter behind; within these limits that band is at most 5 mm wide at the holder's edge. The plate and the
   basket, and a clean pan, may move, but a holder's floor covers the counter only while it rests flat (no more than
-  5 mm above its set-down height, tilted 2 degrees or less): counter under a lifted or tipped holder is bare. In every GPU run below the holders moved
-  at most 0.6 mm, rose 0 mm and turned 0.19 degrees. And 0 if a gripper's position cannot be read (fails closed).
+  5 mm above its set-down height, tilted 2 degrees or less): counter under a lifted or tipped holder is bare. In the GPU runs on hashes 03a125dc and
+  e2482253 (the same plans and scene) the holders moved at most 0.6 mm, rose 0 mm and turned 0.19 degrees. And 0 if a gripper's position cannot be read (fails closed).
 - **Otherwise 0.2 per item placed.** A thigh: centre within 78 mm of the pan's axis (the floor's radius), lowest point
   within 30 mm above the pan floor. A roll: centre within 90 mm of the plate's centre (the well), lowest point within
   5 mm above the well. Each also at rest (under 1 cm/s and 0.5 rad/s) with every gripper point at least 20 mm from it.
@@ -67,8 +67,9 @@ Each row is one fastrun mode (`TASK_DEMO=<mode>`), GPU physics, seed 0, scores r
 the first zero rule is from its `trace.csv`. Run on file hash edc45e39 (`cat $(ls *.py | sort) task.json | shasum -a 256`),
 the final files. The filmed demo (cameras on, seed 0: 1.0 in 989 steps) and Dream-1 (`--policy dream`, seed 0: 0
 after all 1,200 steps; it moved its right hand over the tray and placed no item) ran on hash a5d3d0c0. Since then the
-only code changes are the counter rules in `chicken.py` (`in_outline`, `off_place` and `raw_hand_counter`, called by
-`_hand_counter_check`: floor-only exempt zones, raw holders that must stay put, unread hands fail closed), their tests
+only code changes are the counter rules in `chicken.py` (`in_outline`, `resting_flat`, `off_place` and `raw_hand_counter`,
+called by `_hand_counter_check`: floor-only exempt zones that count only under a holder resting flat, raw holders
+that must stay put, unread hands fail closed), their tests
 in `test_chicken.py`, a source tag on the pan handle's size, and comments. In `task.json` the scores and media lines
 and the wording of setup, scoring and reset_notes changed. The demo's plan and every drawn shape are unchanged, so
 the film was not re-run.
