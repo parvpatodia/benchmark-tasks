@@ -12,8 +12,9 @@ Contamination is read from PhysX contacts (rigid contact views), after every phy
 - RAW at the start: both thighs and the tray (inside, rim or outside: [CHOICE] the whole tray counts, juice runs over
   its rim). Raw spreads by touch: an arm (any link) or a body (as one piece) that touches something raw is raw for good.
 - Latched 0, at any time: a roll, the plate or the basket becomes raw; a roll or a thigh is down on the counter; a raw
-  gripper comes within 3 mm of the counter outside every holder's outline (read from the gripper's pose: the counter is
-  not tracked spot by spot, so a raw hand on it is ruled unsafe at once, and a clean hand can never pick raw up there).
+  gripper comes within 3 mm of the counter outside every holder's true outline (in_outline: tray and basket rectangles,
+  plate and pan discs, the pan handle's box), read from the gripper's pose. The counter is not tracked spot by spot, so
+  a raw hand on it is ruled unsafe at once, and a clean hand can never pick raw up there.
 """
 import dataclasses
 import math
@@ -149,7 +150,7 @@ def _blob(cx, cy, rx, ry, z0, z1, color, ang=0.0, top=0.7, n=14):
 
 
 # Drawn-only pieces of a raw boneless thigh, (cx, cy, rx, ry, z0, z1, colour, angle, taper) in the thigh's frame: lean
-# lobes of uneven thickness (10 to 25 mm) round a lobed outline, white fat seams and dark red streaks [CHOICE: looks only]
+# lobes of uneven thickness (11 to 27 mm) round a lobed outline, white fat seams and dark red streaks [CHOICE: looks only]
 FLESH, FLESH_LT, FLESH_DK = (0.90, 0.58, 0.56), (0.95, 0.72, 0.68), (0.80, 0.40, 0.42)
 FAT, FAT_DK = (0.96, 0.89, 0.85), (0.93, 0.82, 0.78)
 THIGH_LOOK = (
@@ -485,17 +486,39 @@ _HANDS = {"left": None, "right": None}
 HOLDERS = ("tray", "pan", "basket", "plate")
 
 
-def raw_hand_counter(c, hands, outlines, step=0):
-    """Latch on c if a raw hand has a point within HAND_COUNTER_Z of the counter outside every holder's outline
-    (outlines: (low, high) world boxes). Returns the lowest such point's height over the counter (m), or None."""
+PAN_HANDLE_X = (PAN_W / 2 - 0.005, PAN_W / 2 - 0.005 + PAN_HANDLE)   # the handle box's x span, pan frame [ARITH]
+PAN_HANDLE_HALF_Y = 0.013        # half its 26 mm width (pan_body) [ARITH]
+
+
+def in_outline(name, state, pts):
+    """For each point (n, 3, world), whether it lies over the holder's true outline seen from above: the tray and the
+    basket as their rectangles, the plate as a disc of its real radius, the pan as a disc of its rim radius plus its
+    handle's box. Measured in the holder's own frame, so it turns and slides with it."""
+    q = (np.asarray(pts, float) - np.asarray(state.pos, float)) @ mechanism._rot_xyzw(state.quat_xyzw)
+    x, y = q[:, 0], q[:, 1]
+    if name == "tray":
+        return (np.abs(x) <= TRAY[0] / 2) & (np.abs(y) <= TRAY[1] / 2)
+    if name == "basket":
+        return (np.abs(x) <= BASKET[0] / 2) & (np.abs(y) <= BASKET[1] / 2)
+    if name == "plate":
+        return np.hypot(x, y) <= PLATE_R
+    if name == "pan":
+        return (np.hypot(x, y) <= PAN_W / 2) | ((x >= PAN_HANDLE_X[0]) & (x <= PAN_HANDLE_X[1])
+                                                 & (np.abs(y) <= PAN_HANDLE_HALF_Y))
+    raise KeyError(name)
+
+
+def raw_hand_counter(c, hands, holders, step=0):
+    """Latch on c if a raw hand has a point within HAND_COUNTER_Z of the counter outside every holder's true outline
+    (holders: name -> BodyState, see in_outline). Returns the lowest such point's height over the counter (m), or None."""
     least = None
     for side, pts in hands.items():
         if pts is None or side not in c.raw_set:
             continue
         p = np.asarray(pts, float)
         out = np.ones(len(p), bool)
-        for lo, hi in outlines:
-            out &= ~((p[:, 0] >= lo[0]) & (p[:, 0] <= hi[0]) & (p[:, 1] >= lo[1]) & (p[:, 1] <= hi[1]))
+        for name, st in holders.items():
+            out &= ~in_outline(name, st, p)
         if out.any():
             z = float(p[out, 2].min()) - TOP
             least = z if least is None else min(least, z)
@@ -507,12 +530,11 @@ def raw_hand_counter(c, hands, outlines, step=0):
 def _hand_counter_check(env):
     sc = env.unwrapped.scene
     origin = _np(sc.env_origins)[0]
-    outlines = []
+    holders = {}
     for name in HOLDERS:
         pose = _np(sc[name].data.root_link_pose_w)[0]
-        st = mechanism.body_state(SPEC[name], pose[:3] - origin, pose[3:7])
-        outlines.append((st.low, st.high))
-    z = raw_hand_counter(_C["state"], _HANDS, outlines, _C["step"])
+        holders[name] = mechanism.body_state(SPEC[name], pose[:3] - origin, pose[3:7])
+    z = raw_hand_counter(_C["state"], _HANDS, holders, _C["step"])
     if z is not None:
         _C["hand_low"] = min(_C.get("hand_low", 1.0), z)
 

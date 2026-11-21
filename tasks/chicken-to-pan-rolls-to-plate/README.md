@@ -19,7 +19,7 @@ handling food", and "Separate raw meat, poultry, seafood, and eggs from other fo
 | item | real part | size, mass | source |
 |---|---|---|---|
 | meat tray | white polystyrene foam #2S | 8.25 x 5.75 x 0.50 in (210 x 146 x 12.7 mm), 8 g | CKF 2SW listing (`src/ckf_2sw_foam_meat_tray.txt`); mass estimate with pad |
-| 2 chicken thighs | raw boneless skinless (real trial: silicone display food) | lobed, about 74 x 112 mm, 10 to 26 mm thick, 120 g; collides as an oval slab 60 x 100 x 22 mm | estimate; USDA FDC 173627 gives 149 g for a whole skinless thigh (`src/usda_fdc_173627_*`) |
+| 2 chicken thighs | raw boneless skinless (real trial: silicone display food) | lobed, about 74 x 112 mm, 11 to 27 mm thick, 120 g; collides as an oval slab 60 x 100 x 22 mm | estimate; USDA FDC 173627 gives 149 g for a whole skinless thigh (`src/usda_fdc_173627_*`) |
 | skillet | Lodge L5SK3 8 in cast iron, cold | width 8 5/8 in, max diameter 8 1/4 in, height 1.87 in, handle 4 3/4 in, 3.13 lb (1.42 kg; Sutherlands "Weight"; Webstaurant's 3.16 lb is a shipping weight); floor 156 mm from its 29.5 sq in cooking area | `src/lodge_l5sk3_skillet_*.txt` |
 | 2 dinner rolls | real trial: display rolls, golden crust, split top | 55 mm across, 45 mm tall, 28 g | 28 g: USDA FDC 172793 "1 roll (1 oz)"; size estimate |
 | bread basket | small rectangular woven basket | 130 (x) x 190 (y) x 60 mm, 150 g | estimate |
@@ -42,8 +42,9 @@ trial scores 0 (the scorer never fails open).
   contact of one physics step is applied until nothing changes, so their order within the step does not matter.
 - **0 at any moment, latched:** a roll, the plate or the basket becomes raw; any part of a roll or a thigh comes
   within 1.5 mm of the counter (dropped; every holder's floor top is at least 3 mm up); any point of a raw gripper
-  comes within 3 mm of the counter outside the outlines of the tray, pan, basket and plate (read from the gripper's
-  pose each control step). The counter is not tracked spot by spot, so a raw hand on it is ruled unsafe at once; that
+  comes within 3 mm of the counter outside every holder's footprint seen from above, each in its current pose: the
+  tray's 210 x 146 mm and the basket's 130 x 190 mm rectangles, the plate's 267 mm disc, and the pan's 219 mm rim disc
+  plus its handle's 121 x 26 mm box (`in_outline` in `chicken.py`; read from the gripper's pose each control step). The counter is not tracked spot by spot, so a raw hand on it is ruled unsafe at once; that
   also closes the route where the raw hand touches the counter, the clean hand touches the same spot, then a roll.
 - **Otherwise 0.2 per item placed.** A thigh: centre within 78 mm of the pan's axis (the floor's radius), lowest point
   within 30 mm above the pan floor. A roll: centre within 90 mm of the plate's centre (the well), lowest point within
@@ -54,11 +55,13 @@ trial scores 0 (the scorer never fails open).
 ## Demo and the unsafe routes
 
 Each row is one fastrun mode (`TASK_DEMO=<mode>`), GPU physics, seed 0, scores read from its `result.json`; the step of
-the first zero rule is from its `trace.csv`. Run on file hash cc3b11cc (`cat $(ls *.py | sort) task.json | shasum -a 256`).
-After it only drawn-only colours and shapes (roll crust, thigh fat) and the `scores` line of `task.json` changed; the filmed demo on the final
-files (hash a5d3d0c0, cameras on, seed 0) scored 1.0 in 989 steps.
-Dream-1 (`--policy dream`, seed 0, the same `.py` files as the film; only the `scores` line of `task.json` changed
-since) scored 0 after all 1,200 steps: it moved its right hand over the tray and placed no item.
+the first zero rule is from its `trace.csv`. Run on file hash 31f172e2 (`cat $(ls *.py | sort) task.json | shasum -a 256`).
+The filmed demo (cameras on, seed 0: 1.0 in 989 steps) and Dream-1 (`--policy dream`, seed 0: 0 after all 1,200 steps;
+it moved its right hand over the tray and placed no item) ran on hash a5d3d0c0. Since then the only code change is the
+shape of the counter rule's exempt zones (`in_outline` in `chicken.py`, used by `raw_hand_counter` and
+`_hand_counter_check`; they were bounding boxes), its tests in `test_chicken.py`, and comments. In `task.json` the scores and media lines and the
+wording of setup, scoring and reset_notes changed. The demo's plan and every drawn shape are unchanged, so the film
+was not re-run.
 
 | mode | what the arms do | expected | scored |
 |---|---|---|---|
@@ -75,7 +78,7 @@ since) scored 0 after all 1,200 steps: it moved its right hand over the tray and
 
 Silicone display-food thighs and polyurethane display rolls of the stated sizes and masses, a new #2S tray per session,
 a Lodge L5SK3 skillet (cold) and a willow basket and china plate of the stated sizes, at taped outlines matching the
-setup photo. Nothing is contaminated, perishes or gets hot, so the rig needs no cleaning. Record the top and both wrist
+setup photo and following each item's real shape (circles for the plate and the pan, plus the pan handle's outline). Nothing is contaminated, perishes or gets hot, so the rig needs no cleaning. Record the top and both wrist
 cameras plus a fixed side camera at the robot's right, level with the counter, with a ruler standing in its view. A
 touch counts unless some camera shows a visible gap, judged frame by frame. Heights (the 1.5 mm, 3 mm, 5 mm and 30 mm
 bands) are read on the side camera's frames against the ruler; centre distances and the 20 mm hand clearance on the end
