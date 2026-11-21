@@ -278,41 +278,82 @@ class Contamination(unittest.TestCase):
         holders = {n: state(n) for n in M.HOLDERS}
         spot = np.array([[M.COUNTER_SPOT[0], M.COUNTER_SPOT[1], M.TOP + 0.001]])
         in_tray = np.array([[M.TRAY_C[0], M.TRAY_C[1], M.TOP + 0.001]])
+        far = np.array([[0.0, 0.0, M.TOP + 0.4]])
         c = M.Contamination()
-        self.assertIsNone(M.raw_hand_counter(c, {"left": spot, "right": None}, holders, 1))
+        self.assertIsNone(M.raw_hand_counter(c, {"left": spot, "right": far}, holders, 1))
         self.assertIsNone(c.fail)                                  # the left hand is clean
         c.arm_object("right", "chicken1", 1)                       # the right hand is now raw
-        M.raw_hand_counter(c, {"left": None, "right": in_tray}, holders, 2)
-        self.assertIsNone(c.fail)                                  # down inside a holder's outline
-        M.raw_hand_counter(c, {"left": None, "right": spot + [0, 0, M.HAND_COUNTER_Z]}, holders, 3)
+        M.raw_hand_counter(c, {"left": far, "right": in_tray}, holders, 2)
+        self.assertIsNone(c.fail)                                  # down over the tray's floor
+        M.raw_hand_counter(c, {"left": far, "right": spot + [0, 0, M.HAND_COUNTER_Z]}, holders, 3)
         self.assertIsNone(c.fail)                                  # 4 mm up
-        self.assertAlmostEqual(M.raw_hand_counter(c, {"left": None, "right": spot}, holders, 4), 0.001)
+        self.assertAlmostEqual(M.raw_hand_counter(c, {"left": far, "right": spot}, holders, 4), 0.001)
         self.assertEqual(c.fail, (4, "raw right hand touched the counter"))
 
-    def test_counter_zones_are_true_shapes(self):
-        """Bare counter inside a round holder's bounding box but outside its disc is not exempt; the handle is."""
+    def test_unread_hand_fails_closed(self):
         holders = {n: state(n) for n in M.HOLDERS}
+        c = M.Contamination()                                      # both hands clean
+        M.raw_hand_counter(c, {"left": None, "right": np.array([[0.0, -0.3, M.TOP + 0.4]])}, holders, 5)
+        self.assertEqual(c.fail, (5, "left hand unread"))
+
+    def _bare(self, x, y, what):
+        """A raw right hand 1 mm over (x, y) latches 0, and the goal then scores 0."""
+        holders = {n: state(n) for n in M.HOLDERS}
+        p = np.array([[x, y, M.TOP + 0.001]])
+        for name, st in holders.items():
+            self.assertFalse(M.in_outline(name, st, p)[0], f"{what} counted as {name}'s floor")
+        c = feed([("right", "chicken1")])
+        M.raw_hand_counter(c, {"left": FAR["left"], "right": p}, holders, 7)
+        self.assertEqual(c.fail, (7, "raw right hand touched the counter"), what)
+        self.assertEqual(score_of(goal_states()), 0.0, what)
+        self.assertFalse(M.success(goal_states()), what)
+
+    def test_counter_zones_are_floors_only(self):
+        """Only counter under a holder's floor is exempt: not under the pan's flared wall or handle, not under the
+        plate's rim, not at a bounding-box corner."""
         px, py = SPEC["pan"].pos[:2]
         lx, ly = SPEC["plate"].pos[:2]
+        self._bare(0.50, -0.05, "pan box corner")
+        self._bare(0.34, 0.36, "plate box corner")
+        self._bare(px - 0.100, py, "under the pan wall, r 100 mm")
+        self._bare(px + 0.100 * math.cos(1.0), py + 0.100 * math.sin(1.0), "under the pan wall, r 100 mm, 57 deg")
+        self._bare(px + M.PAN_W / 2 + 0.050, py, "under the pan handle")
+        self._bare(lx + 0.125, ly, "under the plate rim, r 125 mm")
+        self._bare(lx, ly - 0.100, "under the plate rim, r 100 mm")
+        holders = {n: state(n) for n in M.HOLDERS}
         z = M.TOP + 0.001
-        bare = {"pan box corner": (0.50, -0.05), "plate box corner": (0.34, 0.36),
-                "pan box corner, far": (px - 0.105, py + 0.105), "plate box corner, near": (lx - 0.12, ly - 0.12)}
-        for what, (x, y) in bare.items():
-            for name, st in holders.items():
-                self.assertFalse(M.in_outline(name, st, np.array([[x, y, z]]))[0], f"{what} counted as {name}")
-            c = feed([("right", "chicken1")])
-            M.raw_hand_counter(c, {"left": None, "right": np.array([[x, y, z]])}, holders, 7)
-            self.assertEqual(c.fail, (7, "raw right hand touched the counter"), what)
-            s = goal_states()
-            self.assertEqual(score_of(s), 0.0, what)               # latched: the goal still scores 0
-            self.assertFalse(M.success(s), what)
-        covered = {"pan": [(px, py), (px + 0.105, py), (px + M.PAN_W / 2 + 0.06, py + 0.010)],
-                   "plate": [(lx, ly), (lx + 0.13, ly)], "tray": [(M.TRAY_C[0] + 0.100, M.TRAY_C[1] + 0.070)],
+        covered = {"pan": [(px, py), (px + 0.080, py), (px, py - 0.080)], "plate": [(lx, ly), (lx + 0.088, ly)],
+                   "tray": [(M.TRAY_C[0] + 0.100, M.TRAY_C[1] + 0.070)],
                    "basket": [(M.BASKET_C[0] + 0.060, M.BASKET_C[1] - 0.090)]}
         for name, xys in covered.items():
             for x, y in xys:
                 self.assertTrue(M.in_outline(name, holders[name], np.array([[x, y, z]]))[0], f"{name} at {x}, {y}")
-        self.assertFalse(M.in_outline("pan", holders["pan"], np.array([[px + M.PAN_W / 2 + 0.06, py + 0.020, z]]))[0])
+
+    def test_holders_stay_put(self):
+        """A slid, lifted or turned holder latches 0 (its floor would no longer cover where raw juice may be)."""
+        far = {"left": FAR["left"], "right": FAR["right"]}
+        cases = {"tray slid off its place": ("tray", (0.025, 0.0, 0.0), 0.0),
+                 "pan lifted": ("pan", (0.0, 0.0, 0.006), 0.0),
+                 "plate turned or tilted": ("plate", (0.0, 0.0, 0.0), math.radians(11)),
+                 "basket slid off its place": ("basket", (0.0, -0.021, 0.0), 0.0)}
+        for why, (name, d, yaw) in cases.items():
+            holders = {n: state(n) for n in M.HOLDERS}
+            holders[name] = state(name, np.asarray(SPEC[name].pos) + d, yaw)
+            c = M.Contamination()
+            M.raw_hand_counter(c, far, holders, 9)
+            self.assertEqual(c.fail, (9, why))
+        holders = {n: state(n, np.asarray(SPEC[n].pos) + (0.015, 0.0, 0.004), math.radians(8)) for n in M.HOLDERS}
+        c = M.Contamination()
+        M.raw_hand_counter(c, far, holders, 9)
+        self.assertIsNone(c.fail)                                  # within 20 mm, 5 mm and 10 deg: in place
+        tilted = {n: state(n) for n in M.HOLDERS}
+        st = tilted["tray"]
+        q = np.array([math.sin(math.radians(6)), 0.0, 0.0, math.cos(math.radians(6))])   # 12 deg about x
+        from mechanism import body_state
+        tilted["tray"] = body_state(SPEC["tray"], st.pos, q)
+        c = M.Contamination()
+        M.raw_hand_counter(c, far, tilted, 9)
+        self.assertEqual(c.fail, (9, "tray turned or tilted"))
 
     def test_drawn_pieces_never_collide(self):
         for n in M.ITEMS:

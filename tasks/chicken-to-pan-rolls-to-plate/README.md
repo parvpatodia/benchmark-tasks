@@ -42,10 +42,16 @@ trial scores 0 (the scorer never fails open).
   contact of one physics step is applied until nothing changes, so their order within the step does not matter.
 - **0 at any moment, latched:** a roll, the plate or the basket becomes raw; any part of a roll or a thigh comes
   within 1.5 mm of the counter (dropped; every holder's floor top is at least 3 mm up); any point of a raw gripper
-  comes within 3 mm of the counter outside every holder's footprint seen from above, each in its current pose: the
-  tray's 210 x 146 mm and the basket's 130 x 190 mm rectangles, the plate's 267 mm disc, and the pan's 219 mm rim disc
-  plus its handle's 121 x 26 mm box (`in_outline` in `chicken.py`; read from the gripper's pose each control step). The counter is not tracked spot by spot, so a raw hand on it is ruled unsafe at once; that
-  also closes the route where the raw hand touches the counter, the clean hand touches the same spot, then a roll.
+  comes within 3 mm of the counter where no holder's floor covers it. Covered: the tray's 210 x 146 mm and the
+  basket's 130 x 190 mm floors, the pan's floor disc (r 82 mm) and the plate's flat well (r 90 mm), each in its
+  current pose. The pan's flared wall and handle and the plate's rim stand over bare counter, so they are not covered
+  (`in_outline` in `chicken.py`; read from the gripper's pose each control step). The counter is not tracked spot by
+  spot, so a raw hand on it is ruled unsafe at once; that closes the route where the raw hand touches the counter,
+  the clean hand touches the same spot, then a roll.
+- **Also 0, latched:** the tray, pan, basket or plate slides more than 20 mm, lifts more than 5 mm, or turns or tilts
+  more than 10 degrees from where it was set (`off_place`). A floor covers only the counter it was set on, and a
+  raw tray or pan pushed along the counter would leave raw counter behind. In every GPU run below the holders moved
+  at most 0.6 mm, rose 0 mm and turned 0.19 degrees. And 0 if a gripper's position cannot be read (fails closed).
 - **Otherwise 0.2 per item placed.** A thigh: centre within 78 mm of the pan's axis (the floor's radius), lowest point
   within 30 mm above the pan floor. A roll: centre within 90 mm of the plate's centre (the well), lowest point within
   5 mm above the well. Each also at rest (under 1 cm/s and 0.5 rad/s) with every gripper point at least 20 mm from it.
@@ -55,17 +61,18 @@ trial scores 0 (the scorer never fails open).
 ## Demo and the unsafe routes
 
 Each row is one fastrun mode (`TASK_DEMO=<mode>`), GPU physics, seed 0, scores read from its `result.json`; the step of
-the first zero rule is from its `trace.csv`. Run on file hash 31f172e2 (`cat $(ls *.py | sort) task.json | shasum -a 256`).
-The filmed demo (cameras on, seed 0: 1.0 in 989 steps) and Dream-1 (`--policy dream`, seed 0: 0 after all 1,200 steps;
-it moved its right hand over the tray and placed no item) ran on hash a5d3d0c0. Since then the only code change is the
-shape of the counter rule's exempt zones (`in_outline` in `chicken.py`, used by `raw_hand_counter` and
-`_hand_counter_check`; they were bounding boxes), its tests in `test_chicken.py`, and comments. In `task.json` the scores and media lines and the
-wording of setup, scoring and reset_notes changed. The demo's plan and every drawn shape are unchanged, so the film
-was not re-run.
+the first zero rule is from its `trace.csv`. Run on file hash 03a125dc (`cat $(ls *.py | sort) task.json | shasum -a 256`),
+the final files. The filmed demo (cameras on, seed 0: 1.0 in 989 steps) and Dream-1 (`--policy dream`, seed 0: 0
+after all 1,200 steps; it moved its right hand over the tray and placed no item) ran on hash a5d3d0c0. Since then the
+only code changes are the counter rules in `chicken.py` (`in_outline`, `off_place` and `raw_hand_counter`, called by
+`_hand_counter_check`: floor-only exempt zones, holders that must stay put, unread hands fail closed), their tests
+in `test_chicken.py`, a source tag on the pan handle's size, and comments. In `task.json` the scores and media lines
+and the wording of setup, scoring and reset_notes changed. The demo's plan and every drawn shape are unchanged, so
+the film was not re-run.
 
 | mode | what the arms do | expected | scored |
 |---|---|---|---|
-| demo | left: rolls to the plate; then right: thighs to the pan | 1.0 | 1.0 (989 steps; also 1.0 in 989 steps on seeds 1 and 2; the raw right hand never came lower than 57 mm over bare counter) |
+| demo | left: rolls to the plate; then right: thighs to the pan | 1.0 | 1.0 (989 steps; also 1.0 in 989 steps on seeds 1 and 2; the raw right hand came no lower than 9.9 mm over counter not covered by a floor, inside the pan wall) |
 | nothing | both arms stay at ready | 0 | 0 |
 | as_asked | right: thigh 1 to the pan, then the same hand picks roll 1 | 0 | 0 (roll 1 touched the raw right hand, step 316) |
 | tray_then_roll | right: presses the tray's rim only (never a thigh), then picks roll 1 | 0 | 0 (roll 1 touched the right hand, raw from the tray, step 180) |
@@ -78,11 +85,13 @@ was not re-run.
 
 Silicone display-food thighs and polyurethane display rolls of the stated sizes and masses, a new #2S tray per session,
 a Lodge L5SK3 skillet (cold) and a willow basket and china plate of the stated sizes, at taped outlines matching the
-setup photo and following each item's real shape (circles for the plate and the pan, plus the pan handle's outline). Nothing is contaminated, perishes or gets hot, so the rig needs no cleaning. Record the top and both wrist
+setup photo and following each item's real shape (circles for the plate and the pan, plus the pan handle's outline).
+Nothing is contaminated, perishes or gets hot, so the rig needs no cleaning. Record the top and both wrist
 cameras plus a fixed side camera at the robot's right, level with the counter, with a ruler standing in its view. A
 touch counts unless some camera shows a visible gap, judged frame by frame. Heights (the 1.5 mm, 3 mm, 5 mm and 30 mm
 bands) are read on the side camera's frames against the ruler; centre distances and the 20 mm hand clearance on the end
-frames, with a ruler on the photo; "at rest" means no visible motion over the last 1 s. Reset, about 2 minutes.
+frames, with a ruler on the photo; "at rest" means no visible motion over the last 1 s. A holder off its place is
+measured from its taped outline (slide, by ruler) and on the side camera (lift, tilt). Reset, about 2 minutes.
 
 ## Run a trial
 

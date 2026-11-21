@@ -12,9 +12,11 @@ Contamination is read from PhysX contacts (rigid contact views), after every phy
 - RAW at the start: both thighs and the tray (inside, rim or outside: [CHOICE] the whole tray counts, juice runs over
   its rim). Raw spreads by touch: an arm (any link) or a body (as one piece) that touches something raw is raw for good.
 - Latched 0, at any time: a roll, the plate or the basket becomes raw; a roll or a thigh is down on the counter; a raw
-  gripper comes within 3 mm of the counter outside every holder's true outline (in_outline: tray and basket rectangles,
-  plate and pan discs, the pan handle's box), read from the gripper's pose. The counter is not tracked spot by spot, so
-  a raw hand on it is ruled unsafe at once, and a clean hand can never pick raw up there.
+  gripper comes within 3 mm of the counter where no holder's floor covers it (in_outline: tray and basket rectangles,
+  the pan's 82 mm floor disc, the plate's 90 mm well), read from the gripper's pose. The counter is not tracked spot by
+  spot, so a raw hand on it is ruled unsafe at once, and a clean hand can never pick raw up there. Also 0: a holder
+  slides over 20 mm, lifts over 5 mm or turns or tilts over 10 deg (its floor covers only where it was set), or a
+  hand's pose cannot be read (fails closed).
 """
 import dataclasses
 import math
@@ -59,7 +61,9 @@ PAN_RIM_R = 8.25 * IN / 2        # inside rim radius [SOURCE: Maximum Diameter 8
 PAN_FLOOR_R = math.sqrt(29.5 / math.pi) * IN   # [ARITH: Cooking Area 29.5 sq. in. [SOURCE] as a disc, r 78 mm]
 PAN_H = 1.87 * IN                # overall height [SOURCE: Height 1.87 in]
 PAN_FLOOR_T = 0.005              # floor thickness [EST]
+PAN_FLOOR_DISC = PAN_FLOOR_R + 0.004   # the floor collider's radius, 82 mm; the wall starts outside it [ARITH]
 PAN_HANDLE = 4.75 * IN           # handle length [SOURCE: Handle Length 4 3/4 in]
+PAN_HANDLE_W, PAN_HANDLE_T = 0.026, 0.016   # handle width and thickness [EST: the listings give neither]
 PAN_KG = 3.13 * 0.4536           # [SOURCE: Sutherlands "Weight 3.13 lb"; Webstaurant's 3.16 lb is a shipping weight]
 PAN_C = (0.350, -0.130)          # [CHOICE]
 PAN_SPOTS = ((0.305, -0.130), (0.395, -0.130))   # thighs set down side by side, long side along y [CHOICE]
@@ -221,12 +225,12 @@ def plate_body():
 
 
 def pan_body():
-    floor = Shape("cylinder", (0, 0, PAN_FLOOR_T / 2), (PAN_FLOOR_R + 0.004, PAN_FLOOR_T), IRON, material="iron",
+    floor = Shape("cylinder", (0, 0, PAN_FLOOR_T / 2), (PAN_FLOOR_DISC, PAN_FLOOR_T), IRON, material="iron",
                   mass=PAN_KG * 0.45)
     wall = _annulus(PAN_FLOOR_R + 0.005, 0.0, PAN_W / 2, PAN_H, (PAN_W / 2 - PAN_RIM_R), 24, IRON, "iron",
                     PAN_KG * 0.40)
-    handle = _box((PAN_W / 2 + PAN_HANDLE / 2 - 0.005, 0, PAN_H - 0.012), (PAN_HANDLE, 0.026, 0.016), IRON, "iron",
-                  PAN_KG * 0.15)
+    handle = _box((PAN_W / 2 + PAN_HANDLE / 2 - 0.005, 0, PAN_H - 0.012), (PAN_HANDLE, PAN_HANDLE_W, PAN_HANDLE_T), IRON,
+                  "iron", PAN_KG * 0.15)
     return body("pan", (*PAN_C, TOP + 0.0005), [floor, *wall, handle], MATS, color=IRON)
 
 
@@ -285,6 +289,14 @@ class Contamination:
             self._latch(step, f"{name} on the counter")
         elif name in CHICKEN:
             self._latch(step, f"{name} dropped on the counter")
+
+    def holder_off(self, why, step=0):
+        """The tray, pan, basket or plate slid, lifted or turned off its place (see off_place)."""
+        self._latch(step, why)
+
+    def hand_unread(self, side, step=0):
+        """A hand's points could not be read: the counter rule cannot be checked, so it scores 0 (fails closed)."""
+        self._latch(step, f"{side} hand unread")
 
     def hand_on_counter(self, side, step=0):
         """A raw hand down on the counter: the spot is raw, and the counter is not tracked spot by spot, so it is 0."""
@@ -486,14 +498,15 @@ _HANDS = {"left": None, "right": None}
 HOLDERS = ("tray", "pan", "basket", "plate")
 
 
-PAN_HANDLE_X = (PAN_W / 2 - 0.005, PAN_W / 2 - 0.005 + PAN_HANDLE)   # the handle box's x span, pan frame [ARITH]
-PAN_HANDLE_HALF_Y = 0.013        # half its 26 mm width (pan_body) [ARITH]
+HOLD_MOVE, HOLD_RISE, HOLD_TURN = 0.020, 0.005, 10.0   # m, m, deg: a holder that slides, lifts or turns more is off its
+                                 # place [CHOICE; [RUN] demo seeds 0 to 2 and every mode moved them at most 0.6 mm, 0 mm,
+                                 # 0.19 deg (fast_31f172e2 traces)]
 
 
 def in_outline(name, state, pts):
-    """For each point (n, 3, world), whether it lies over the holder's true outline seen from above: the tray and the
-    basket as their rectangles, the plate as a disc of its real radius, the pan as a disc of its rim radius plus its
-    handle's box. Measured in the holder's own frame, so it turns and slides with it."""
+    """For each point (n, 3, world), whether the counter under it is covered by the holder's floor: the tray's and the
+    basket's floors (their full rectangles), the pan's floor disc (r 82 mm; its flared wall and handle stand over bare
+    counter), the plate's flat well (r 90 mm; its rim stands over bare counter). In the holder's own frame."""
     q = (np.asarray(pts, float) - np.asarray(state.pos, float)) @ mechanism._rot_xyzw(state.quat_xyzw)
     x, y = q[:, 0], q[:, 1]
     if name == "tray":
@@ -501,19 +514,43 @@ def in_outline(name, state, pts):
     if name == "basket":
         return (np.abs(x) <= BASKET[0] / 2) & (np.abs(y) <= BASKET[1] / 2)
     if name == "plate":
-        return np.hypot(x, y) <= PLATE_R
+        return np.hypot(x, y) <= PLATE_FLAT_R
     if name == "pan":
-        return (np.hypot(x, y) <= PAN_W / 2) | ((x >= PAN_HANDLE_X[0]) & (x <= PAN_HANDLE_X[1])
-                                                 & (np.abs(y) <= PAN_HANDLE_HALF_Y))
+        return np.hypot(x, y) <= PAN_FLOOR_DISC
     raise KeyError(name)
 
 
+def off_place(name, state):
+    """Why a holder is off its starting place (slid over HOLD_MOVE, lifted over HOLD_RISE, or turned or tilted over
+    HOLD_TURN), or "" if it is in place. Its floor only covers the counter where it was set down."""
+    start = SPEC[name].pos
+    p = np.asarray(state.pos, float)
+    if math.hypot(p[0] - start[0], p[1] - start[1]) > HOLD_MOVE:
+        return f"{name} slid off its place"
+    if p[2] - start[2] > HOLD_RISE:
+        return f"{name} lifted"
+    r = mechanism._rot_xyzw(state.quat_xyzw)
+    yaw = math.degrees(math.atan2(r[1, 0], r[0, 0])) - math.degrees(SPEC[name].yaw)
+    tilt = math.degrees(math.acos(max(-1.0, min(1.0, float(r[2, 2])))))
+    if abs((yaw + 180) % 360 - 180) > HOLD_TURN or tilt > HOLD_TURN:
+        return f"{name} turned or tilted"
+    return ""
+
+
 def raw_hand_counter(c, hands, holders, step=0):
-    """Latch on c if a raw hand has a point within HAND_COUNTER_Z of the counter outside every holder's true outline
-    (holders: name -> BodyState, see in_outline). Returns the lowest such point's height over the counter (m), or None."""
+    """The counter rules, one control step. Latch on c: a holder off its place; an unread hand (fails closed); a raw
+    hand with a point within HAND_COUNTER_Z of the counter where no holder's floor covers it (holders: name ->
+    BodyState, see in_outline). Returns the lowest such raw point's height over the counter (m), or None."""
+    for name, st in holders.items():
+        why = off_place(name, st)
+        if why:
+            c.holder_off(why, step)
     least = None
     for side, pts in hands.items():
-        if pts is None or side not in c.raw_set:
+        if pts is None:
+            c.hand_unread(side, step)
+            continue
+        if side not in c.raw_set:
             continue
         p = np.asarray(pts, float)
         out = np.ones(len(p), bool)
@@ -559,7 +596,7 @@ def read_hands(env):
             print(f"[chicken] counter check failed: {_C['failed']}", flush=True)
     try:
         _HANDS.update({side: HAND.from_env(env, side) for side in ("left", "right")})
-    except Exception:  # noqa: BLE001  WHY: never stop the run; unread hands count as touching
+    except Exception:  # noqa: BLE001  WHY: never stop the run; an unread hand latches 0 (raw_hand_counter)
         _HANDS.update({"left": None, "right": None})
     try:
         _hand_counter_check(env)
