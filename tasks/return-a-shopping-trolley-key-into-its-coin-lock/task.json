@@ -1,0 +1,21 @@
+{
+  "title": "Return a shopping trolley: push the chain key of the trolley in front home in your coin lock, then take the quarter back",
+  "category": "Societal relatability",
+  "keywords": [
+    "shopping trolley",
+    "coin lock",
+    "chain key",
+    "hanging object",
+    "insertion",
+    "latch"
+  ],
+  "instruction": "Return the shopping trolley: take the key hanging on its chain from the coin lock of the trolley in front, push it fully into the key slot of your trolley's coin lock, then take out the quarter the lock releases and lay it on the rubber mat. Leave the key in the lock and take both hands away.",
+  "context": "Supermarket coin-lock trolleys are returned by coupling them: the chain key of the trolley in front goes into the returned trolley's lock, which then releases the deposit coin. The key hangs loose on a chain and must be found, gripped, turned and lined up with a narrow slot among the tubes of two nested trolleys.",
+  "setup": "World x forward from the arm bases, y to the robot's left, heights over the bench top. Two nested trolleys shown by their push handles, both steel tube 25 mm across: a straight handle 300 mm long along y (y -0.10 to 0.20), its axis 0.340 m over the bench, with a side tube at each end running 80 mm forward (+x) and down to the bench. The near (returned) trolley's handle is at x 0.150, the front trolley's handle 178 mm further on at x 0.328. Each handle carries a coin lock (grey plastic body, 90 mm along the handle, 70 mm across, 68 mm tall, red top; on the handle, centred at y 0.05). The near lock has a 21 x 6 mm key slot in its front (+x) face, centred at y 0.02, 0.364 m over the bench, and holds a US quarter (24.26 mm, 1.75 mm thick, 5.67 g) out of sight in its coin slide. From the back face of each lock a steel chain of 11 links of 20 mm (220 mm) hangs free; on the front lock's chain hangs its key, a flat steel tag 62 x 15 x 3 mm (22 g), tip down, its line at x 0.290, y 0.020, its tip 67 mm over the bench, broad faces facing x. A rubber mat 100 x 100 x 3 mm lies on the bench centred at x 0.060, y -0.120. Both arms start in the ready pose.",
+  "scoring": "Stages, from the end state. 0.25: the front lock's key is in the near lock's slot, in line (its tip within 4 mm of the slot centre across and within 2.5 mm up or down, the key within 15 degrees of the slot's axis, tip first) and 5 mm or more past the slot mouth. 0.5: also the coin slide out 35 mm or more of its 40 mm travel. The lock lets the slide out only when the key's tip has gone 12.5 mm past the mouth and pushed its plunger home; a finger fits 2 mm short of that, so the slide is the record that the key went home. 0.75: also the quarter resting on the mat (its centre 5 mm or more inside the mat's edges and its lowest point within 3 mm of the mat's top). 1.0: also the quarter, key, plunger and slide at rest (points under 0.01 m/s, spins under 0.5 rad/s) and every gripper point 30 mm or more from the key and the quarter, held for 1 s. Any state without the key in line and 5 mm in scores 0, so prying at the coin slide or reaching for the coin without the key scores 0; a key reversed or pushed in beside the slot scores 0. Real trial: a ruler on the key's exposed length and the slide's travel, and a photo of the mat and the hands.",
+  "run_limit": "1,600 steps (80 s at 20 Hz)",
+  "reset_notes": "Nothing is consumed. Pull the key out (on a real lock press the release with the coin: put the quarter back into the slide and push the slide home until it latches), and let the key hang still on its chain.",
+  "fidelity": "Rigid PhysX bodies; lock, quarter, nesting gap and tube at catalogue size. The lock's inside follows EP0427819B1 loosely: a spring plunger with a tooth latches the coin slide out; the key stays in the slot by friction, not the patent's ball. The chain is 11 rigid links on alternating hinges, 40 mm shorter than the 260 mm listed; the handles are shortened and lowered to 0.34 m for the arms' reach.",
+  "scores": "Dream-1 run: not run yet; scripted demo: pending",
+  "media": ""
+}

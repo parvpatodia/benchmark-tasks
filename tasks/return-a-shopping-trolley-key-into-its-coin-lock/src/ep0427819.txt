@@ -1,0 +1,1312 @@
+Source: https://patents.google.com/patent/EP0427819B1/en (retrieved 2026-11-21), page text.
+ 
+ EP0427819B1 - A coin lock for a trolley 
+ - Google Patents 
+ EP0427819B1 - A coin lock for a trolley 
+ - Google Patents 
+ A coin lock for a trolley 
+ Download PDF 
+ Info 
+ Publication number 
+ EP0427819B1 
+ EP0427819B1 
+ EP90906159A 
+ EP90906159A 
+ EP0427819B1 
+ EP 0427819 B1 
+ EP0427819 B1 
+ EP 0427819B1 
+ EP 90906159 A 
+ EP90906159 A 
+ EP 90906159A 
+ EP 90906159 A 
+ EP90906159 A 
+ EP 90906159A 
+ EP 0427819 B1 
+ EP0427819 B1 
+ EP 0427819B1 
+ Authority 
+ EP 
+ European Patent Office 
+ Prior art keywords 
+ coin 
+ coupling member 
+ casing 
+ slide 
+ coin slide 
+ Prior art date 
+ 1989-04-19 
+ Legal status (The legal status is an assumption and is not a legal conclusion. Google has not performed a legal analysis and makes no representation as to the accuracy of the status listed.) 
+ Expired - Lifetime 
+ Application number 
+ EP90906159A 
+ Other languages 
+ German ( de )
+ French ( fr )
+ Other versions 
+ EP0427819A1 
+ ( en 
+ Inventor 
+ Rudolf Wanzl 
+ Karl Ertle 
+ Current Assignee (The listed assignees may be inaccurate. Google has not performed a legal analysis and makes no representation or warranty as to the accuracy of the list.) 
+ Wanzl GmbH and Co Holding KG
+ Original Assignee 
+ Wanzl GmbH and Co Entwicklungs KG 
+ Priority date (The priority date is an assumption and is not a legal conclusion. Google has not performed a legal analysis and makes no representation as to the accuracy of the date listed.) 
+ 1989-04-19 
+ Filing date 
+ 1990-04-17 
+ Publication date 
+ 1992-11-11 
+ 1990-04-17 
+ Application filed by Wanzl GmbH and Co Entwicklungs KG 
+ filed 
+ Critical 
+ Wanzl GmbH and Co Entwicklungs KG 
+ 1990-04-17 
+ Priority to AT90906159T 
+ priority 
+ Critical 
+ patent/ATE82417T1/en 
+ 1991-05-22 
+ Publication of EP0427819A1 
+ publication 
+ Critical 
+ patent/EP0427819A1/en 
+ 1992-11-11 
+ Application granted 
+ granted 
+ Critical 
+ 1992-11-11 
+ Publication of EP0427819B1 
+ publication 
+ Critical 
+ patent/EP0427819B1/en 
+ 2010-04-17 
+ Anticipated expiration 
+ legal-status 
+ Critical 
+ Status 
+ Expired - Lifetime 
+ legal-status 
+ Critical 
+ Current 
+ Links 
+ Espacenet 
+ EPO GPI 
+ EP Register 
+ Global Dossier 
+ Discuss 
+ 230000008878 
+ coupling 
+ Effects 
+ 0.000 
+ claims 
+ abstract 
+ description 
+ 76 
+ 238000010168 
+ coupling process 
+ Methods 
+ 0.000 
+ claims 
+ abstract 
+ description 
+ 76 
+ 238000005859 
+ coupling reaction 
+ Methods 
+ 0.000 
+ claims 
+ abstract 
+ description 
+ 76 
+ 238000003780 
+ insertion 
+ Methods 
+ 0.000 
+ claims 
+ abstract 
+ description 
+ 12 
+ 230000037431 
+ insertion 
+ Effects 
+ 0.000 
+ claims 
+ abstract 
+ description 
+ 11 
+ 230000001419 
+ dependent effect 
+ Effects 
+ 0.000 
+ claims 
+ 1 
+ 238000000034 
+ method 
+ Methods 
+ 0.000 
+ abstract 
+ description 
+ 2 
+ 230000006835 
+ compression 
+ Effects 
+ 0.000 
+ description 
+ 4 
+ 238000007906 
+ compression 
+ Methods 
+ 0.000 
+ description 
+ 4 
+ 229910000831 
+ Steel 
+ Inorganic materials 
+ 0.000 
+ description 
+ 1 
+ 230000005484 
+ gravity 
+ Effects 
+ 0.000 
+ description 
+ 1 
+ 229920003023 
+ plastic 
+ Polymers 
+ 0.000 
+ description 
+ 1 
+ 239000004033 
+ plastic 
+ Substances 
+ 0.000 
+ description 
+ 1 
+ 230000000284 
+ resting effect 
+ Effects 
+ 0.000 
+ description 
+ 1 
+ 239000010959 
+ steel 
+ Substances 
+ 0.000 
+ description 
+ 1 
+ Images 
+ Classifications 
+ G — PHYSICS 
+ G07 — CHECKING-DEVICES 
+ G07F — COIN-FREED OR LIKE APPARATUS 
+ G07F7/00 — Mechanisms actuated by objects other than coins to free or to actuate vending, hiring, coin or paper currency dispensing or refunding apparatus 
+ G07F7/06 — Mechanisms actuated by objects other than coins to free or to actuate vending, hiring, coin or paper currency dispensing or refunding apparatus by returnable containers, i.e. reverse vending systems in which a user is rewarded for returning a container that serves as a token of value, e.g. bottles 
+ G07F7/0618 — Mechanisms actuated by objects other than coins to free or to actuate vending, hiring, coin or paper currency dispensing or refunding apparatus by returnable containers, i.e. reverse vending systems in which a user is rewarded for returning a container that serves as a token of value, e.g. bottles by carts 
+ G07F7/0654 — Mechanisms actuated by objects other than coins to free or to actuate vending, hiring, coin or paper currency dispensing or refunding apparatus by returnable containers, i.e. reverse vending systems in which a user is rewarded for returning a container that serves as a token of value, e.g. bottles by carts in which the lock functions according to a "pinching of the token" principle, i.e. the token is held between two members 
+ G — PHYSICS 
+ G07 — CHECKING-DEVICES 
+ G07F — COIN-FREED OR LIKE APPARATUS 
+ G07F17/00 — Coin-freed apparatus for hiring articles; Coin-freed facilities or services 
+ G07F17/10 — Coin-freed apparatus for hiring articles; Coin-freed facilities or services for means for safe-keeping of property, left temporarily, e.g. by fastening the property 
+ Y — GENERAL TAGGING OF NEW TECHNOLOGICAL DEVELOPMENTS; GENERAL TAGGING OF CROSS-SECTIONAL TECHNOLOGIES SPANNING OVER SEVERAL SECTIONS OF THE IPC; TECHNICAL SUBJECTS COVERED BY FORMER USPC CROSS-REFERENCE ART COLLECTIONS [XRACs] AND DIGESTS 
+ Y10 — TECHNICAL SUBJECTS COVERED BY FORMER USPC 
+ Y10S — TECHNICAL SUBJECTS COVERED BY FORMER USPC CROSS-REFERENCE ART COLLECTIONS [XRACs] AND DIGESTS 
+ Y10S194/00 — Check-actuated control mechanisms 
+ Y10S194/905 — Shopping cart return 
+ Definitions 
+ the present invention 
+ relates to a coin lock for a trolley intended for attachment to the coin lock of a further trolley, e.g. at a trolley collection point. 
+ a casing 
+ is provided with a coin slide and with a coupling member arranged so as to be movable at an angle to each other. 
+ Locking members arranged inside the casing 
+ act upon the coin slide and the coupling member and, when the coin slide containing a coin is inserted into the casing, allow the coupling member to be released and the coin slide to be locked so as to prevent removal oi the coin. 
+ the released coupling member 
+ is re-inserted into the coin lock casing it moves a locking member in the direction of sliding of the coupling member to release the coin slide and free the coin; withdrawal of the coin slide locks the coupling member in the casing. 
+ Coin locks of this type 
+ have become widespread, and they are frequently used on shopping trolleys in self-service stores. 
+ the shopping trolleys 
+ nested in rows and attached to one another, are available to the customer on payment of a deposit. If the customer wishes to remove the last trolley of a row of nested shopping trolleys, he must insert a coin into the coin lock mounted on the shopping trolley. This then releases the connection in the form of a flexible coupling member between the last trolley and the preceding trolley, and the last trolley can be removed. 
+ a coin lock of this type 
+ is described, for example, in European Patent Specification 0 070 997 and in W086/04174. 
+ this coin lock 
+ has proved successful, it does have a significant disadvantage in that it is relatively large. 
+ This coin lock 
+ is attached to the handle of a shopping trolley, this can cause an obstruction for a small child sitting in a child's seat fitted to the shopping trolley near the handle. 
+ the relatively large shape of this coin lock 
+ is due to the fact that the coin slide has a relatively long bar fixed thereto, and in the coupling position of the coin lock the coupling member has to engage an additional stationary part in the casing in order to lock the coin slide. 
+ the length of the bar 
+ corresponds approximately to the length of a coin-receiving portion in the coin slide, and a space required for the insertion or withdrawal of the coupling member is formed between the coin-receiving portion and the free end of the bar. 
+ a compression spring acting upon the coin slide 
+ is provided for ejection thereof. The length of the coin slide and the further space for receiving the compression spring determines the minimum structural size of this coin lock. 
+ An object of the present invention 
+ is to provide a coin lock as described above but having a substantial reduction in structural size. 
+ the casing 
+ comprises a fixed portion separating the coin slide and the inserted coupling member at an area of overlapping thereof and having a space therein accommodating a movable locking member, the locking member engaging a space in the inserted coupling member for locking thereof on release of the coin slide and being movable out of the space of the coupling member towards the fully inserted coin slide when a withdrawal force is applied to the inserted coupling member. 
+ the locking member 
+ is merely a ball of approximately 7 mm in diameter, whereas the length of the locking member bar of the prior-art coin lock described above 15 at least 6 times the diameter of the ball. 
+ This dimensional comparison alone 
+ clearly demonstrates the substantial reduction of the structural size which is possible in the case of the proposed coin lock on account of the proposed locking member. 
+ the coin lock according to the invention 
+ the previously-described space required for the insertion and withdrawal of the coupling member and increasing the width of the coin lock can advantageously be dispensed with. 
+ the coin lock according to the invention 
+ may be substantially smaller than known coin locks. 
+ a coin lock 1 
+ comprises a casing 2 to which a cover (not shown) can be attached by screws. 
+ the casing 2 
+ contains a stationary casing portion 3 formed as an intermediate floor between the top and bottom of the casing. 
+ the underside of the stationary casing portion 3 
+ is provided with a slot 6 for slidably receiving a coupling member 8 of a further coin lock. 
+ An opening 5, which permits the insertion of the coupling member 8 into the slot 6, 
+ is provided in the side wall of the casing 2. 
+ the coupling member 8 
+ is preferably flexibly attached to the coin lock 1, for example by means of a chain or a plastics-coated steel wire. 
+ the manner of attachment of the coupling member 8 
+ is preferably such that the coupling member 8 cannot be inserted into its own coin lock 1, but only into the coin lock of an adjacent trolley. 
+ the coupling member 8 
+ may be mounted stationary on the coin lock 1, but this has not been found in the past to be particularly advantageous with similar coin locks. 
+ the attachment of the coupling member 8 to the coin lock 1 
+ is not shown in the drawings. 
+ Receiving means 10 in the form of a guide slot for a coin slide 11 
+ are provided at right angles to the slot 6 along the top of the stationary casing portion 3. 
+ the coin slide 11 and the coupling member 8 
+ are therefore inclined to each other at right angles and they are situated on different planes separated by the stationary casing 3. 
+ the coin slide 11 
+ has a horizontal receiving portion in the form of a coin recess 12 into which a coin may be inserted. 
+ a spring-loaded locking member 14 
+ is provided adjacent the coin slide 11, and on engagement with a recess 13 provided in the coin slide 11 prevents full insertion of the coin slide 11, and hence release of the coupling member 8, unless the coin slide 11 contains a coin. 
+ a further spring-loaded locking member 16 engageable with the other side of the coin slide 11 
+ is similarly arranged opposite the locking member 14 on the casing portion 3. 
+ the coin lock 1 
+ is shown in Fig. 1 in such a way that the coupling member 8 of another coin lock is locked with the coin lock 1 and the coin slide 11 projects sufficiently far out of the casing 2 that a coin may be inserted into the coin recess 12. In this position two trolleys are coupled to each other. 
+ the casing portion 3 
+ is provided in an area 7 at the intersection of the coin slide 11 and the coupling member 8 with a space in the form of an aperture 19 in which a locking member 18, preferably a ball of e.g. 7 mm in diameter, may be inserted. 
+ a space 
+ for example, in the form of an upwardly-orientated recess 20, is provided on the underside of the coin slide 11, and the coupling member 8 is provided with an aperture 21 in the form of an elongate hole. 
+ the recess 20 in the coin slide 11 
+ has, viewed from above, the preferred shape of an elongate depression. 
+ spherical locking member 18 
+ is accommodated not only in the aperture 19 of the casing portion 3, but also partially engages in the aperture 21 of the coupling member 8 and rests on the base 4 of the casing 2. 
+ the aperture 21 of the coupling member 8 
+ is covered at the top by the coin slide 11. 
+ the thicknes of the coupling member 8, barely half the diameter of the locking member 18, and the thickness of the casing portion 3 
+ are each less than the diameter of the spherical locking member 18, while the total thickness of the coupling member 8 and the casing portion 3 is slightly greater than the diameter of the spherical locking member 18, which is arranged with play in the apertures 19 and 21. 
+ the locking member 18 
+ may alternatively be constructed as a roller with semicircular ends. 
+ the release or the disconnection of the coupling member 8 from the coin lock 1 
+ is described with reference to Fig. 2. 
+ the coin slide 11 containing a coin 
+ can be seen in a position in which it has been pushed fully into the coin lock 1 and locked by means of the locking member 18. 
+ the recess 20 on the underside of the coin slide 11 
+ is situated precisely above the apertures 19 and 21 of the casing portion 3 and the coupling member 8. 
+ the apertures 19, 21 and the recess 20 
+ now together form a larger space 22, the height of which is so great that under the action of a tensile force (see arow) on the coupling member 8 the spherical locking member 18 is presses upwards by the end wall of the aperture 21 of the coupling member 8, i.e. 
+ the locking member 18, now resting on the top of the coupling member 8 
+ is situated partially in the aperture 19 of the casing portion 3 and in the recess 20 of the coin slide 11. 
+ the ends of the aperture 21 
+ may be chamfered. 
+ the coupling member 8 
+ can thus be completely withdrawn from the coin lock 1, and the locking member 18 again drops down, rests on the casing base 4 and partially projects into the aperture 19 of the casing portion 3. 
+ An improper withdrawal of the coin slide 11 
+ is prevented by the locking member 16 engaged in the groove 15 in the coin slide 11. It is now possible to use the trolley, the coupling member 8 of which has been withdrawn from the coin lock 1. 
+ Fig. 3 
+ shows the coin lock 1 without the coupling member 8 of an adjacent coin lock. 
+ the coin slide 11 
+ cannot be withdrawn, since this is prevented by the locking member 16. Consequently, the coin cannot be removed from the coin slide 11. 
+ a coupling member 8 
+ to the coin lock 1 and the associated release of the coin are likewise described with reference to Fig. 2. 
+ the coupling member 8 
+ is pressed (in the opposite direction to the arrow) through the opening 5 in the casing wall into the slot 6. 
+ its front end 9 
+ presses the spherical locking member 18 upwards into the aperture 19 and the recess 20. 
+ the spherical locking member 18 
+ drops downwards under the action of gravity, so that it occupies the apertures 19 and 21, but no longer the recess 20 of the coin slide 11. 
+ the coupling member 8 
+ pushes the locking member 16 against the action of a spring (not shown) out of the slot 15, so as to release the coin slide 11. In so doing, the locking member 16 executes a small clockwise movement in Fig. 2. As soon as the coin slide 11 is released from the locking member 16, the coin slide 11 is pushed sufficiently far out of the casing 2 by the action of the compression spring 17 so that the coin can be removed again from the coin slide 11, whereas the coupling member 8 is firmly locked by the locking member 18 engaging the apertures 19 and 21. 
+ the coin slide 11 
+ is now ready to receive a coin once more to repeat the trolley releasing procedure. 
+ Landscapes 
+ Physics & Mathematics 
+ ( AREA )
+ General Physics & Mathematics 
+ ( AREA )
+ Handcart 
+ ( AREA )
+ Control Of Vending Devices And Auxiliary Devices For Vending Devices 
+ ( AREA )
+ Purses, Travelling Bags, Baskets, Or Suitcases 
+ ( AREA )
+ Coin-Freed Apparatuses For Hiring Articles 
+ ( AREA )
+ Testing Of Coins 
+ ( AREA )
+ Abstract 
+ A coin slide (11) bearing a coin is movable into a casing (2) of a coin lock (1) to release a locking member (14) and allow full insertion of the coin slide (11). In this position a space (recess 20) in the coin slide (11) is aligned with a space (aperture 21) in a coupling member (8) and with a space (aperture 19) in a casing portion separating the coin slide (11) and the coupling member (8). A locking member (e.g. ball 18) in the apertures (19 and 21) may now be moved upwardly, on pulling of the coupling member (8), to occupy the recess (20) and the aperture (19) so as to allow complete withdrawal of the coupling member (8), e.g. to free a shopping trolley. The coin is released by reversing the procedure on re-insertion of the coupling member (8). 
+ Description 
+ The present invention relates to a coin lock for a trolley intended for attachment to the coin lock of a further trolley, e.g. at a trolley collection point. 
+ In a known coin lock a casing is provided with a coin slide and with a coupling member arranged so as to be movable at an angle to each other. Locking members arranged inside the casing act upon the coin slide and the coupling member and, when the coin slide containing a coin is inserted into the casing, allow the coupling member to be released and the coin slide to be locked so as to prevent removal oi the coin. When the released coupling member is re-inserted into the coin lock casing it moves a locking member in the direction of sliding of the coupling member to release the coin slide and free the coin; withdrawal of the coin slide locks the coupling member in the casing. 
+ Coin locks of this type have become widespread, and they are frequently used on shopping trolleys in self-service stores. The shopping trolleys, nested in rows and attached to one another, are available to the customer on payment of a deposit. If the customer wishes to remove the last trolley of a row of nested shopping trolleys, he must insert a coin into the coin lock mounted on the shopping trolley. This then releases the connection in the form of a flexible coupling member between the last trolley and the preceding trolley, and the last trolley can be removed. When the customer brings the shopping trolley back again to one of the return positions provided, he pushes it into a trolley alreadey there, he then attaches it to that trolley by inserting the coupling member on that trolley into the opening in the coin lock of his returned trolley, and retrieves his inserted coin again. 
+ A coin lock of this type is described, for example, in European Patent Specification 0 070 997 and in W086/04174. Although this coin lock has proved successful, it does have a significant disadvantage in that it is relatively large. When this coin lock is attached to the handle of a shopping trolley, this can cause an obstruction for a small child sitting in a child's seat fitted to the shopping trolley near the handle. The relatively large shape of this coin lock is due to the fact that the coin slide has a relatively long bar fixed thereto, and in the coupling position of the coin lock the coupling member has to engage an additional stationary part in the casing in order to lock the coin slide. The length of the bar corresponds approximately to the length of a coin-receiving portion in the coin slide, and a space required for the insertion or withdrawal of the coupling member is formed between the coin-receiving portion and the free end of the bar. In addition, there is a further space between the end of the coin slide in the casing and an opposing casing wall in which a compression spring acting upon the coin slide is provided for ejection thereof. The length of the coin slide and the further space for receiving the compression spring determines the minimum structural size of this coin lock. 
+ An object of the present invention is to provide a coin lock as described above but having a substantial reduction in structural size. 
+ This object is attained according to the invention in that the casing comprises a fixed portion separating the coin slide and the inserted coupling member at an area of overlapping thereof and having a space therein accommodating a movable locking member, the locking member engaging a space in the inserted coupling member for locking thereof on release of the coin slide and being movable out of the space of the coupling member towards the fully inserted coin slide when a withdrawal force is applied to the inserted coupling member. 
+ In a preferred embodiment the locking member is merely a ball of approximately 7 mm in diameter, whereas the length of the locking member bar of the prior-art coin lock described above 15 at least 6 times the diameter of the ball. This dimensional comparison alone clearly demonstrates the substantial reduction of the structural size which is possible in the case of the proposed coin lock on account of the proposed locking member. In addition, in the case of the coin lock according to the invention the previously-described space required for the insertion and withdrawal of the coupling member and increasing the width of the coin lock can advantageously be dispensed with. Thus, the coin lock according to the invention may be substantially smaller than known coin locks. 
+ An embodiment of the invention will be described by way of example only with reference to the accompanying drawings, wherein:
+ Fig. 1 is a plan part-sectional view of a coin lock with the coupling member locked and the coin slide ready to receive a coin, Fig. 2 shows the coin lock of Fig. 1 with the coin slide containing a coin and pushed into the lock, and Fig. 3 shows the coin lock of Fig. 2 with the coupling member removed. 
+ In the drawings, a coin lock 1 comprises a casing 2 to which a cover (not shown) can be attached by screws. 
+ The casing 2 contains a stationary casing portion 3 formed as an intermediate floor between the top and bottom of the casing. The underside of the stationary casing portion 3 is provided with a slot 6 for slidably receiving a coupling member 8 of a further coin lock. An opening 5, which permits the insertion of the coupling member 8 into the slot 6, is provided in the side wall of the casing 2. The coupling member 8 is preferably flexibly attached to the coin lock 1, for example by means of a chain or a plastics-coated steel wire. The manner of attachment of the coupling member 8 is preferably such that the coupling member 8 cannot be inserted into its own coin lock 1, but only into the coin lock of an adjacent trolley. Alternatively, the coupling member 8 may be mounted stationary on the coin lock 1, but this has not been found in the past to be particularly advantageous with similar coin locks. The attachment of the coupling member 8 to the coin lock 1 is not shown in the drawings. 
+ Receiving means 10 in the form of a guide slot for a coin slide 11 are provided at right angles to the slot 6 along the top of the stationary casing portion 3. The coin slide 11 and the coupling member 8 are therefore inclined to each other at right angles and they are situated on different planes separated by the stationary casing 3. The coin slide 11 has a horizontal receiving portion in the form of a coin recess 12 into which a coin may be inserted. A spring-loaded locking member 14 is provided adjacent the coin slide 11, and on engagement with a recess 13 provided in the coin slide 11 prevents full insertion of the coin slide 11, and hence release of the coupling member 8, unless the coin slide 11 contains a coin. A further spring-loaded locking member 16 engageable with the other side of the coin slide 11 is similarly arranged opposite the locking member 14 on the casing portion 3. 
+ When the coin slide 11 containing a coin is inserted into the casing 2, against the action of a compression spring 17 in the casing 2, the locking member 16 engages in a groove 15 formed in the coin slide 11 and prevents the coin slide 11 from springing out of the casing 2 again. The coin lock 1 is shown in Fig. 1 in such a way that the coupling member 8 of another coin lock is locked with the coin lock 1 and the coin slide 11 projects sufficiently far out of the casing 2 that a coin may be inserted into the coin recess 12. In this position two trolleys are coupled to each other. 
+ The casing portion 3 is provided in an area 7 at the intersection of the coin slide 11 and the coupling member 8 with a space in the form of an aperture 19 in which a locking member 18, preferably a ball of e.g. 7 mm in diameter, may be inserted. A space, for example, in the form of an upwardly- orientated recess 20, is provided on the underside of the coin slide 11, and the coupling member 8 is provided with an aperture 21 in the form of an elongate hole. In addition, the recess 20 in the coin slide 11 has, viewed from above, the preferred shape of an elongate depression. 
+ In Fig. 1 the spherical locking member 18 is accommodated not only in the aperture 19 of the casing portion 3, but also partially engages in the aperture 21 of the coupling member 8 and rests on the base 4 of the casing 2. The aperture 21 of the coupling member 8 is covered at the top by the coin slide 11. The thicknes of the coupling member 8, barely half the diameter of the locking member 18, and the thickness of the casing portion 3 are each less than the diameter of the spherical locking member 18, while the total thickness of the coupling member 8 and the casing portion 3 is slightly greater than the diameter of the spherical locking member 18, which is arranged with play in the apertures 19 and 21. In this position, it is not possible to withdraw the coupling member 8 from the coin lock 1 since, as soon as a tensile force acts upon the coupling member 8, the locking member 18 is pressed by an end wall of the aperture 21 of the coupling member 8 against the underside of the coin slide 11. Since in this case the spherical locking member 18 is able to move only very slightly upwards, it forms a lock for the coupling member 8. The locking member 18 may alternatively be constructed as a roller with semicircular ends. 
+ The release or the disconnection of the coupling member 8 from the coin lock 1 is described with reference to Fig. 2. The coin slide 11 containing a coin can be seen in a position in which it has been pushed fully into the coin lock 1 and locked by means of the locking member 18. In this position the recess 20 on the underside of the coin slide 11 is situated precisely above the apertures 19 and 21 of the casing portion 3 and the coupling member 8. The apertures 19, 21 and the recess 20 now together form a larger space 22, the height of which is so great that under the action of a tensile force (see arow) on the coupling member 8 the spherical locking member 18 is presses upwards by the end wall of the aperture 21 of the coupling member 8, i.e. performs a yielding movement, so that the locking member 18, now resting on the top of the coupling member 8, is situated partially in the aperture 19 of the casing portion 3 and in the recess 20 of the coin slide 11. In order to facilitate movement of the locking member into and out of the aperture 21 the ends of the aperture 21 may be chamfered. The coupling member 8 can thus be completely withdrawn from the coin lock 1, and the locking member 18 again drops down, rests on the casing base 4 and partially projects into the aperture 19 of the casing portion 3. An improper withdrawal of the coin slide 11 is prevented by the locking member 16 engaged in the groove 15 in the coin slide 11. It is now possible to use the trolley, the coupling member 8 of which has been withdrawn from the coin lock 1. 
+ Fig. 3 shows the coin lock 1 without the coupling member 8 of an adjacent coin lock. As already mentioned with reference to Fig. 2, the coin slide 11 cannot be withdrawn, since this is prevented by the locking member 16. Consequently, the coin cannot be removed from the coin slide 11. 
+ The attachment of a coupling member 8 to the coin lock 1 and the associated release of the coin are likewise described with reference to Fig. 2. The coupling member 8 is pressed (in the opposite direction to the arrow) through the opening 5 in the casing wall into the slot 6. When the coupling member 8 is inserted, its front end 9 presses the spherical locking member 18 upwards into the aperture 19 and the recess 20. As soon as the three spaces 19, 20 and 21 are in alignment, the spherical locking member 18 drops downwards under the action of gravity, so that it occupies the apertures 19 and 21, but no longer the recess 20 of the coin slide 11. If the coupling member 8 is pushed a little further in the direction opposite that of the arrown which is possible on account of the elongate shape of the aperture 21, the coupling member 8 pushes the locking member 16 against the action of a spring (not shown) out of the slot 15, so as to release the coin slide 11. In so doing, the locking member 16 executes a small clockwise movement in Fig. 2. As soon as the coin slide 11 is released from the locking member 16, the coin slide 11 is pushed sufficiently far out of the casing 2 by the action of the compression spring 17 so that the coin can be removed again from the coin slide 11, whereas the coupling member 8 is firmly locked by the locking member 18 engaging the apertures 19 and 21. 
+ The coin slide 11 is now ready to receive a coin once more to repeat the trolley releasing procedure. 
+ Claims ( 12 ) 
+ A coin lock (1) for a trolley comprising a casing (2) having a coin slide (11) slidable therein, a coupling member (8) for attachment to the coin lock of a first adjacent trolley or a collecting point, a passage way (5, 6) in the casing (2) for slidable receiving an inserted coupling member (8) of a second adjacent trolley and extending at an angle to the coin slide (11), so that on insertion of the coin slide (11) carrying a coin into the casing (2) the coin slide (11) is locked therein preventing removal and the inserted coupling member (8) is released to allow withdrawal therefor, and on insertion of the coupling member (8) into the casing (2) the coin slide (11) is released to allow removal of the coin and the inserted coupling member (8) is locked in the casing (2), characterised in that the casing (2) comprises a fixed portion (3) separating the coin slide (11) and the inserted coupling member (8) at an area (7) of overlapping thereof and having a space (19) therein accommodating a movable locking member (18), the locking member (18) engaging a space (21) in the inserted coupling member (8) for locking thereof on release of the coin slide (11) and being movable out of the space (21) of the coupling member (8) towards the fully-inserted coin slide (11) when a withdrawal force is applied to the inserted coupling member (8). 
+ A coin lock according to claim 1, characterised in that the coin slide (11) has a space (20) for parallel accommodating the locking member (18) on full insertion of the coin slide (11) carrying a coin into the casing (2) to allow withdrawal of the coupling member (8). 
+ A coin lock according to claim 2, characterised in that when the coin slide (11) and the coupling member (8) are fully inserted in the casing (2), the spaces (19,20,21) are aligned to allow movement of the locking member (18) in a direction at right angles to the direction of sliding of both the coin slide (11) and the inserted coupling member (8) in the casing (2). 
+ A coin lock according to claim 1, 2 or 3, characterised in that the locking member (18) is in the form of a ball. 
+ A coin lock according to claim 1, 2 or 3, characterised in that the locking member (18) is constructed as a roller having semicircular ends. 
+ A coin lock according to any one of claims 1 to 5, characterised in that the space (21) of the coupling member (8) has an elongate outline extending in the sliding direction of the inserted coupling member (8). 
+ A coin lock according to any one of the claims 1 to 6, characterised in that the space (21) of the coupling member (8) is formed as an aperture therethrough. 
+ A coin lock as claimed in claim 2 or any one of claims 3 to 7 dependent on claim 2, characterised in that, the space (20) in the coin slide (11) is in the form of an elongate recess extending in the direction of sliding of the coin slide (11). 
+ A coin lock according to any one of claims 1 to 8, characterised in that the thickness of the coupling member (8) and the thickness of the fixed portion (3) are each smaller, but together slightly larger, than the diameter or height of the locking member. 
+ A coin lock according to any one of claims 1 to 9, characterised in that the thickness of the coupling member (8) is slightly smaller than half the diameter or height of the locking member (18). 
+ A coin lock according to any one of claims 1 to 10, characterised in that a further spring loaded locking member (16) is provided in the casing (2) for holding the coin slide (11) in the inserted position (Fig. 3) and being movable to release the coin slide (11) on full insertion of the coupling member (8) into the casing (2). 
+ A coin lock according to any one of claims 1 to 11, characterised in that a further, spring-loaded locking member (14) is provided in the casing (2) for preventing full insertion of an empty coin slide (11) and being movable by means of a coin in the coin slide (11) to allow full insertion of the coin slide (11) into the casing (2) for releasing the inserted coupling member (8). 
+ EP90906159A 
+ 1989-04-19 
+ 1990-04-17 
+ A coin lock for a trolley 
+ Expired - Lifetime 
+ EP0427819B1 
+ ( en )
+ Priority Applications (1) 
+ Application Number 
+ Priority Date 
+ Filing Date 
+ Title 
+ AT90906159T 
+ ATE82417T1 
+ ( en )
+ 1989-04-19 
+ 1990-04-17 
+ COIN-OPERATING LOCK FOR A SHOPPING CART.
+ Applications Claiming Priority (2) 
+ Application Number 
+ Priority Date 
+ Filing Date 
+ Title 
+ DE3912831 
+ 1989-04-19 
+ DE3912831A 
+ DE3912831A1 
+ ( en )
+ 1989-04-19 
+ 1989-04-19 
+ COIN LOCK FOR TRANSPORT CARS
+ Publications (2) 
+ Publication Number 
+ Publication Date 
+ EP0427819A1 
+ EP0427819A1
+ ( en )
+ 1991-05-22 
+ EP0427819B1 
+ true 
+ EP0427819B1
+ ( en )
+ 1992-11-11 
+ Family 
+ ID=6378986 
+ Family Applications (1) 
+ Application Number 
+ Title 
+ Priority Date 
+ Filing Date 
+ EP90906159A 
+ Expired - Lifetime 
+ EP0427819B1 
+ ( en )
+ 1989-04-19 
+ 1990-04-17 
+ A coin lock for a trolley 
+ Country Status (9) 
+ Country 
+ Link 
+ US 
+ ( 1 )
+ US5121823A 
+ ( en )
+ EP 
+ ( 1 )
+ EP0427819B1 
+ ( en )
+ AU 
+ ( 1 )
+ AU626179B2 
+ ( en )
+ CA 
+ ( 1 )
+ CA2031217C 
+ ( en )
+ DD 
+ ( 1 )
+ DD293668A5 
+ ( en )
+ DE 
+ ( 2 )
+ DE3912831A1 
+ ( en )
+ ES 
+ ( 1 )
+ ES2036417T3 
+ ( en )
+ WO 
+ ( 1 )
+ WO1990013098A1 
+ ( en )
+ ZA 
+ ( 1 )
+ ZA902922B 
+ ( en )
+ Cited By (2) 
+ * Cited by examiner, † Cited by third party 
+ Publication number 
+ Priority date 
+ Publication date 
+ Assignee 
+ Title 
+ DE4426210C2 
+ ( en )
+ * 
+ 1993-10-27 
+ 2002-03-21 
+ Wanzl Metallwarenfabrik Kg 
+ Deposit lock for transport trolleys
+ DE102004006071B4 
+ ( en )
+ * 
+ 2004-02-07 
+ 2013-10-31 
+ Wanzl Metallwarenfabrik Gmbh 
+ deposit lock
+ Families Citing this family (20) 
+ * Cited by examiner, † Cited by third party 
+ Publication number 
+ Priority date 
+ Publication date 
+ Assignee 
+ Title 
+ US5040656A 
+ ( en )
+ * 
+ 1990-01-31 
+ 1991-08-20 
+ Dipaolo Anthony M 
+ Coin-controlled apparatus for locking shopping carts together 
+ DE4118514A1 
+ ( en )
+ * 
+ 1991-06-06 
+ 1992-12-10 
+ Systec Ausbausysteme Gmbh 
+ TRANSPORT CARRIAGE WITH COIN LOCK
+ GB9200282D0 
+ ( en )
+ * 
+ 1992-01-08 
+ 1992-02-26 
+ Clares Equip Ltd 
+ A lock 
+ DE4200861C2 
+ ( en )
+ * 
+ 1992-01-15 
+ 1996-07-25 
+ Wolfgang Eberlein 
+ Equipment for shopping for goods in a self-service shop or for transporting luggage
+ DE4218527C2 
+ ( en )
+ * 
+ 1992-06-05 
+ 2001-10-18 
+ Vendoret Holding Sa 
+ Coupling lock for shopping trolleys
+ US5220987A 
+ ( en )
+ * 
+ 1992-06-29 
+ 1993-06-22 
+ Dipaolo Anthony M 
+ Coin-controlled apparatus for locking shopping carts together 
+ FR2693297B1 
+ ( en )
+ * 
+ 1992-07-01 
+ 1994-08-26 
+ Caddie Atel Reunis 
+ Lockout device and built-in cart comprising such a device.
+ FR2695502B1 
+ ( en )
+ * 
+ 1992-09-09 
+ 1994-10-28 
+ Caddie Atel Reunis 
+ Lockout device.
+ DE4304116A1 
+ ( en )
+ * 
+ 1993-02-12 
+ 1994-08-18 
+ Systec Ausbausysteme Gmbh 
+ Deposit lock for transport trolleys
+ WO1995030974A1 
+ ( en )
+ * 
+ 1994-05-08 
+ 1995-11-16 
+ Peter Fuchs 
+ Coin-operated lock 
+ FR2726110A1 
+ ( en )
+ * 
+ 1994-10-21 
+ 1996-04-26 
+ Giat Ind Sa 
+ LOCKER FOR TROLLEY
+ AU5495596A 
+ ( en )
+ * 
+ 1995-04-28 
+ 1996-11-18 
+ Peter Fuchs 
+ A coin-operated lock 
+ US5540316A 
+ ( en )
+ * 
+ 1995-06-15 
+ 1996-07-30 
+ Anthony M. DiPaolo 
+ Coin controlled apparatus for locking shopping carts together 
+ DE19600248C1 
+ ( en )
+ * 
+ 1996-01-05 
+ 1997-07-31 
+ Boehringer Rainer 
+ Deposit lock
+ EP0894313B1 
+ ( en )
+ 1997-01-13 
+ 2002-05-22 
+ Wanzl Metallwarenfabrik Gmbh 
+ Device for shopping or transporting luggage 
+ DE10103916A1 
+ ( en )
+ 2001-01-30 
+ 2002-08-01 
+ Wanzl Metallwarenfabrik Kg 
+ Deposit lock for a dolly
+ DE102006052158B3 
+ ( en )
+ * 
+ 2006-11-02 
+ 2008-05-08 
+ Wanzl Metallwarenfabrik Gmbh 
+ Dolly
+ DE202008000606U1 
+ ( en )
+ * 
+ 2008-01-15 
+ 2009-05-28 
+ Sonnendorfer, Horst 
+ Shopping cart with push handle and coin lock device
+ DE112010000244A5 
+ ( en )
+ * 
+ 2009-02-04 
+ 2012-07-05 
+ Horst Sonnendorfer & Franz Wieth GbR (vertretungsberechtigter Gesellschafter: Franz Wieth, 82178 Puchheim) 
+ SHOPPING CAR WITH A GIRL
+ ITPD20120315A1 
+ ( en )
+ * 
+ 2012-10-25 
+ 2014-04-26 
+ Luca Serafin 
+ COIN
+ Family Cites Families (12) 
+ * Cited by examiner, † Cited by third party 
+ Publication number 
+ Priority date 
+ Publication date 
+ Assignee 
+ Title 
+ DE2554916C2 
+ ( en )
+ * 
+ 1975-12-06 
+ 1990-10-25 
+ Willi 7016 Gerlingen Kragl 
+ Transport trolley
+ DK143535C 
+ ( en )
+ * 
+ 1978-10-12 
+ 1982-01-18 
+ Abacco Installation Aps 
+ PLANT FOR DELIVERY AND RECEIPT OF CARRIAGES, ISRAEL SHOPPING CARTS AND TRACKERS
+ DE8121677U1 
+ ( en )
+ * 
+ 1981-07-23 
+ 1981-12-03 
+ Sonnendorfer, Horst, 8034 Germering 
+ DEVICE FOR ENSURING THE RETURN OF RENTED SHOPPING CART
+ FR2575569B1 
+ ( en )
+ * 
+ 1984-12-27 
+ 1988-06-10 
+ Maloeuvre Robert 
+ METHOD AND DEVICE FOR INCENTING THE STORAGE OF SELF-SERVICE TROLLEYS
+ DE3508772A1 
+ ( en )
+ * 
+ 1985-03-12 
+ 1986-10-30 
+ Josef 6259 Brechen Sövenyhazi 
+ Device for the releasable fixing of shopping or luggage trolleys in a parking area 
+ DE3519167A1 
+ ( en )
+ * 
+ 1985-05-29 
+ 1986-12-04 
+ Rudolf Wanzl Kg, 8874 Leipheim 
+ Trolley 
+ US4691816A 
+ ( en )
+ * 
+ 1985-09-19 
+ 1987-09-08 
+ Cari-All Inc. 
+ Locking device for interlocking nested shopping carts 
+ DE3605055A1 
+ ( en )
+ * 
+ 1986-02-18 
+ 1987-08-20 
+ Wanzl Kg Rudolf 
+ Trolley, in particular shopping trolley 
+ EP0330653A4 
+ ( en )
+ * 
+ 1986-08-06 
+ 1990-01-08 
+ Gdt Pty Ltd 
+ Security device for trolleys. 
+ DE3900582A1 
+ ( en )
+ * 
+ 1989-01-11 
+ 1990-07-12 
+ Carry Park Ltd 
+ Coin-operated or token-operated device for the uncoupling of shopping trolleys 
+ DE3900538A1 
+ ( en )
+ * 
+ 1989-01-11 
+ 1990-07-12 
+ Peter Fuchs 
+ Coin insertion and return arrangement for deposit coins 
+ US5040656A 
+ ( en )
+ * 
+ 1990-01-31 
+ 1991-08-20 
+ Dipaolo Anthony M 
+ Coin-controlled apparatus for locking shopping carts together 
+ 1989 
+ 1989-04-19 
+ DE 
+ DE3912831A 
+ patent/DE3912831A1/en 
+ not_active 
+ Withdrawn 
+ 1990 
+ 1990-04-10 
+ DD 
+ DD90339629A 
+ patent/DD293668A5/en 
+ not_active 
+ IP Right Cessation 
+ 1990-04-17 
+ CA 
+ CA002031217A 
+ patent/CA2031217C/en 
+ not_active 
+ Expired - Fee Related 
+ 1990-04-17 
+ US 
+ US07/623,965 
+ patent/US5121823A/en 
+ not_active 
+ Expired - Lifetime 
+ 1990-04-17 
+ EP 
+ EP90906159A 
+ patent/EP0427819B1/en 
+ not_active 
+ Expired - Lifetime 
+ 1990-04-17 
+ AU 
+ AU54321/90A 
+ patent/AU626179B2/en 
+ not_active 
+ Ceased 
+ 1990-04-17 
+ WO 
+ PCT/EP1990/000593 
+ patent/WO1990013098A1/en 
+ not_active 
+ Ceased 
+ 1990-04-17 
+ DE 
+ DE9090906159T 
+ patent/DE69000461T2/en 
+ not_active 
+ Expired - Lifetime 
+ 1990-04-17 
+ ES 
+ ES199090906159T 
+ patent/ES2036417T3/en 
+ not_active 
+ Expired - Lifetime 
+ 1990-04-18 
+ ZA 
+ ZA902922A 
+ patent/ZA902922B/en 
+ unknown 
+ Cited By (2) 
+ * Cited by examiner, † Cited by third party 
+ Publication number 
+ Priority date 
+ Publication date 
+ Assignee 
+ Title 
+ DE4426210C2 
+ ( en )
+ * 
+ 1993-10-27 
+ 2002-03-21 
+ Wanzl Metallwarenfabrik Kg 
+ Deposit lock for transport trolleys
+ DE102004006071B4 
+ ( en )
+ * 
+ 2004-02-07 
+ 2013-10-31 
+ Wanzl Metallwarenfabrik Gmbh 
+ deposit lock
+ Also Published As 
+ Publication number 
+ Publication date 
+ ES2036417T3 
+ ( en )
+ 1993-05-16 
+ DE3912831A1 
+ ( en )
+ 1990-10-25 
+ CA2031217C 
+ ( en )
+ 1999-07-27 
+ DD293668A5 
+ ( en )
+ 1991-09-05 
+ DE69000461T2 
+ ( en )
+ 1993-05-19 
+ US5121823A 
+ ( en )
+ 1992-06-16 
+ AU5432190A 
+ ( en )
+ 1990-11-16 
+ DE69000461D1 
+ ( en )
+ 1992-12-17 
+ WO1990013098A1 
+ ( en )
+ 1990-11-01 
+ AU626179B2 
+ ( en )
+ 1992-07-23 
+ EP0427819A1 
+ ( en )
+ 1991-05-22 
+ CA2031217A1 
+ ( en )
+ 1990-10-20 
+ ZA902922B 
+ ( en )
+ 1991-02-27 
+ Similar Documents 
+ Publication 
+ Publication Date 
+ Title 
+ AU626179B2 
+ ( en )
+ 1992-07-23 
+ A coin lock for a trolley 
+ US4635782A 
+ ( en )
+ 1987-01-13 
+ Safety arrangement 
+ KR100400874B1 
+ ( en )
+ 2003-10-08 
+ Anti-theft container 
+ US5180045A 
+ ( en )
+ 1993-01-19 
+ Securing device for carts 
+ US4941560A 
+ ( en )
+ 1990-07-17 
+ Security device for trolleys 
+ EP0513204B1 
+ ( en )
+ 1996-11-20 
+ Coin-controlled apparatus for locking shopping carts together 
+ US4637507A 
+ ( en )
+ 1987-01-20 
+ Coin lock device for shopping trolleys 
+ US5131517A 
+ ( en )
+ 1992-07-21 
+ Coin-controlled apparatus for locking shopping carts together 
+ RU2332719C2 
+ ( en )
+ 2008-08-27 
+ Security lock 
+ US5540316A 
+ ( en )
+ 1996-07-30 
+ Coin controlled apparatus for locking shopping carts together 
+ GB2224498A 
+ ( en )
+ 1990-05-09 
+ Mechanism for dispensing article from stack 
+ RU2175210C2 
+ ( en )
+ 2001-10-27 
+ Article storage apparatus 
+ US5220987A 
+ ( en )
+ 1993-06-22 
+ Coin-controlled apparatus for locking shopping carts together 
+ US5495930A 
+ ( en )
+ 1996-03-05 
+ Coin-deposit lock 
+ WO1991006930A1 
+ ( en )
+ 1991-05-16 
+ Coin-freed shopping trolley lock 
+ US5069325A 
+ ( en )
+ 1991-12-03 
+ Coin operated shopping cart rental system 
+ US5425438A 
+ ( en )
+ 1995-06-20 
+ Deposit lock and token for a transport cart 
+ AU597417B2 
+ ( en )
+ 1990-05-31 
+ Security device for trolleys 
+ JPH03206274A 
+ ( en )
+ 1991-09-09 
+ Lock mechanism for removable type safe 
+ EP1066606B1 
+ ( en )
+ 2003-08-27 
+ Automatic coin-operated deposit locking device for use in a system of customer trolleys 
+ EP0551213A2 
+ ( en )
+ 1993-07-14 
+ Coin lock 
+ JP2504720B2 
+ ( en )
+ 1996-06-05 
+ Coin lock device for cart
+ JPH09137653A 
+ ( en )
+ 1997-05-27 
+ Cart linked lock
+ JP2631622B2 
+ ( en )
+ 1997-07-16 
+ Locking device for shopping cart
+ AU6612190A 
+ ( en )
+ 1991-05-31 
+ Coin-freed shopping trolley lock 
+ Legal Events 
+ Date 
+ Code 
+ Title 
+ Description 
+ 1991-04-05 
+ PUAI 
+ Public reference made under article 153(3) epc to a published international application that has entered the european phase 
+ Free format text :
+ ORIGINAL CODE: 0009012 
+ 1991-05-22 
+ 17P 
+ Request for examination filed 
+ Effective date :
+ 19900921 
+ 1991-05-22 
+ AK 
+ Designated contracting states 
+ Kind code of ref document :
+ A1 
+ Designated state(s) :
+ AT BE CH DE DK ES FR GB IT LI LU NL SE 
+ 1992-06-03 
+ 17Q 
+ First examination report despatched 
+ Effective date :
+ 19920423 
+ 1992-09-26 
+ GRAA 
+ (expected) grant 
+ Free format text :
+ ORIGINAL CODE: 0009210 
+ 1992-11-11 
+ AK 
+ Designated contracting states 
+ Kind code of ref document :
+ B1 
+ Designated state(s) :
+ AT BE CH DE DK ES FR GB IT LI LU NL SE 
+ 1992-11-11 
+ PG25 
+ Lapsed in a contracting state [announced via postgrant information from national office to epo] 
+ Ref country code :
+ LI 
+ Effective date :
+ 19921111 
+ Ref country code :
+ CH 
+ Effective date :
+ 19921111 
+ Ref country code :
+ DK 
+ Effective date :
+ 19921111 
+ 1992-11-11 
+ REF 
+ Corresponds to: 
+ Ref document number :
+ 82417 
+ Country of ref document :
+ AT 
+ Date of ref document :
+ 19921115 
+ Kind code of ref document :
+ T 
+ 1992-12-17 
+ REF 
+ Corresponds to: 
+ Ref document number :
+ 69000461 
+ Country of ref document :
+ DE 
+ Date of ref document :
+ 19921217 
+ 1992-12-31 
+ ET 
+ Fr: translation filed 
+ 1993-01-11 
+ ITF 
+ It: translation for a ep patent filed 
+ 1993-02-15 
+ REG 
+ Reference to a national code 
+ Ref country code :
+ CH 
+ Ref legal event code :
+ PL 
+ 1993-04-30 
+ PG25 
+ Lapsed in a contracting state [announced via postgrant information from national office to epo] 
+ Ref country code :
+ LU 
+ Free format text :
+ LAPSE BECAUSE OF NON-PAYMENT OF DUE FEES 
+ Effective date :
+ 19930430 
+ 1993-05-16 
+ REG 
+ Reference to a national code 
+ Ref country code :
+ ES 
+ Ref legal event code :
+ FG2A 
+ Ref document number :
+ 2036417 
+ Country of ref document :
+ ES 
+ Kind code of ref document :
+ T3 
+ 1993-09-11 
+ PLBE 
+ No opposition filed within time limit 
+ Free format text :
+ ORIGINAL CODE: 0009261 
+ 1993-09-11 
+ STAA 
+ Information on the status of an ep patent application or granted ep patent 
+ Free format text :
+ STATUS: NO OPPOSITION FILED WITHIN TIME LIMIT 
+ 1993-11-03 
+ 26N 
+ No opposition filed 
+ 1995-01-31 
+ EAL 
+ Se: european patent in force in sweden 
+ Ref document number :
+ 90906159.0 
+ 1999-03-03 
+ REG 
+ Reference to a national code 
+ Ref country code :
+ GB 
+ Ref legal event code :
+ 732E 
+ 1999-03-19 
+ REG 
+ Reference to a national code 
+ Ref country code :
+ FR 
+ Ref legal event code :
+ TP 
+ 1999-05-03 
+ NLS 
+ Nl: assignments of ep-patents 
+ Owner name :
+ WANZL METALLWARENFABRIK GMBH 
+ 1999-06-01 
+ REG 
+ Reference to a national code 
+ Ref country code :
+ ES 
+ Ref legal event code :
+ PC2A 
+ 2000-04-30 
+ PGFP 
+ Annual fee paid to national office [announced via postgrant information from national office to epo] 
+ Ref country code :
+ AT 
+ Payment date :
+ 20000430 
+ Year of fee payment :
+ 11 
+ 2001-03-13 
+ PGFP 
+ Annual fee paid to national office [announced via postgrant information from national office to epo] 
+ Ref country code :
+ BE 
+ Payment date :
+ 20010313 
+ Year of fee payment :
+ 12 
+ 2001-04-17 
+ PG25 
+ Lapsed in a contracting state [announced via postgrant information from national office to epo] 
+ Ref country code :
+ AT 
+ Free format text :
+ LAPSE BECAUSE OF NON-PAYMENT OF DUE FEES 
+ Effective date :
+ 20010417 
+ 2002-01-01 
+ REG 
+ Reference to a national code 
+ Ref country code :
+ GB 
+ Ref legal event code :
+ IF02 
+ 2002-03-07 
+ PGFP 
+ Annual fee paid to national office [announced via postgrant information from national office to epo] 
+ Ref country code :
+ SE 
+ Payment date :
+ 20020307 
+ Year of fee payment :
+ 13 
+ 2002-04-30 
+ PG25 
+ Lapsed in a contracting state [announced via postgrant information from national office to epo] 
+ Ref country code :
+ BE 
+ Free format text :
+ LAPSE BECAUSE OF NON-PAYMENT OF DUE FEES 
+ Effective date :
+ 20020430 
+ 2003-04-18 
+ PG25 
+ Lapsed in a contracting state [announced via postgrant information from national office to epo] 
+ Ref country code :
+ SE 
+ Free format text :
+ LAPSE BECAUSE OF NON-PAYMENT OF DUE FEES 
+ Effective date :
+ 20030418 
+ 2003-12-02 
+ EUG 
+ Se: european patent has lapsed 
+ 2008-07-31 
+ PGFP 
+ Annual fee paid to national office [announced via postgrant information from national office to epo] 
+ Ref country code :
+ ES 
+ Payment date :
+ 20080424 
+ Year of fee payment :
+ 19 
+ 2008-09-30 
+ PGFP 
+ Annual fee paid to national office [announced via postgrant information from national office to epo] 
+ Ref country code :
+ IT 
+ Payment date :
+ 20080428 
+ Year of fee payment :
+ 19 
+ 2008-10-31 
+ PGFP 
+ Annual fee paid to national office [announced via postgrant information from national office to epo] 
+ Ref country code :
+ NL 
+ Payment date :
+ 20080422 
+ Year of fee payment :
+ 19 
+ 2008-11-28 
+ PGFP 
+ Annual fee paid to national office [announced via postgrant information from national office to epo] 
+ Ref country code :
+ FR 
+ Payment date :
+ 20080418 
+ Year of fee payment :
+ 19 
+ 2008-12-31 
+ PGFP 
+ Annual fee paid to national office [announced via postgrant information from national office to epo] 
+ Ref country code :
+ GB 
+ Payment date :
+ 20080423 
+ Year of fee payment :
+ 19 
+ 2009-08-31 
+ PGFP 
+ Annual fee paid to national office [announced via postgrant information from national office to epo] 
+ Ref country code :
+ DE 
+ Payment date :
+ 20090430 
+ Year of fee payment :
+ 20 
+ 2009-12-23 
+ GBPC 
+ Gb: european patent ceased through non-payment of renewal fee 
+ Effective date :
+ 20090417 
+ 2010-01-04 
+ NLV4 
+ Nl: lapsed or anulled due to non-payment of the annual fee 
+ Effective date :
+ 20091101 
+ 2010-01-22 
+ REG 
+ Reference to a national code 
+ Ref country code :
+ FR 
+ Ref legal event code :
+ ST 
+ Effective date :
+ 20091231 
+ 2010-02-26 
+ PG25 
+ Lapsed in a contracting state [announced via postgrant information from national office to epo] 
+ Ref country code :
+ NL 
+ Free format text :
+ LAPSE BECAUSE OF NON-PAYMENT OF DUE FEES 
+ Effective date :
+ 20091101 
+ 2010-04-30 
+ PG25 
+ Lapsed in a contracting state [announced via postgrant information from national office to epo] 
+ Ref country code :
+ FR 
+ Free format text :
+ LAPSE BECAUSE OF NON-PAYMENT OF DUE FEES 
+ Effective date :
+ 20091222 
+ Ref country code :
+ GB 
+ Free format text :
+ LAPSE BECAUSE OF NON-PAYMENT OF DUE FEES 
+ Effective date :
+ 20090417 
+ 2010-06-28 
+ REG 
+ Reference to a national code 
+ Ref country code :
+ ES 
+ Ref legal event code :
+ FD2A 
+ Effective date :
+ 20090418 
+ 2010-07-30 
+ PG25 
+ Lapsed in a contracting state [announced via postgrant information from national office to epo] 
+ Ref country code :
+ ES 
+ Free format text :
+ LAPSE BECAUSE OF NON-PAYMENT OF DUE FEES 
+ Effective date :
+ 20090418 
+ 2011-03-31 
+ PG25 
+ Lapsed in a contracting state [announced via postgrant information from national office to epo] 
+ Ref country code :
+ IT 
+ Free format text :
+ LAPSE BECAUSE OF NON-PAYMENT OF DUE FEES 
+ Effective date :
+ 20090417 
+ 2013-06-28 
+ PG25 
+ Lapsed in a contracting state [announced via postgrant information from national office to epo] 
+ Ref country code :
+ DE 
+ Free format text :
+ LAPSE BECAUSE OF EXPIRATION OF PROTECTION 
+ Effective date :
+ 20100417 
