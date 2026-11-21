@@ -1,0 +1,16 @@
+Source: https://mrimed.com/products/mri-pvc-utility-cart
+Retrieved: 2026-11-21. Excerpt of the page text (lines matching the cited facts); en and em dashes replaced by '-'.
+
+Advanced MRI PVC Utility Cart: Precision-Engineered and MR Conditional to 3T
+MR Conditional to 3T
+Overall Dimensions:
+21.0"L x 19.0"W x 30.0"H
+Weight capacity per shelf: 75 lbs
+Total weight capacity: 225 lbs (evenly distributed)
+The MRI PVC Utility Cart measures 21″ L × 19″ W × 30″ H and includes three evenly spaced shelves with 14.5″ clearance between levels. Each shelf supports up to 75 lbs, with a total load capacity of 225 lbs (evenly distributed). Assembly is required, but it’s straightforward and typically takes just a few minutes. Once assembled, the cart is stable, smooth-rolling, and built for everyday clinical use.
+Yes. The MRI PVC Utility Cart is MR Conditional, tested for safe use in MRI environments up to 3 Tesla, in compliance with ASTM F2503 labeling standards. It’s constructed entirely from non-ferromagnetic materials, minimizing the risk of magnetic attraction or interference. The cart can be safely used in and around MRI suites when operated under standard MR Conditional conditions.
+ASTM F2503: What It Means for MRI Equipment Buyers
+MR Safe - an item that poses no known hazards in all MRI environments. Using the terminology, “MR Safe” items are non-conducting, non-metallic, and non-magnetic items such as a plastic Petri dish. An item may be determined to be MR Safe by providing a scientifically based rationale rather than test data.
+MR Unsafe - An item that is known to pose hazards in all MRI environments. MR Unsafe items include magnetic items such as a pair of ferromagnetic scissors.
+MR Conditional - an item that has been demonstrated to pose no known hazards in a specified MR environment with specified conditions of use. “Field” conditions that define the MR environment include static magnetic field strength, spatial gradient magnetic field, dB/dt (time rate of change of the magnetic field), radio frequency (RF) fields, and specific absorption rate (SAR). Additional conditions, including specific configurations of the item (e.g., the routing of leads used for a neurostimulation system), may be required.
+The cart is made from medical-grade PVC with non-ferromagnetic casters, designed to withstand daily hospital use while staying MRI-safe under MR Conditional guidelines. PVC provides excellent chemical resistance and is easy to disinfect, making it suitable for sterile or high-cleaning environments. Its lightweight structure makes it easy to maneuver without compromising durability or load capacity.

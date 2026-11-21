@@ -1,0 +1,11 @@
+Source: https://accessgudid.nlm.nih.gov/api/v3/devices/lookup.json?di=00840306800016 (FDA GUDID record, AccessGUDID API)
+Retrieved: 2026-11-21. Selected fields.
+
+primaryDi: None
+brandName: Marina Medical
+companyName: MARINA MEDICAL INSTRUMENTS, INC.
+versionModelNumber: 020-061
+catalogNumber: 020-061
+deviceDescription: Emesis Basin, 20 x 9.5 x 4.5 cm
+MRISafetyStatus: MR Safe
+commercialDistributionStatus: None

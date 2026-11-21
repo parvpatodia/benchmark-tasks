@@ -1,0 +1,11 @@
+Source: https://www.eugenefast.com/images/pdf/Bins/Akrobins%20catalog%20section.pdf (Akro-Mils AkroBins catalog section)
+Retrieved: 2026-11-21. Excerpt (pdftotext -layout): table header, the 30255 row, the material line; dashes replaced by '-'.
+Columns: Model, colors, Outside L W H (in), Bottom L W H (in), ...
+
+
+ AkroBins Outside Dimensions (In.) Bottom Dimensions (In.) Capacity/Quantity Accessories
+ Bin Load
+ In Stock Colors Bin Black Length Black Width Divider Bin Lid Card
+ Model No. L W H L W H X Capacity On Ctn. Qty. Dividers‡ Dividers‡ Pkg. Qty. Lids Pkg. Qty. Stock
+ 30255 R, Y, B, S, G, SC, K 10-7/8 16-1/2 5 9-3/4 15 4-3/4 9 60 lbs. 6 40230 (3) - 6 - - 29302
+ • DURABLE - Molded of industrial-grade polymers, AkroBins are resistant to weak acids

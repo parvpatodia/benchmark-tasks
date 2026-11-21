@@ -1,0 +1,28 @@
+Source: American College of Radiology, ACR Manual on MR Safety (2024), https://edge.sitecorecloud.io/americancoldf5f-acrorgf92a-productioncb02-3650/media/ACR/Files/Clinical/Radiology-Safety/Manual-on-MR-Safety.pdf
+Retrieved: 2026-11-21. Excerpts (pdftotext), page 21 Zone IV and the Chapter 11 labeling and testing passage.
+
+Zone IV . Zone IV is synonymous with the MR I scanner room and is comprised of the physical walled
+confines where the scanner is located . It includes the MR Projectile Area where there is definite,
+potentially lethal projectile risk.
+Zone IV should be clearly labeled as being potentially hazardous because of the presence of the
+very strong magnetic fields. The entrance to Zone IV
+with a superconducting magnet should also
+be clearly marked with a prominently displayed red illuminated warning sign stating, "The Magnet
+is Always On ." Illuminated signs should have a battery backup energy source
+in case of power
+failure. In the case of resistive MR systems, the sign may be active only when the magnet is
+barriers include easily adjusted straps , plastic chains , or other deployable barrier devices secured
+across the doorway to Zone IV (Figure 4 ). Strictly controlled entrance to Zone IV is a critical safety
+consideration for the prevention of ferromagnetic objects entering the room. As such, when the
+All sites should have ready access to a strong handheld magnet (>1000 G) and/or a
+ferromagnetic detection device for testing purposes.
+All portable metallic or partially metallic objects
+items.
+The t esting of object s that are not electrically activated (e.g., fire extinguishers, intravenous
+poles, oxygen tanks, step stools) is to be accomplished by MR Personnel exposing the object to
+a handheld magnet (>1000 G) or ferromagnetic detector. If grossly detectable ferromagnetic
+properties are observed, it is to be labeled with a circular red MR Unsafe label
+
+. If none are
+
+observed, the object may be a candidate for

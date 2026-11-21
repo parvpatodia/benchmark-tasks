@@ -1,0 +1,9 @@
+Source: https://support.apple.com/en-us/111831
+Retrieved: 2026-11-21. Excerpt of the page text (lines matching the cited facts); en and em dashes replaced by '-'.
+
+iPhone 15 - Tech Specs - Apple Support
+iPhone 15 - Tech Specs
+Width: 2.82 inches (71.6 mm)
+Height: 5.81 inches (147.6 mm)
+Depth: 0.31 inch (7.80 mm)
+Weight: 6.02 ounces (171 grams)

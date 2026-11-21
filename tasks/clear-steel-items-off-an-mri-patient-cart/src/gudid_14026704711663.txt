@@ -1,0 +1,11 @@
+Source: https://accessgudid.nlm.nih.gov/api/v3/devices/lookup.json?di=14026704711663 (FDA GUDID record, AccessGUDID API)
+Retrieved: 2026-11-21. Selected fields.
+
+primaryDi: None
+brandName: RUSCH
+companyName: TELEFLEX INCORPORATED
+versionModelNumber: IPN915486
+catalogNumber: 008621000
+deviceDescription: RUSCH  STANDARD HANDLE: MEDIUM
+MRISafetyStatus: MR Unsafe
+commercialDistributionStatus: None

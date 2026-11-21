@@ -1,0 +1,11 @@
+Source: https://accessgudid.nlm.nih.gov/api/v3/devices/lookup.json?di=00845821010414 (FDA GUDID record, AccessGUDID API)
+Retrieved: 2026-11-21. Selected fields.
+
+primaryDi: None
+brandName: BV Medical 
+companyName: BV Medical
+versionModelNumber: 80-170-060
+catalogNumber: None
+deviceDescription: Utility scissors 5.5", stainless steel with coral green handle
+MRISafetyStatus: MR Unsafe
+commercialDistributionStatus: None
