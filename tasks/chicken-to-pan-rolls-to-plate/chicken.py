@@ -14,9 +14,9 @@ Contamination is read from PhysX contacts (rigid contact views), after every phy
 - Latched 0, at any time: a roll, the plate or the basket becomes raw; a roll or a thigh is down on the counter; a raw
   gripper comes within 3 mm of the counter where no holder's floor covers it (in_outline: tray and basket rectangles,
   the pan's 82 mm floor disc, the plate's 90 mm well), read from the gripper's pose. The counter is not tracked spot by
-  spot, so a raw hand on it is ruled unsafe at once, and a clean hand can never pick raw up there. Also 0: a holder
-  slides over 20 mm, lifts over 5 mm or turns or tilts over 10 deg (its floor covers only where it was set), or a
-  hand's pose cannot be read (fails closed).
+  spot, so a raw hand on it is ruled unsafe at once, and a clean hand can never pick raw up there. Also 0: a raw holder
+  (the tray; the pan once raw) slides over 5 mm, lifts over 5 mm or turns or tilts over 2 deg from where it turned raw
+  (it would leave raw counter behind), or a hand's pose cannot be read (fails closed).
 """
 import dataclasses
 import math
@@ -250,6 +250,7 @@ class Contamination:
 
     def __init__(self):
         self.raw_set = set(CHICKEN) | {"tray"}
+        self.raw_ref = {}          # raw holder -> (pos, yaw) where it was when first seen raw (off_place's reference)
         self.fail = None           # (step, reason) of the first latch
 
     @property
@@ -498,9 +499,12 @@ _HANDS = {"left": None, "right": None}
 HOLDERS = ("tray", "pan", "basket", "plate")
 
 
-HOLD_MOVE, HOLD_RISE, HOLD_TURN = 0.020, 0.005, 10.0   # m, m, deg: a holder that slides, lifts or turns more is off its
-                                 # place [CHOICE; [RUN] demo seeds 0 to 2 and every mode moved them at most 0.6 mm, 0 mm,
-                                 # 0.19 deg (fast_31f172e2 traces)]
+HOLD_MOVE, HOLD_RISE, HOLD_TURN = 0.005, 0.005, 2.0   # m, m, deg: a RAW holder that slides, lifts or turns more is off
+                                 # its place [CHOICE; [RUN] demo seeds 0 to 2 and every mode moved the holders at most
+                                 # 0.60 mm, 0 mm, 0.19 deg (fast_03a125dc traces)]
+# WHY this tight and raw holders only: a raw tray or pan moved along the counter leaves raw counter that no rule tracks;
+# at 5 mm and 2 deg (the tray's corners sweep 4.4 mm) that band is at most 5 mm wide at the holder's edge. A clean
+# holder may move freely: a raw hand can only reach its floor by touching it, which already scores 0
 
 
 def in_outline(name, state, pts):
@@ -520,17 +524,17 @@ def in_outline(name, state, pts):
     raise KeyError(name)
 
 
-def off_place(name, state):
-    """Why a holder is off its starting place (slid over HOLD_MOVE, lifted over HOLD_RISE, or turned or tilted over
-    HOLD_TURN), or "" if it is in place. Its floor only covers the counter where it was set down."""
-    start = SPEC[name].pos
+def off_place(name, state, ref=None):
+    """Why a raw holder is off its place (slid over HOLD_MOVE, lifted over HOLD_RISE, or turned or tilted over HOLD_TURN
+    from ref = (pos, yaw rad), default its set-down pose), or "" if it is in place."""
+    start, yaw0 = ref if ref is not None else (SPEC[name].pos, SPEC[name].yaw)
     p = np.asarray(state.pos, float)
     if math.hypot(p[0] - start[0], p[1] - start[1]) > HOLD_MOVE:
         return f"{name} slid off its place"
     if p[2] - start[2] > HOLD_RISE:
         return f"{name} lifted"
     r = mechanism._rot_xyzw(state.quat_xyzw)
-    yaw = math.degrees(math.atan2(r[1, 0], r[0, 0])) - math.degrees(SPEC[name].yaw)
+    yaw = math.degrees(math.atan2(r[1, 0], r[0, 0])) - math.degrees(yaw0)
     tilt = math.degrees(math.acos(max(-1.0, min(1.0, float(r[2, 2])))))
     if abs((yaw + 180) % 360 - 180) > HOLD_TURN or tilt > HOLD_TURN:
         return f"{name} turned or tilted"
@@ -542,7 +546,13 @@ def raw_hand_counter(c, hands, holders, step=0):
     hand with a point within HAND_COUNTER_Z of the counter where no holder's floor covers it (holders: name ->
     BodyState, see in_outline). Returns the lowest such raw point's height over the counter (m), or None."""
     for name, st in holders.items():
-        why = off_place(name, st)
+        if name not in c.raw_set:
+            continue
+        if name not in c.raw_ref:     # the tray is raw from the start; the pan from the step it is first seen raw
+            r = mechanism._rot_xyzw(st.quat_xyzw)
+            c.raw_ref[name] = ((SPEC[name].pos, SPEC[name].yaw) if name == "tray" else
+                               (tuple(np.asarray(st.pos, float)), math.atan2(r[1, 0], r[0, 0])))
+        why = off_place(name, st, c.raw_ref[name])
         if why:
             c.holder_off(why, step)
     least = None

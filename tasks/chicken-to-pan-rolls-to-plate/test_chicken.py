@@ -330,25 +330,42 @@ class Contamination(unittest.TestCase):
                 self.assertTrue(M.in_outline(name, holders[name], np.array([[x, y, z]]))[0], f"{name} at {x}, {y}")
 
     def test_holders_stay_put(self):
-        """A slid, lifted or turned holder latches 0 (its floor would no longer cover where raw juice may be)."""
+        """A raw holder (the tray; the pan once raw) that slides, lifts or turns latches 0; clean holders may move."""
         far = {"left": FAR["left"], "right": FAR["right"]}
-        cases = {"tray slid off its place": ("tray", (0.025, 0.0, 0.0), 0.0),
+        cases = {"tray slid off its place": ("tray", (0.006, 0.0, 0.0), 0.0),
                  "pan lifted": ("pan", (0.0, 0.0, 0.006), 0.0),
-                 "plate turned or tilted": ("plate", (0.0, 0.0, 0.0), math.radians(11)),
-                 "basket slid off its place": ("basket", (0.0, -0.021, 0.0), 0.0)}
+                 "pan turned or tilted": ("pan", (0.0, 0.0, 0.0), math.radians(2.5)),
+                 "tray turned or tilted": ("tray", (0.0, 0.0, 0.0), math.radians(2.5))}
         for why, (name, d, yaw) in cases.items():
+            c = M.Contamination()
+            c.raw_set.add("pan")
+            M.raw_hand_counter(c, far, {n: state(n) for n in M.HOLDERS}, 8)      # the pan's raw pose = its start
+            self.assertIsNone(c.fail)
             holders = {n: state(n) for n in M.HOLDERS}
             holders[name] = state(name, np.asarray(SPEC[name].pos) + d, yaw)
-            c = M.Contamination()
             M.raw_hand_counter(c, far, holders, 9)
             self.assertEqual(c.fail, (9, why))
-        holders = {n: state(n, np.asarray(SPEC[n].pos) + (0.015, 0.0, 0.004), math.radians(8)) for n in M.HOLDERS}
+        # within 5 mm, 5 mm and 2 deg: in place; a clean pan, plate and basket moved far: no latch
         c = M.Contamination()
+        holders = {n: state(n, np.asarray(SPEC[n].pos) + (0.004, 0.0, 0.004), math.radians(1.5)) for n in M.HOLDERS}
+        for n in ("pan", "plate", "basket"):
+            holders[n] = state(n, np.asarray(SPEC[n].pos) + (0.0, 0.030, 0.010), math.radians(20))
         M.raw_hand_counter(c, far, holders, 9)
-        self.assertIsNone(c.fail)                                  # within 20 mm, 5 mm and 10 deg: in place
+        self.assertIsNone(c.fail)
+        # the pan's reference is where it turned raw, not its start
+        c = M.Contamination()
+        moved = {n: state(n) for n in M.HOLDERS}
+        moved["pan"] = state("pan", np.asarray(SPEC["pan"].pos) + (0.030, 0.0, 0.0))
+        M.raw_hand_counter(c, far, moved, 9)
+        c.raw_set.add("pan")
+        M.raw_hand_counter(c, far, moved, 10)
+        self.assertIsNone(c.fail)
+        moved["pan"] = state("pan", np.asarray(SPEC["pan"].pos) + (0.036, 0.0, 0.0))
+        M.raw_hand_counter(c, far, moved, 11)
+        self.assertEqual(c.fail, (11, "pan slid off its place"))
         tilted = {n: state(n) for n in M.HOLDERS}
         st = tilted["tray"]
-        q = np.array([math.sin(math.radians(6)), 0.0, 0.0, math.cos(math.radians(6))])   # 12 deg about x
+        q = np.array([math.sin(math.radians(1.5)), 0.0, 0.0, math.cos(math.radians(1.5))])   # 3 deg about x
         from mechanism import body_state
         tilted["tray"] = body_state(SPEC["tray"], st.pos, q)
         c = M.Contamination()
