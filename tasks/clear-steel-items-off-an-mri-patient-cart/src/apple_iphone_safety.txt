@@ -1,0 +1,9 @@
+Source: Apple Support, "Important safety information for iPhone" (iPhone User Guide)
+URL: https://support.apple.com/guide/iphone/important-safety-information-iph301fc905/ios
+Retrieved: 2026-11-21
+
+Excerpt (sentences containing 'magnet', verbatim):
+- iPhone, MagSafe accessories, and Apple Pencil contain magnets as well as components and/or radios that emit electromagnetic fields.
+- These magnets and electromagnetic fields might interfere with medical devices.
+- Manufacturers often provide recommendations on the safe use of their devices around wireless or magnetic products to prevent possible interference.
+- Medical devices such as implanted pacemakers and defibrillators may contain sensors that respond to magnets and radios when in close contact.

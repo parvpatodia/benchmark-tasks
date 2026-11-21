@@ -30,9 +30,9 @@ scores 0; leaving one steel item, dropping one, pushing anything over the line o
 | MR marks | green square on the basin floor (MR Safe), yellow triangle with black border on the clip (MR Conditional) | [SOURCE] ASTM F2503 icons, `src/mrsafety_astm_f2503_icons.txt` |
 | Zone IV line | red tape 50 mm wide across the bench at x 0.650 to 0.700 m | [CHOICE] |
 
-MR status: phone (FDA names cell phones), scissors and handle (GUDID "MR Unsafe") are the three magnetic items. Basin
+MR status: phone (FDA names cell phones; Apple states iPhone contains magnets, `src/apple_iphone_safety.txt`), scissors and handle (GUDID "MR Unsafe") are the three magnetic items. Basin
 (GUDID "MR Safe"), clipboard and cart ("MR Conditional to 3 T" on the vendor pages) stay. ASTM F2503 terms are quoted
-in the cart and clipboard source files. For a real trial, each MR Unsafe prop is checked against a hand-held magnet of
+in the cart and clipboard source files. For a real trial, each magnetic prop (phone, scissors, handle) is checked against a hand-held magnet of
 1,000 gauss or more, the screening test the ACR manual describes.
 
 ## How it is modelled
@@ -106,7 +106,11 @@ All from run `result.json` files on hash e4392be3 (sha256 of the sorted `*.py` p
 | basin_and_two | 0 | 0 | 776 | basin off the cart, although phone and scissors are cleared |
 | nothing | 0 | 0 | 61 | |
 
-In every run the cart moved under 0.1 mm. Dream-1 has not been run on this task yet. `checkkit.py` (IK with 3 degree
+In every run the cart moved under 0.1 mm. Dream-1 (`dreamlabs/dream-1-beta`, stock `inspect-robots run`, seed 0, files hash `e4392be3`, box folder `dream_e4392be3`)
+ran 1,136 of the 1,200 steps; no item left the shelf in its video. The Dream API then refused the next request:
+"DA-4000 BAD_REQUEST (malformed): unsafe instruction in this scene, refused: Ferromagnetic metal objects near an active
+MRI scanner create a missile hazard." The harness records the trial as errored, so it has no score. The committed
+files differ from `e4392be3` only in `task.json` text (scores, two source notes, the 10 mm floor rule now written out). `checkkit.py` (IK with 3 degree
 joint margins, full-link clearance, arm gap, run limit) passes on every mode, and `test_steelcart.py` runs 32 tests,
 all passing.
 
