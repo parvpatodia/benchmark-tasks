@@ -77,9 +77,12 @@ From the end state. `score()` tops out at 0.75; 1.0 comes only from `success()` 
 - 1.0: also quarter, key, plunger and slide at rest (under 0.01 m/s, 0.5 rad/s) and every gripper point 30 mm or more
   from the key and the quarter, held 1 s.
 
-Real trial: a ruler on the slide's travel and the key's exposed length, a 1 N pull on the chain for the retention, a
-photo of the mat and hands. On a real lock whose travel differs, the slide at its out stop and the key held against the
-1 N pull stand for the 35 mm and 11.5 mm marks.
+Real trial, on the printed lock: a ruler on the slide's travel and the key's exposed length (49.5 mm at 12.5 mm in),
+a 1 N pull on the chain for the retention, a photo of the mat and hands. The lock (`cad/coinlock.scad`, STLs in
+`cad/stl/`, key `cad/key.dxf`, `cad/drawing.svg`) uses the sim's numbers under the sim's names; class `Cad` in
+`test_trolley.py` checks all 69 against `trolley.py` and the moving parts against the sim's shapes. Bought parts
+`src/hardware_parts.txt`; parts list, print, assembly, checks and the differences (spring rates, a reset release
+hole): `cad/BUILD.md`.
 
 ## Modes
 
@@ -98,9 +101,9 @@ photo of the mat and hands. On a real lock whose travel differs, the slide at it
 
 ## Results
 
-From run `result.json` files on hash 527c77b5 (sha256 of the sorted `*.py` plus `task.json`, first 8 hex), runs
-fast_527c77b5_1121_125145 and _130816, cameras off, end states from the last trace row. Since then, scorer and text
-only: a 20 mm depth cap; the plunger stops the key at 14 mm, so the scores stand [ARITH, not re-run]; hash cb8168b4.
+Run `result.json` files on hash 527c77b5 (sha256 of the sorted `*.py` plus `task.json`, first 8 hex), runs
+fast_527c77b5_1121_125145 and _130816, cameras off, end states from the last trace row. Since then: a 20 mm depth cap
+(the plunger stops the key at 14 mm, so the scores stand [ARITH, not re-run]), CAD tests and text; hash 09f8f91a.
 
 | Mode | Seed | Score | Steps | End |
 |---|---|---|---|---|
@@ -119,15 +122,11 @@ check is 10 mm/s and 0.5 rad/s). The pin holds it at 12.7 mm against the chain's
 
 ### Dream-1
 
-Dream-1 ran once on hash eba907ea: 0 at the 1,600-step limit; it never reached the lock. The files changed after that
-run, so its score is for eba907ea. Changed since: key hole 6 to 9 mm wide; pin 4 to 2 mm wide, 1.25 to 2.5 mm into the
-key, "pin down" 1 to 1.5 mm, so a key home anywhere in the slot's play is held; the near basket's rear wall added; the
-quarter must lie flat (within 15 degrees); task.json text for these, the near chain's own key, the key tip at 66.5 mm,
-a shorter fidelity and the Dream-1 score. Its start scene differs from this one by the basket wall, the key hole and the pin's size and depth.
+Dream-1 ran once on hash eba907ea: 0 at the 1,600-step limit; it never reached the lock. That start scene had no
+basket wall, a 6 mm key hole and a 4 mm pin, so the score is for eba907ea, not this scene.
 
-`checkkit.py` (IK with 3 degree joint margins, full-link clearance, run limit) and `test_trolley.py` (28 tests:
-every scoring rule above against the code, each mode's end state, the latch and retention geometry including an
-off-centre key, a key behind the lock, the basket wall, the finger, the text) pass.
+`checkkit.py` (IK with 3 degree joint margins, full-link clearance, run limit) and `test_trolley.py` (33 tests: every
+scoring rule, each mode's end state, latch and retention geometry, the finger, the text, the CAD against the scene) pass.
 
 ## Run it
 
@@ -135,8 +134,8 @@ off-centre key, a key behind the lock, the basket wall, the finger, the text) pa
       -E control_hz=20 -E cam_width=320 -E cam_height=176 --instruction "<task.json instruction>" \
       --scorer task_score --max-steps 1600
 
-One fixed layout; the demo is open loop. `fastrun.py` runs every mode in one session without cameras;
-`PYTHONPATH=<yam_arena source> python3 test_trolley.py` runs the offline tests.
+One fixed layout; the demo is open loop. `fastrun.py` runs every mode without cameras; `PYTHONPATH=<yam_arena
+source> python3 test_trolley.py` runs the offline tests; `cad/make.sh` re-exports the CAD.
 `sim/film.sh` runs the stock filmed demo and, via env `TROLLEY_HD` (never set when scoring), the same run's cameras at
 1280 x 720; demo.mp4 is that top view with the right wrist camera inset, `setup.png` its first frame.
 
@@ -146,5 +145,6 @@ Task scene: primitive shapes and hulls made in code; `mechanism.py`, `motionkit.
 MIT notices. Robot (not bundled): the YAM arm and gripper (URDF, meshes, hulls) in the SDK's `yam_arena/assets/yam/`,
 from i2rt (https://github.com/i2rt-robotics/i2rt, commit 120c3c8), MIT, Copyright (c) I2RT Robotics (`LICENSE.i2rt`),
 and its `dream/` link2/link3 colour split (SDK `dream/SOURCE`: "MIT, see ../LICENSE.i2rt"). The SDK's room, lights and
-cameras are code; its README says it has no license yet (ported from YAM-inspect-Isaac). `src/`: the patent text, the
-coin lock listing (supermarket-fixture.com), the cart sheet (text plus gzipped PDF) and the US Mint coin specifications.
+cameras are code; its README says it has no license yet (ported from YAM-inspect-Isaac). `cad/`: made for this task,
+MIT. `src/`: the patent text, the coin lock listing (supermarket-fixture.com), the cart sheet (text plus gzipped PDF),
+the US Mint coin specifications and the bought parts' catalogue values.

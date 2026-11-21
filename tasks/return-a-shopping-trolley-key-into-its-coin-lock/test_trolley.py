@@ -373,5 +373,106 @@ class Text(unittest.TestCase):
         self.assertIn(f"{M.SUCCESS_HOLD_S:g} s", tj["scoring"])
 
 
+def scad_params(path=HERE / "cad" / "coinlock.scad"):
+    """(block-1 SIM numbers as written, every top-level `NAME = expr;` evaluated in file order) from the .scad."""
+    sim, env, block = {}, {"sqrt": math.sqrt, "pow": math.pow}, 0
+    for line in path.read_text().splitlines():
+        b = re.match(r"// ---- (\d)\.", line)
+        if b:
+            block = int(b.group(1))
+        m = re.match(r"^([A-Z][A-Z0-9_]*)\s*=\s*([^;]+);", line)
+        if m:
+            env[m.group(1)] = eval(m.group(2), {"__builtins__": {}}, env)  # noqa: S307  WHY: our own file
+            if block == 1 and re.fullmatch(r"-?[\d.]+", m.group(2).strip()):
+                sim[m.group(1)] = float(m.group(2))
+    return sim, env
+
+
+def box_of(shape):
+    """(low, high) corners of a sim box shape, in mm."""
+    c, z = np.asarray(shape.center) * 1000, np.asarray(shape.size) * 1000 / 2
+    return c - z, c + z
+
+
+class Cad(unittest.TestCase):
+    """The printable lock in cad/coinlock.scad has the sim's dimensions: every SIM number equals the trolley.py
+    constant, the derived contact geometry equals the sim's shapes, and the bought springs work in their pockets."""
+    SIM, P = scad_params()
+    VECTORS = {"T_X": ("T_X0", "T_X1"), "T_Y": ("T_Y0", "T_Y1"), "L_X": ("L_X0", "L_X1"), "L_Y": ("L_Y0", "L_Y1"),
+               "HOLE": ("HOLE_X0", "HOLE_X1", "HOLE_Y0", "HOLE_Y1"), "ANCHOR": ("ANCHOR_X", "ANCHOR_Y", "ANCHOR_Z")}
+
+    def test_sim_numbers_equal_scene_constants(self):
+        done = set()
+        for vec, names in self.VECTORS.items():
+            for name, v in zip(names, getattr(M, vec)):
+                self.assertAlmostEqual(self.SIM[name], v * 1000, places=6, msg=name)
+                done.add(name)
+        for name in ("TOOTH_TOP", "LUG_TOP"):
+            done.add(name)
+        for name, v in self.SIM.items():
+            if name not in done:
+                self.assertTrue(hasattr(M, name), f"{name} is not a trolley.py constant")
+                self.assertAlmostEqual(v, getattr(M, name) * 1000, places=6, msg=name)
+        self.assertEqual(len(self.SIM), 69)
+
+    def test_parts_match_sim_shapes(self):
+        p = self.P
+        body, tooth = (box_of(s) for s in M.plunger_shapes())
+        np.testing.assert_allclose(body[0], (p["PL_X0"], p["SY0"] + 0.5, p["Z_KEY0"] + 0.5), atol=1e-6)
+        np.testing.assert_allclose(body[1], (p["PL_X1"], p["SY1"] - 0.5, p["Z_KEY1"] - 0.5), atol=1e-6)
+        np.testing.assert_allclose(tooth[1], (p["T_X1"], p["T_Y1"], p["TOOTH_TOP"]), atol=1e-6)
+        sl = M.slide_shapes()
+        np.testing.assert_allclose(box_of(sl[-1])[1], (p["L_X1"], p["L_Y1"], p["LUG_TOP"]), atol=1e-6)
+        wall = box_of(sl[4])                                     # the coin pocket's -x wall
+        np.testing.assert_allclose(wall[0], (p["W_LO"] - p["WALL_T"], p["CY0"], p["SLIDE_FLOOR"]), atol=1e-6)
+        np.testing.assert_allclose(wall[1], (p["W_LO"], p["CY1"], p["SLIDE_FLOOR"] + p["WALL_H"]), atol=1e-6)
+        pts = np.asarray(M.pin_shapes()[0].points) * 1000
+        self.assertAlmostEqual(pts[:, 2].max(), p["PIN_TOP"], places=6)
+        self.assertAlmostEqual(pts[:, 2].min(), p["PIN_Z0"], places=6)
+        self.assertAlmostEqual(box_of(M.casing_shapes()[3])[1][0], p["BEHIND_X1"], places=6)
+
+    def test_real_stops_are_sim_limits(self):
+        p = self.P
+        # T's slot in the cover: its +x end holds the plunger at rest (joint 0), its -x end at PLUNGER_STOP
+        self.assertIn("bx([T_X0 - PLUNGER_STOP, T_Y0 - CLR, Z_KEY1 - 1], [T_X1, T_Y1 + CLR, Z_COV1 + 1]);",
+                      (HERE / "cad" / "coinlock.scad").read_text())
+        # the slide's post meets the cap's stop block after PUSH_TRAVEL
+        self.assertAlmostEqual(p["POST_Y0"] - p["STOP_Y1"], M.PUSH_TRAVEL * 1000)
+        # the pin's head sits on the bore's shoulder at the sim's rest and meets the bore top at PIN_RISE
+        self.assertAlmostEqual(p["PIN_TOP"], (M.PIN_Z0 + 0.006) * 1000)
+        # nothing added reaches the key: the arm ends behind the homed key's deepest tip (plunger stop, 14 mm)
+        self.assertLess(p["ARM_X1"] + p["CLR"], p["FX"] - (M.PLUNGER_IN + M.PLUNGER_STOP) * 1000)
+        self.assertGreaterEqual(p["T_Y1"], p["ARM_Y0"])
+
+    def test_springs_fit_and_stay_in_range(self):
+        p = self.P
+        # plunger spring VD-006C: preload PLUNGER_PRE at rest, PLUNGER_PRE + PLUNGER_STOP at the stop
+        self.assertLessEqual(p["PLUNGER_PRE"] + p["PLUNGER_STOP"], p["PSPR_SN"])
+        self.assertGreaterEqual(p["PSPR_L0"] - p["PLUNGER_PRE"] - p["PLUNGER_STOP"], p["PSPR_LN"])
+        self.assertGreaterEqual(p["CHEEK_GAP"], p["PSPR_DH"])
+        self.assertGreater(p["PL_X0"] - p["PLUNGER_STOP"] - p["CHEEK_L"], p["PSPR_X0"])
+        # pin spring VD-006: preload PIN_PRE at rest, PIN_PRE + PIN_RISE fully lifted
+        self.assertLessEqual(p["PIN_PRE"] + p["PIN_RISE"], p["PINSPR_SN"])
+        self.assertGreaterEqual(p["PIN_BORE_D"], p["PINSPR_DH"])
+        self.assertAlmostEqual(p["PIN_SPR_Z1"] - p["PIN_SPR_Z0"], p["PINSPR_L0"] - p["PIN_PRE"])
+        # slide spring VD-042J-05 on the 3 mm rod
+        self.assertLessEqual(p["SSPR_DEFL_IN"], p["SSPR_SN"])
+        self.assertLessEqual(p["SSPR_R"] * p["SSPR_DEFL_IN"], p["SSPR_FN"])
+        self.assertGreater(p["SSPR_DEFL_IN"] - p["PUSH_TRAVEL"], 0)    # still pushes at the out stop
+        self.assertLessEqual(p["ROD_D"], p["SSPR_DD"])
+        self.assertLess(p["SPR_Z"] + p["ROD_D"] / 2, p["STOP_Z0"])      # the rod passes under the stop block
+        self.assertGreater(p["POST_TOP"], p["STOP_Z0"])                  # the post does not
+        self.assertGreater(p["SPR_Z"] - p["SSPR_DE"] / 2, p["SLIDE_FLOOR"] + p["COIN_D"])   # spring over the coin
+
+    def test_files_exported(self):
+        for part in ("floor_plate", "clamp_lower", "key_plate", "cover_plate", "shell", "cap", "plunger", "slide",
+                     "pin", "key"):
+            f = HERE / "cad" / "stl" / f"{part}.stl"
+            self.assertTrue(f.exists() and f.stat().st_size > 1000, part)
+            self.assertRegex((HERE / "cad" / "make.sh").read_text(), rf"\b{part}\b")
+        self.assertTrue((HERE / "cad" / "key.dxf").exists())
+        self.assertTrue((HERE / "cad" / "drawing.svg").exists())
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)

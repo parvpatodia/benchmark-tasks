@@ -1,0 +1,28 @@
+Bought parts for the printed coin lock (cad/). Retrieved 2026-11-21 with an automated page fetch that returned the
+pages' specification fields as quoted text; these are second-hand transcriptions of the vendor pages, not saved copies.
+Check each value on the vendor page before ordering.
+
+1. Gutekunst Federn compression springs, stainless 1.4310, ends closed (federnshop.com)
+
+   VD-006C  https://www.federnshop.com/en/products/compression_springs/vd-006c.html
+     title "Compression spring VD-006C Stainless steel Ø 0.2 x 2.3 x 10 mm"
+     d 0.2 mm; D (mean) 2.3 mm; De 2.5 mm; Dd (max mandrel) 2 mm; Dh (min bush) 2.9 mm; L0 10 mm;
+     Ln (min length, static) 2.91 mm; sn (max deflection, static) 7.09 mm; Fn 0.96 N; R 0.135 N/mm; n 8.5
+
+   VD-006   https://www.federnshop.com/en/products/compression_springs/vd-006.html
+     title "Compression spring VD-006 Stainless steel Ø 0.2 x 2.5 x 25.3 mm"
+     d 0.2 mm; De 2.7 mm; Dd 2 mm; Dh 3.1 mm; L0 25.3 mm; Ln 5.64 mm; sn 19.66 mm; Fn 0.952 N; R 0.048 N/mm; n 18.5
+
+   VD-042J-05  https://www.federnshop.com/en/products/compression_springs/vd-042j-05.html
+     title "Compression spring VD-042J-05 Stainless steel Ø 0.4 x 5.6 x 64.7 mm"
+     d 0.4 mm; De 6 mm; Dd 4.8 mm; Dh 6.6 mm; L0 64.7 mm; Ln 11.72 mm; sn 52.98 mm; Fn 3.653 N; R 0.069 N/mm;
+     n 18.5; buckling length Lk 58.93 mm (so it runs on a rod)
+
+2. Aspen Fasteners (aspenfasteners.com)
+
+   ME127-305X20  https://www.aspenfasteners.com/m3-0-5-x-20mm-din-912-iso-4762-metric-hex-socket-head-cap-screws-a2-stainless-steel/
+     "M3-0.5 X 20mm DIN 912 / ISO 4762, Metric, Hex Socket Head Cap Screws, A2 Stainless Steel"
+     length 20 mm; thread length 18 mm; head diameter 5.5 mm; head height 3 mm; drive 2.5 mm
+
+   ME535-305X1-000100  https://www.aspenfasteners.com/m3-0-5-x-1m-din-976-1-metric-studs-full-thread-a2-stainless-steel/
+     "M3-0.5 X 1m DIN 976-1, Metric, Studs, Full Thread, A2 Stainless Steel"; M3, pitch 0.5, length 1 m
