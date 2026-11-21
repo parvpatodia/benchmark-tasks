@@ -16,6 +16,6 @@
   "run_limit": "1,200 steps (1 minute at 20 Hz)",
   "reset_notes": "Real trials use silicone display-food chicken thighs and polyurethane display rolls of the stated sizes and weights, so nothing is contaminated or perishes; a new #2S tray per session. Record the top and both wrist cameras plus a fixed side camera at the robot's right, level with the counter, with a ruler standing in view. A touch counts unless some camera shows a visible gap. Heights (the 1.5 mm, 3 mm, 5 mm and 30 mm bands) are read on the side camera against the ruler; the 20 mm hand clearance and the centre distances on the end frames, by ruler; at rest means no visible motion over the last 1 s. Reset, about 2 minutes: thighs in the tray, rolls in the basket, items at the taped outlines in the setup photo.",
   "fidelity": "PhysX 240 Hz, rigid bodies at real size and mass. Thighs and rolls collide as rigid convex hulls (real ones are soft); their lobes, fat seams, crust shading and split are drawn only. Tray, basket and plate are thin rigid walls; the pan wall is 24 hull segments. Contamination is not a substance: the scorer tracks which bodies touch (PhysX contacts) and raw hand poses near the counter. Cold pan; no crumbs, juice or washing.",
-  "scores": "Dream-1 run: not yet run; scripted demo: 1.0 after 989 steps",
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 after 989 steps",
   "media": ""
 }

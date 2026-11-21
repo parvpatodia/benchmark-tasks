@@ -57,6 +57,8 @@ Each row is one fastrun mode (`TASK_DEMO=<mode>`), GPU physics, seed 0, scores r
 the first zero rule is from its `trace.csv`. Run on file hash cc3b11cc (`cat $(ls *.py | sort) task.json | shasum -a 256`).
 After it only drawn-only colours and shapes (roll crust, thigh fat) and the `scores` line of `task.json` changed; the filmed demo on the final
 files (hash a5d3d0c0, cameras on, seed 0) scored 1.0 in 989 steps.
+Dream-1 (`--policy dream`, seed 0, the same `.py` files as the film; only the `scores` line of `task.json` changed
+since) scored 0 after all 1,200 steps: it moved its right hand over the tray and placed no item.
 
 | mode | what the arms do | expected | scored |
 |---|---|---|---|
