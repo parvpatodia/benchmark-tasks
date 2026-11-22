@@ -101,21 +101,22 @@ hole): `cad/BUILD.md`.
 
 ## Results
 
-Run `result.json` files on hash 527c77b5 (sha256 of the sorted `*.py` plus `task.json`, first 8 hex), runs
-fast_527c77b5_1121_125145 and _130816, cameras off, end states from the last trace row. Since then: a 20 mm depth cap
-(the plunger stops the key at 14 mm, so the scores stand [ARITH, not re-run]), CAD tests and text; hash 09f8f91a.
+Run `result.json` files on the final hash 8c032377 (sha256 of the sorted `*.py` plus `task.json`, first 8 hex), run
+fast_8c032377_1122_080739, every mode on seeds 0, 1 and 2, `fastrun.py` (the stock scorer, cameras off), 1,600-step
+limit. Every mode scored the same on all three seeds, with the same step count. The End column is from the last trace
+row of the same plans on hash 527c77b5 (runs fast_527c77b5_1121_125145 and _130816), where every score and step count
+was identical.
 
-| Mode | Seed | Score | Steps | End |
+| Mode | Seeds | Score | Steps | End |
 |---|---|---|---|---|
-| demo | 0 | 1.0 | 682 | success held 1 s; key 12.7 mm in, pin 0.6 mm up, slide out 40 mm, quarter flat on the mat |
-| demo | 1, 2 | 1.0 each | 682 | the same |
-| key_only | 0 | 0.5 | 501 | key 12.7 mm in, pin 1.0 mm up, slide out 40 mm, quarter left in the slide |
-| drop_coin | 0 | 0.5 | 736 | quarter on the bench beside the mat |
-| hold_coin | 0 | 0.5 | 760 | quarter still in the hand, its centre 37 mm over the mat |
-| partway | 0 | 0.25 | 439 | key 9.7 mm in, held; slide in, pin riding on the key (3.0 mm up) |
-| pry_coin | 0 | 0 | 191 | slide in, key hanging |
-| no_key_coin | 0 | 0 | 173 | slide in, key hanging |
-| nothing | 0 | 0 | 61 | |
+| demo | 0, 1, 2 | 1.0 each | 682 | success held 1 s; key 12.7 mm in, pin 0.6 mm up, slide out 40 mm, quarter flat on the mat, its centre 5 to 6 mm from the mat's centre (trace, hash 7eb2c921) |
+| key_only | 0, 1, 2 | 0.5 each | 501 | key 12.7 mm in, pin 1.0 mm up, slide out 40 mm, quarter left in the slide |
+| drop_coin | 0, 1, 2 | 0.5 each | 736 | quarter on the bench beside the mat |
+| hold_coin | 0, 1, 2 | 0.5 each | 760 | quarter still in the hand, its centre 37 mm over the mat |
+| partway | 0, 1, 2 | 0.25 each | 439 | key 9.7 mm in, held; slide in, pin riding on the key (3.0 mm up) |
+| pry_coin | 0, 1, 2 | 0 | 191 | slide in, key hanging |
+| no_key_coin | 0, 1, 2 | 0 | 173 | slide in, key hanging |
+| nothing | 0, 1, 2 | 0 | 61 | |
 
 In the demo's last second the key's tip and back end move at most 4.6 mm/s and it turns at most 0.14 rad/s (the 1.0
 check is 10 mm/s and 0.5 rad/s). The pin holds it at 12.7 mm against the chain's pull.
