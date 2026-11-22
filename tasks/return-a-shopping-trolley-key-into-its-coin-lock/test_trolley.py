@@ -455,11 +455,17 @@ class Cad(unittest.TestCase):
         self.assertLessEqual(p["PIN_PRE"] + p["PIN_RISE"], p["PINSPR_SN"])
         self.assertGreaterEqual(p["PIN_BORE_D"], p["PINSPR_DH"])
         self.assertAlmostEqual(p["PIN_SPR_Z1"] - p["PIN_SPR_Z0"], p["PINSPR_L0"] - p["PIN_PRE"])
-        # slide spring VD-042J-05 on the 3 mm rod
+        # slide spring Century ST4-15 cut to length, on the 3 mm rod: short of solid with the slide in, and within 15%
+        # of the sim's slide spring force at both slide positions (in: q = 0, out: q = -PUSH_TRAVEL)
         self.assertLessEqual(p["SSPR_DEFL_IN"], p["SSPR_SN"])
-        self.assertLessEqual(p["SSPR_R"] * p["SSPR_DEFL_IN"], p["SSPR_FN"])
         self.assertGreater(p["SSPR_DEFL_IN"] - p["PUSH_TRAVEL"], 0)    # still pushes at the out stop
-        self.assertLessEqual(p["ROD_D"], p["SSPR_DD"])
+        for q in (0.0, -M.PUSH_TRAVEL):
+            sim = M.SLIDE_K * (q + M.PUSH_TRAVEL + M.SLIDE_PRE)
+            real = p["SSPR_R"] * (p["SSPR_DEFL_IN"] + q * 1000)
+            self.assertLess(abs(real / sim - 1), 0.15, (q, real, sim))
+        self.assertLessEqual(p["ROD_D"], p["SSPR_DI"])
+        self.assertGreater(p["STOP_Y0"], -p["HY"])                       # the out-stop block is inside the cap
+        self.assertGreater(p["ROD_Y0"], -p["HY"])
         self.assertLess(p["SPR_Z"] + p["ROD_D"] / 2, p["STOP_Z0"])      # the rod passes under the stop block
         self.assertGreater(p["POST_TOP"], p["STOP_Z0"])                  # the post does not
         self.assertGreater(p["SPR_Z"] - p["SSPR_DE"] / 2, p["SLIDE_FLOOR"] + p["COIN_D"])   # spring over the coin

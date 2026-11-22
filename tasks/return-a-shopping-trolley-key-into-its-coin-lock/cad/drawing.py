@@ -128,7 +128,7 @@ def slide_view(ax):
     dim(ax, p["L_Y0"], p["L_Y0"] - p["PUSH_TRAVEL"], p["L_X1"] + 3, f"travel {p['PUSH_TRAVEL']:g}", vertical=True)
     dim(ax, p["T_X0"], p["T_X1"], p["T_Y0"] - 3, "T")
     dim(ax, p["T_X1"] - p["RELEASE_TRAVEL"], p["T_X1"], p["T_Y1"] + 1, f"{p['RELEASE_TRAVEL']:g}")
-    ax.text(p["SPR_X"] - 1, p["SLD_Y1"] + 2, "VD-042J-05 on M3 rod", fontsize=6, ha="center")
+    ax.text(p["SPR_X"] - 1, p["SLD_Y1"] + 2, "Century ST4-15 (88.9 mm) on M3 rod", fontsize=6, ha="center")
     ax.text(-p["SLD_X"] + 0.5, p["STOP_Y0"] - 4, "out stop (cap)", fontsize=6)
     ax.text(p["COIN_X"] - 8, -p["HY"] - p["PUSH_TRAVEL"] + 2, "coin pocket out", fontsize=6)
     ax.set_title("C. coin slide from above: in (filled), at its out stop (dashed); T and lug L", fontsize=8)

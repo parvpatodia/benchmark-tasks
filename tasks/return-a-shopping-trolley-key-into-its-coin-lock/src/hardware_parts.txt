@@ -2,7 +2,9 @@ Bought parts for the printed coin lock (cad/). Retrieved 2026-11-21 with an auto
 pages' specification fields as quoted text; these are second-hand transcriptions of the vendor pages, not saved copies.
 Check each value on the vendor page before ordering.
 
-1. Gutekunst Federn compression springs, stainless 1.4310, ends closed (federnshop.com)
+1. Compression springs
+
+   Gutekunst Federn, stainless 1.4310, ends closed (federnshop.com): plunger and pin springs
 
    VD-006C  https://www.federnshop.com/en/products/compression_springs/vd-006c.html
      title "Compression spring VD-006C Stainless steel Ø 0.2 x 2.3 x 10 mm"
@@ -13,10 +15,38 @@ Check each value on the vendor page before ordering.
      title "Compression spring VD-006 Stainless steel Ø 0.2 x 2.5 x 25.3 mm"
      d 0.2 mm; De 2.7 mm; Dd 2 mm; Dh 3.1 mm; L0 25.3 mm; Ln 5.64 mm; sn 19.66 mm; Fn 0.952 N; R 0.048 N/mm; n 18.5
 
-   VD-042J-05  https://www.federnshop.com/en/products/compression_springs/vd-042j-05.html
-     title "Compression spring VD-042J-05 Stainless steel Ø 0.4 x 5.6 x 64.7 mm"
-     d 0.4 mm; De 6 mm; Dd 4.8 mm; Dh 6.6 mm; L0 64.7 mm; Ln 11.72 mm; sn 52.98 mm; Fn 3.653 N; R 0.069 N/mm;
-     n 18.5; buckling length Lk 58.93 mm (so it runs on a rod)
+   VD-042J-05 (no longer used for the slide spring: R 0.069 N/mm gives 3.45 N in, 0.69 N out, against the sim's
+   2.1 N and 0.9 N.) The catalogue sorted by rate (federnshop.com compression_springs.html?sort=R&dir=asc, pages 1 to
+   3, same automated fetch) lists no spring with R from 0.019 to 0.041 N/mm and Fn of 2.1 N or more under De 24 mm:
+   the low-rate springs of 6 mm or less (VD-011Z-01, VD-011Z, VD-2029, VD-2004, VD-2055) have Fn 0.26 to 0.64 N.
+
+   Century Spring long-length compression springs (centuryspring.com), slide spring
+
+   Listing page  https://www.centuryspring.com/shop/springs-long-length-compression
+     describes 20 in and 36 in long stainless springs cut to length; the fetch reported its worked example as: the
+     rate of a cut length is the listed rate constant divided by the cut length, and the solid length is the solid
+     length constant times the cut length (ST2-13, 1.1, cut to 8 in, about 0.138 lbs/in). Summarised by the fetch,
+     not quoted verbatim.
+
+   ST4-15  https://www.centuryspring.com/shop/st4-15cs
+     standard-units table as returned: Material "302/304 Stainless Steel"; Outside Diameter "0.25 in";
+     Inside Diameter "0.22 in"; Wire Diameter "0.015 in"; Length "20 in"; Pitch "0.125 in"; Rate "0.6 lbs-in";
+     Rate Constant "0.05 lbf"; Solid Length Constant "0.13 in"; Suggested Max Load "6.4 lbf"
+     Reading [ARITH]: rate x length = 0.6 lbf = 2.669 N, so a cut length L0 has R = 2.669 N / L0 ("Rate Constant
+     0.05 lbf" is the same 0.6 per foot, 0.6 / 12). Solid length 0.13 x L0. Cross-check from the page's own
+     wire, pitch and OD [ARITH, G = 69 GPa for 302 stainless EST, not on the page]: d 0.381 mm, D 5.97 mm,
+     8 coils per inch, R(1 in) = G d^4 / (8 D^3 n) = 0.61 lbs/in, matching 0.6. The "6.4 lbf" suggested max load is
+     out of line with the series (ST3-15 0.8, ST4-17 0.9, ST4-20 1.4 lbf) and is not relied on; the shear stress at
+     2.1 N is 8 F D / (pi d^3) x Wahl 1.09 = 0.63 GPa [ARITH], under the 0.45 x tensile static limit for 0.015 in
+     302 wire (about 1 GPa [EST: ASTM A313 tensile not read this session]).
+     Cut to L0 = 88.9 mm (3.5 in): R = 2.669 / 88.9 = 0.03002 N/mm; solid 0.13 x 88.9 = 11.56 mm.
+
+   Other Century long springs read the same way (same fetch): ST3-15 0.187 OD, 0.157 ID, wire 0.015, Rate
+   "0.9996 lbs-in", solid constant 0.21, max load 0.8 lbf; ST3-17 0.187 OD, 0.153 ID, wire 0.017, Rate
+   "1.4004 lbs-in", solid constant 0.28, max load 1.2 lbf; ST4-17 0.25 OD, 0.216 ID, wire 0.017, Rate
+   "0.9996 lbs-in", solid constant 0.16, max load 0.9 lbf; ST4-20 0.25 OD, 0.21 ID, wire 0.02, Rate
+   "1.5996 lbs-in", solid constant 0.22, max load 1.4 lbf. At 0.03 N/mm these need L0 = 148 to 237 mm and stand
+   78 to 167 mm with the slide in, longer than the lock; ST4-15 alone stands 18.9 mm.
 
 2. Aspen Fasteners (aspenfasteners.com)
 

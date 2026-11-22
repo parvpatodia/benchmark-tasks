@@ -25,8 +25,8 @@ face with the slot, y along the handle, z up from the tube's axis).
 | key | 1 per lock | 62 x 15 x 3 mm, 9 x 8 mm hole 6 mm from the tip, 8 mm eye with a 3 mm hole | laser-cut 3 mm 304 stainless from `key.dxf` |
 | plunger spring | 1 | Gutekunst VD-006C (De 2.5, L0 10, R 0.135 N/mm) | federnshop.com |
 | pin spring | 1 | Gutekunst VD-006 (De 2.7, L0 25.3, R 0.048 N/mm) | federnshop.com |
-| slide spring | 1 | Gutekunst VD-042J-05 (De 6, L0 64.7, R 0.069 N/mm) | federnshop.com |
-| spring rod | 1 | 69.7 mm of M3 A2 threaded rod, Aspen ME535-305X1-000100 | aspenfasteners.com |
+| slide spring | 1 | Century Spring ST4-15 (302 stainless, OD 6.35, ID 5.59, wire 0.38), cut to L0 88.9 mm (3.5 in): R 0.0300 N/mm | centuryspring.com |
+| spring rod | 1 | 73.9 mm of M3 A2 threaded rod, Aspen ME535-305X1-000100 | aspenfasteners.com |
 | screws | 12 per lock | M3 x 20 DIN 912 A2, Aspen ME127-305X20 (4 stack, 4 cap, 4 clamp) | aspenfasteners.com |
 | chain | 2 | steel chain, 220 mm from the tab hole to the key's eye hole, two split rings | any; not tied to a catalogue part |
 | handle tube | 2 | 25 mm steel tube | any |
@@ -58,7 +58,8 @@ section in both width and thickness; the DXF already has the width taper).
 3. Lay the cover plate on (T through its slot). Drop the pin blade-down into its bore, the pin spring on its head.
 4. Lower the shell on (the spring into its bore). Fit the 4 stack screws from below through floor, key plate and
    cover into the shell.
-5. Screw the rod in from the shell's +y end face until flush. Slide the slide spring onto the rod.
+5. Screw the rod in from the shell's +y end face until flush. Cut the ST4-15 to 88.9 mm with flush cutters (the cut
+   end is open; file the burr) and slide it onto the rod.
 6. Push the slide in from the open -y face (its post onto the rod) while holding a 3 mm thick strip 13 mm deep in the
    slot (the plunger 5 mm in); release the plunger: T springs out in front of lug L and the slide is latched in.
 7. Put the quarter on edge in the pocket before step 6, or with the slide out. Fit the cap (its block drops in on
@@ -79,7 +80,7 @@ section in both width and thickness; the DXF already has the width taper).
 |---|---|---|
 | plunger spring | 150 N/m, 0.15 N at rest, 0.83 N at release, 1.05 N at stop | 0.135 N/mm: 0.14, 0.74, 0.95 N [ARITH] |
 | pin spring | 50 N/m, 0.20 N at rest, 0.43 N lifted | 0.048 N/mm: 0.19, 0.41 N [ARITH] |
-| slide spring | 30 N/m, 2.1 N in, 0.9 N out | 0.069 N/mm: 3.45 N in, 0.69 N out [ARITH]; none of the lowest-rate Gutekunst springs (R up to 0.069 N/mm) of 6 mm diameter or less has the sim's 70 mm stroke |
+| slide spring | 30 N/m, 2.1 N in, 0.9 N out | 0.0300 N/mm: 2.10 N in, 0.90 N out [ARITH, below]; cut-to-length rate and solid length are Century's rule, not a measured spring |
 | T joined to the plunger | one rigid link through the cover | an arm in a pocket beside the slot; T in a cover slot |
 | plunger and pin stops | joint limits | cover slot ends; pin head on its bore's shoulder and the bore top |
 | slide out stop | joint limit | post on the cap's block |
@@ -87,5 +88,16 @@ section in both width and thickness; the DXF already has the width taper).
 | key eye pivot | at the eye's end | at the 3 mm hole, 3 mm from the end |
 | clamp, rod, post, block | absent | inside the lock or under its floor, away from the slot, the key path and the coin's way out |
 
-The tooth-on-lug friction is PETG on PETG; its coefficient was not measured. With the stiffer slide spring, the
-key's push at release is larger than the sim's; the release check above is the test.
+Slide spring forces [ARITH from the Century page values in `../src/hardware_parts.txt`]. Rate x length is 0.6 lbf
+= 2.669 N, so R = 2.669 / 88.9 = 0.03002 N/mm. Free length L0 = 88.9 mm; the spring runs from the end wall
+(y 37) to the slide's post, so it stands L = 18.9 mm with the slide in and 58.9 mm at the 40 mm out stop.
+
+| Slide | L (mm) | F = R (L0 - L) | Sim F = 30 N/m x (q + 0.070 m) | Diff |
+|---|---|---|---|---|
+| in (q = 0) | 18.9 | 0.03002 x 70.0 = 2.10 N | 2.10 N | +0.1% |
+| out (q = -0.040 m) | 58.9 | 0.03002 x 30.0 = 0.90 N | 0.90 N | +0.1% |
+
+Solid length is 0.13 x 88.9 = 11.6 mm, 7.3 mm short of the 18.9 mm it stands at with the slide in. The rod
+(3 mm) guides the 5.59 mm bore against buckling. The out-stop block under the cap moved with the post: its +y face
+is at y -24.9, 5 mm long. The tooth-on-lug friction is PETG on PETG; its coefficient was not measured; the release
+check above is the test.

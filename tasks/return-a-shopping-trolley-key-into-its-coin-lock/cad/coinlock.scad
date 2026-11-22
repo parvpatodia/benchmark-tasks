@@ -115,8 +115,9 @@ PIN_BORE_D = 3.4;       // spring bore; VD-006 needs a bush of 3.1 mm or more
 // release hole: a 1.5 mm wire pushed up through it and through the homed key's hole lifts the pin to reset the lock
 REL_D = 1.8;
 REL_X = PIN_X - PIN_HX + 2;
-// slide spring VD-042J-05 on a 3 mm rod (M3 threaded rod), between the casing's end wall and a post on the slide
-SSPR_DEFL_IN = 50;      // spring deflection with the slide in [CHOICE: 3.45 N in, 0.69 N at the out stop]
+// slide spring: Century ST4-15 cut to SSPR_L0, on a 3 mm rod (M3 threaded rod), between the casing's end wall and a
+// post on the slide. Deflection PUSH_TRAVEL + SLIDE_PRE with the slide in, SLIDE_PRE at the out stop, as the sim
+SSPR_DEFL_IN = 70;      // [CHOICE: 0.03 N/mm x 70 = 2.10 N in, x 30 = 0.90 N out; sim 2.1 N, 0.9 N]
 POST_T = 3;
 POST_X0 = -SLD_X + 0.5;
 POST_X1 = W_LO - WALL_T - 0.875;  // 0.875 mm clear of the coin pocket's wall
@@ -127,7 +128,7 @@ ROD_D = 3;
 // out stop: a block under the cap; the post's -y face meets it at the slide's full PUSH_TRAVEL. The rod (top at
 // SPR_Z + 1.5 = 63.5) passes under it.
 STOP_Z0 = 64.5;
-STOP_Y0 = -26;
+STOP_T = 5;             // block length along y [CHOICE]
 // fasteners: M3 x 20 DIN 912 (head 5.5 x 3 mm), into 2.5 mm pilot holes in PETG
 M3_CLR = 3.4;
 M3_PILOT = 2.5;
@@ -146,7 +147,7 @@ TAB_T = 3;
 // key: eye hole for the split ring
 EYE_HOLE_D = 3;
 
-// ---- 3. Bought springs: Gutekunst Federn catalogue values (federnshop.com product pages, read 2026-11-21) -----------
+// ---- 3. Bought springs: catalogue values (Gutekunst federnshop.com, Century centuryspring.com pages, read 2026-11-21)
 // VD-006C plunger spring: d 0.2, De 2.5, L0 10, Ln 2.91, sn 7.09, R 0.135 N/mm, bush >= 2.9, mandrel <= 2
 PSPR_L0 = 10;
 PSPR_LN = 2.91;
@@ -161,14 +162,17 @@ PINSPR_SN = 19.66;
 PINSPR_R = 0.048;
 PINSPR_DE = 2.7;
 PINSPR_DH = 3.1;
-// VD-042J-05 slide spring: d 0.4, De 6, L0 64.7, Ln 11.72, sn 52.98, R 0.069 N/mm, Fn 3.653 N, mandrel <= 4.8
-SSPR_L0 = 64.7;
-SSPR_LN = 11.72;
-SSPR_SN = 52.98;
-SSPR_R = 0.069;
-SSPR_FN = 3.653;
-SSPR_DD = 4.8;
-SSPR_DE = 6;
+// Century Spring ST4-15 slide spring (centuryspring.com, read 2026-11-21): 302/304 stainless, 20 in stock length cut to
+// length; wire 0.015 in, OD 0.25 in, ID 0.22 in, "Rate 0.6 lbs-in" (rate x cut length), "Solid Length Constant
+// 0.13 in" (solid length per inch of cut length). Rate = SSPR_C / SSPR_L0; solid = SSPR_S x SSPR_L0.
+SSPR_C = 0.6 * 4.44822;            // N (0.6 lbf)
+SSPR_S = 0.13;
+SSPR_L0 = 88.9;                    // cut length 3.5 in [CHOICE: rate 0.0300 N/mm, the sim's 30 N/m]
+SSPR_R = SSPR_C / SSPR_L0;         // 0.03002 N/mm
+SSPR_LN = SSPR_S * SSPR_L0;        // 11.56 mm solid
+SSPR_SN = SSPR_L0 - SSPR_LN;       // 77.34 mm to solid
+SSPR_DI = 0.22 * 25.4;             // 5.59 mm
+SSPR_DE = 0.25 * 25.4;             // 6.35 mm
 
 // derived real geometry
 PSPR_X0 = PL_X0 - (PSPR_L0 - PLUNGER_PRE);              // plunger spring's seat: it stands L0 - preload at rest
@@ -177,6 +181,7 @@ PIN_SPR_Z1 = PIN_SPR_Z0 + PINSPR_L0 - PIN_PRE;          // bore top: the spring 
 POST_Y1 = SLD_Y1 - (SSPR_L0 - SSPR_DEFL_IN);            // post's +y face with the slide in
 POST_Y0 = POST_Y1 - POST_T;
 STOP_Y1 = POST_Y0 - PUSH_TRAVEL;                        // post's -y face at the full travel
+STOP_Y0 = STOP_Y1 - STOP_T;
 ROD_Y0 = STOP_Y1 - 4;                                   // rod's free end, 4 mm past the post at the out stop
 ROD_L = HY - ROD_Y0;    // cut from M3 threaded rod; screwed in from the +y face, flush
 
