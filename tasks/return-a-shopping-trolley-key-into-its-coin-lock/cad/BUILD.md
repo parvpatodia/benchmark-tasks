@@ -30,6 +30,9 @@ face with the slot, y along the handle, z up from the tube's axis).
 | screws | 12 per lock | M3 x 20 DIN 912 A2, Aspen ME127-305X20 (4 stack, 4 cap, 4 clamp) | aspenfasteners.com |
 | chain | 2 | steel chain, 220 mm from the tab hole to the key's eye hole, two split rings | any; not tied to a catalogue part |
 | handle tube | 2 | 25 mm steel tube | any |
+| basket rear wall | 1 | 5 mm steel rod: 3 rails 280 mm long (y -0.09 to 0.19) and 8 uprights 40 mm apart, welded or tied into the grid in the setup, hung in the plane x 0.180 | any 5 mm rod, or a wire-shelf section cut to that grid |
+| mat | 1 | rubber pad 100 x 100 x 3 mm | any |
+| quarter | 1 | US quarter (24.26 mm, 1.75 mm, 5.67 g) | `../src/usmint_quarter.txt` |
 
 Vendor values are in `../src/hardware_parts.txt` (fetched pages, second-hand transcription: check before ordering).
 The front lock needs only the casing parts (floor, key plate, cover, shell, cap, clamp) and its chain and key.
@@ -40,7 +43,8 @@ tubes to the bench) is not specified as parts; any rigid frame that holds the tu
 
 PETG, 0.2 mm layers, 4 perimeters, 40% infill on casing parts and 100% on the plunger, slide and pin. Sliding fits
 are 0.3 mm a side (`CLR`); print `cover_plate` and `pin` first and check that the pin drops freely in its bores
-before printing the rest; open a tight bore with a needle file, never the key slot (its 21 x 4.5 mm is the scored
+before printing the rest. The plunger spring at its 6 mm stop stands 3.00 mm long against its 2.91 mm minimum length (Ln)
+[ARITH: L0 10 - preload 1 - travel 6, coinlock.scad], a 0.09 mm margin: if it binds, sand 0.5 mm off the plunger's spring seat; open a tight bore with a needle file, never the key slot (its 21 x 4.5 mm is the scored
 geometry). Bed orientation: floor_plate top face down; clamp_lower flat face down; key_plate and cover_plate flat;
 shell on its z 31 face; cap upside down (red face on the bed); plunger and slide on their bottom faces; pin head
 down. No part needs supports by design [not sliced; check in your slicer]. The key, if printed in PETG instead of

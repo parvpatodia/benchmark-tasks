@@ -73,12 +73,13 @@ From the end state. `score()` tops out at 0.75; 1.0 comes only from `success()` 
   retaining pin within 1.5 mm of its rest: in the key's hole, 1 mm or more into its thickness). The slide comes out only
   at 12.5 mm of key depth.
 - 0.75: also the quarter lying flat on the mat (faces within 15 degrees of level, the whole coin on it:
-  centre 14.1 mm or more inside each edge, the 12.1 mm radius plus 2 mm; lowest point within 3 mm of its top). A quarter on edge does not count.
+  centre 14.1 mm or more inside each edge, the 12.1 mm radius plus 2 mm; lowest point within 3 mm of its top), let go: every gripper point 10 mm or more from it. A quarter on edge or
+  still in the hand does not count.
 - 1.0: also quarter, key, plunger and slide at rest (under 0.01 m/s, 0.5 rad/s) and every gripper point 30 mm or more
   from the key and the quarter, held 1 s.
 
 Real trial, on the printed lock: a ruler on the slide's travel and the key's exposed length (49.5 mm at 12.5 mm in),
-a 1 N pull on the chain for the retention, a photo of the mat and hands. The lock (`cad/coinlock.scad`, STLs in
+a 1 N pull on the chain for the retention, a 1 s video of the mat and hands with a ruler in frame. The lock (`cad/coinlock.scad`, STLs in
 `cad/stl/`, key `cad/key.dxf`, `cad/drawing.svg`) uses the sim's numbers under the sim's names; class `Cad` in
 `test_trolley.py` checks all 69 against `trolley.py` and the moving parts against the sim's shapes. Bought parts
 `src/hardware_parts.txt`; parts list, print, assembly, checks and the differences (spring rates, a reset release
@@ -101,15 +102,13 @@ hole): `cad/BUILD.md`.
 
 ## Results
 
-Run `result.json` files on the final hash 8c032377 (sha256 of the sorted `*.py` plus `task.json`, first 8 hex), run
-fast_8c032377_1122_080739, every mode on seeds 0, 1 and 2, `fastrun.py` (the stock scorer, cameras off), 1,600-step
-limit. Every mode scored the same on all three seeds, with the same step count. The End column is from the last trace
-row of the same plans on hash 527c77b5 (runs fast_527c77b5_1121_125145 and _130816), where every score and step count
-was identical.
+Run fast_91ed4b1b_1122_100909, `fastrun.py` (stock scorer, cameras off), seeds 0 to 2, 1,600 steps, files hash 91ed4b1b
+(sha256 of sorted `*.py` plus `task.json`, first 8 hex; the committed task.json differs only in `scores` and `media`).
+End column: last trace rows of the same plans on 527c77b5 and 7eb2c921, with the same scores and step counts.
 
 | Mode | Seeds | Score | Steps | End |
 |---|---|---|---|---|
-| demo | 0, 1, 2 | 1.0 each | 682 | success held 1 s; key 12.7 mm in, pin 0.6 mm up, slide out 40 mm, quarter flat on the mat, its centre 5 to 6 mm from the mat's centre (trace, hash 7eb2c921) |
+| demo | 0, 1, 2 | 1.0 each | 682 | success held 1 s; key 12.7 mm in, pin 0.6 mm up, slide out 40 mm, quarter flat on the mat, centre 5 to 6 mm from the mat's centre |
 | key_only | 0, 1, 2 | 0.5 each | 501 | key 12.7 mm in, pin 1.0 mm up, slide out 40 mm, quarter left in the slide |
 | drop_coin | 0, 1, 2 | 0.5 each | 736 | quarter on the bench beside the mat |
 | hold_coin | 0, 1, 2 | 0.5 each | 760 | quarter still in the hand, its centre 37 mm over the mat |
@@ -118,15 +117,15 @@ was identical.
 | no_key_coin | 0, 1, 2 | 0 | 173 | slide in, key hanging |
 | nothing | 0, 1, 2 | 0 | 61 | |
 
-In the demo's last second the key's tip and back end move at most 4.6 mm/s and it turns at most 0.14 rad/s (the 1.0
-check is 10 mm/s and 0.5 rad/s). The pin holds it at 12.7 mm against the chain's pull.
+In the demo's last second the key moves at most 4.6 mm/s and turns at most 0.14 rad/s (limits 10 mm/s, 0.5 rad/s).
 
 ### Dream-1
 
-Dream-1 ran once on hash eba907ea: 0 at the 1,600-step limit; it never reached the lock. That start scene had no
-basket wall, a 6 mm key hole and a 4 mm pin, so the score is for eba907ea, not this scene.
+Dream-1 (`dreamlabs/dream-1-beta`, stock `inspect-robots run --policy dream`, seed 0) ran once on this scene, hash
+8c032377, box folder dream_8c032377: task_score 0 at the 1,600-step limit, no errors. The later scorer change (stage 3
+needs the hands 10 mm off the quarter) only adds a condition, so it cannot raise that 0 [ARITH]; the scene is unchanged.
 
-`checkkit.py` (IK with 3 degree joint margins, full-link clearance, run limit) and `test_trolley.py` (33 tests: every
+`checkkit.py` (IK with 3 degree joint margins, full-link clearance, run limit) and `test_trolley.py` (34 tests: every
 scoring rule, each mode's end state, latch and retention geometry, the finger, the text, the CAD against the scene) pass.
 
 ## Run it
@@ -147,5 +146,5 @@ MIT notices. Robot (not bundled): the YAM arm and gripper (URDF, meshes, hulls) 
 from i2rt (https://github.com/i2rt-robotics/i2rt, commit 120c3c8), MIT, Copyright (c) I2RT Robotics (`LICENSE.i2rt`),
 and its `dream/` link2/link3 colour split (SDK `dream/SOURCE`: "MIT, see ../LICENSE.i2rt"). The SDK's room, lights and
 cameras are code; its README says it has no license yet (ported from YAM-inspect-Isaac). `cad/`: made for this task,
-MIT. `src/`: the patent text, the coin lock listing (supermarket-fixture.com), the cart sheet (text plus gzipped PDF),
+MIT. `src/`: the patent text, the coin lock listing (supermarket-fixture.com), the cart sheet (Unarco M60TN, text plus a gzipped reference copy of the PDF, source URL in `unarco_M60TN.txt`),
 the US Mint coin specifications and the bought parts' catalogue values.

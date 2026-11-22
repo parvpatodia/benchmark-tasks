@@ -168,6 +168,14 @@ class Scoring(unittest.TestCase):
         on_edge = (ON_MAT[0], ON_MAT[1], M.TOP + M.MAT[2] + M.COIN_R)
         self.assertEqual(sc(states(key_at(HOME), near(OUT), coin(on_edge, flat=False))), 0.5)   # on edge: not laid
 
+    def test_held_quarter_is_not_on_the_mat(self):
+        """A flat quarter still in the gripper just over the mat scores 0.5, not 0.75 (hands 10 mm off it for 0.75)."""
+        hover = (ON_MAT[0], ON_MAT[1], ON_MAT[2] + 0.0029)
+        top = np.asarray(hover) + (0.0, 0.0, M.COIN_T / 2)
+        for gap, want in ((M.COIN_FREE - 0.002, 0.5), (M.COIN_FREE + 0.002, 0.75)):
+            hands = dict(FAR, right=np.array([top + (0.0, 0.0, gap)]))
+            self.assertEqual(sc(states(key_at(HOME), near(OUT), coin(hover)), hands), want, gap)
+
     def test_quarter_tilt_limit(self):
         """The quarter counts only lying within COIN_FLAT_DEG of flat, its lowest rim point on the mat."""
         for tilt, want in ((M.COIN_FLAT_DEG - 3, 0.75), (M.COIN_FLAT_DEG + 3, 0.5)):

@@ -312,6 +312,8 @@ PIN_DOWN = Z_KEY0 + KEY_T - PIN_Z0 - 0.001   # "pin down": its upright face stil
 #                                  on solid key it stands 2.5 mm up. WHY not 1 mm: under the chain's pull the seated pin
 #                                  stands about 1 mm up with the key still home (RUN, hash 18d431ec: 0.6 to 1.0 mm)
 CLEAR = 0.030                    # every hand point 30 mm from the key and the quarter [CHOICE]
+COIN_FREE = 0.010                # 0.75 also needs every hand point 10 mm from the quarter [CHOICE]. WHY: a flat quarter
+#                                  still in the gripper 2.9 mm over the mat read as lying on it
 STILL_V, STILL_W = 0.01, 0.5     # m/s, rad/s
 
 
@@ -386,6 +388,14 @@ def hands_read():
     return all(v is not None for v in _HANDS.values())
 
 
+def hands_off_coin(objects):
+    q = objects["quarter"]
+    for pts in _HANDS.values():
+        if pts is None or box_distance(np.asarray(pts, float), q.low, q.high).min() < COIN_FREE:
+            return False
+    return True
+
+
 def hands_clear(objects):
     tip, back = key_points(objects["front"])
     key_lo, key_hi = np.minimum(tip, back) - KEY_W / 2, np.maximum(tip, back) + KEY_W / 2
@@ -431,7 +441,7 @@ def key_resting(front):
 
 def stage(objects):
     """0 none (or hands unread); 1 key in the slot, in line, 5 mm in; 2 and the coin slide out and the key retained (home,
-    pin down in its hole); 3 and the quarter resting on the mat; 4 and all still, both hands 30 mm from the key and the
+    pin down in its hole); 3 and the quarter resting on the mat, no hand within 10 mm of it; 4 and all still, both hands 30 mm from the key and the
     quarter."""
     if not hands_read():
         return 0
@@ -442,7 +452,7 @@ def stage(objects):
     # pin rule makes the lock, not the hand, hold the key
     if objects["near"].joints["slide_j"] > -SLIDE_OUT or not retained(objects, depth):
         return 1
-    if not coin_on_mat(objects):
+    if not (coin_on_mat(objects) and hands_off_coin(objects)):
         return 2
     st, cl = still(objects), hands_clear(objects)
     _WHY["clear"] = cl
