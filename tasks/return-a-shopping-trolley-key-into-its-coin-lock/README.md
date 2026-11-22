@@ -72,8 +72,8 @@ From the end state. `score()` tops out at 0.75; 1.0 comes only from `success()` 
 - 0.5: also the coin slide out 35 mm or more of its 40 mm travel, and the key held by the lock (tip 11.5 mm or more in,
   retaining pin within 1.5 mm of its rest: in the key's hole, 1 mm or more into its thickness). The slide comes out only
   at 12.5 mm of key depth.
-- 0.75: also the quarter lying flat on the mat (faces within 15 degrees of level, centre 5 mm or more inside its edges,
-  lowest point within 3 mm of its top). A quarter on edge does not count.
+- 0.75: also the quarter lying flat on the mat (faces within 15 degrees of level, the whole coin on it:
+  centre 14.1 mm or more inside each edge, the 12.1 mm radius plus 2 mm; lowest point within 3 mm of its top). A quarter on edge does not count.
 - 1.0: also quarter, key, plunger and slide at rest (under 0.01 m/s, 0.5 rad/s) and every gripper point 30 mm or more
   from the key and the quarter, held 1 s.
 

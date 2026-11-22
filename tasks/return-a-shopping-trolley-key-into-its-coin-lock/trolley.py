@@ -302,7 +302,9 @@ MAX_IN = 0.020                   # and no more than 20 mm: the plunger stops the
 #                                  key held in line behind the lock's back face read as deep in the slot
 LINE_Y, LINE_Z, LINE_DEG = 0.004, 0.0025, 15.0   # tip within these of the slot's centre line, key within 15 deg of it
 SLIDE_OUT = 0.035                # coin slide out 35 mm or more of its 40 [CHOICE]
-MAT_IN, MAT_REST = 0.005, 0.003  # coin centre 5 mm inside the mat's edge; its lowest point within 3 mm of the mat top
+MAT_IN, MAT_REST = COIN_R + 0.002, 0.003  # the whole coin on the mat: centre a radius plus 2 mm inside each edge
+#                                  (35.9 mm of the 50 mm half-width) [CHOICE]; its lowest point within 3 mm of the mat top.
+#                                  WHY: a centre-only rule counted a quarter hanging 7 mm off the mat
 COIN_FLAT_DEG = 15.0             # "laid": the coin's faces within 15 degrees of level, so one standing on edge fails [CHOICE]
 HOME_TOL = 0.001                 # "home": tip HOME_DEPTH - 1 mm or more [CHOICE]
 PIN_DOWN = Z_KEY0 + KEY_T - PIN_Z0 - 0.001   # "pin down": its upright face still overlaps a key on the slot floor by
