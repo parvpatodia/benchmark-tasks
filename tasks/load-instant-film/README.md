@@ -5,8 +5,9 @@ towards the left. A new film pack lies flat beside it. The instruction asks for 
 made ready to shoot. That is the camera's own loading sequence, each step a different kind of contact:
 1. Press the back cover lock down: the back cover springs ajar.
 2. Swing the cover open round its hinge.
-3. Pick the pack up by its long sides, turn it so its yellow mark is at the camera's yellow mark (yellow end up, the
-   back with the two holes facing out), and push it fully home, never touching the two holes.
+3. Turn the pack so its yellow mark is at the camera's yellow mark (yellow end up, the back with the two holes facing
+   out), set its bottom edge into the chamber tilted out at the top, let it drop in and press it flat, never touching
+   the two holes.
 4. Swing the cover shut and press it until it locks.
 5. Grip the lens ring and turn it to ON.
 6. Press the shutter button once: the black film cover comes out of the slot on top.
@@ -34,8 +35,9 @@ cover came out.
 | Size | Value used | Source |
 |---|---|---|
 | camera body | 104 x 66.6 x 122 mm (W x D x H) | Fujifilm's instax mini 12 specifications page (306 g without batteries, strap and film) |
-| film pack | 92 x 61 x 20 mm, 45 g | size: Wikipedia's instax article (mini film pack); mass: **estimate** |
-| film chamber | 67 x 98 mm, 20.5 mm deep (3 mm play round the pack), floor 11 mm up; a finger notch 10 mm deep and 72 mm tall in each side | **estimate**; the notches are a simplification (see below) |
+| film pack | 92 x 61 x 20 mm, 45 g | size: Wikipedia's Instax article, mini specifications table, "Film pack size (W×H×D) 61 mm × 92 mm × 20 mm" (fetched 2026-11-23; a secondary source); mass: **estimate** |
+| film inside the pack | 86 x 54 mm per sheet | Fujifilm's instax mini Link specifications page, "Film size: 86 mm x 54 mm" (fetched 2026-11-23); shown only as a check that a 92 x 61 mm pack is plausible |
+| film chamber | 67 x 98 mm, 20.5 mm deep, floor 11 mm up; solid walls on all four sides | **estimate**: the pack plus 3 mm of play each side (width and height) and 0.5 mm of depth; no camera was measured |
 | back cover | 3 mm plate, 30 g, hinged on its far edge, a stop at 95 degrees, springing 20 degrees ajar when unlocked | **estimate** from the guide's drawings (which warn against opening it further) |
 | back cover lock | 12 x 12 x 7 mm tab, 3 mm travel, unlocks at 2 mm | **estimate** |
 | lens ring | 62 mm across, 22 mm deep; ON at 30 degrees or more | **estimate** |
@@ -58,8 +60,13 @@ What we simplified:
 - The film cover is ejected by a joint, not a motor and rollers; nothing is exposed or printed.
 - The pack is a plain box: the real pack's shape keys it, so in a real camera a wrong-way pack sits proud and the cover
   won't shut; here it fits and is scored 0.
-- The chamber has 3 mm of play and a finger notch in each side, so the gripper's two fingers (offset 18-30 mm either
-  side of its pinch line) can carry the pack in by its long sides; a person's fingers fit past the pack's ends.
+- No camera was measured for this version (we have none to hand), so the chamber's size is not a measurement. It is the
+  pack's size plus a small stated clearance, with solid walls and no finger notches: the reviewed version's 10 x 72 mm
+  side notches, which let the gripper carry the pack home by its long sides, are gone. What matters for the task is
+  kept: the pack drops into a pocket only a little larger than itself, so no finger fits between the pack and the
+  chamber's sides, and the pack has to be set in from outside and pushed home, as a person does it. The 3 mm play is
+  if anything generous to the robot; a tighter real chamber would make the bottom-edge-first insertion harder, not
+  different. Measuring a camera's chamber would replace these numbers.
 - The sizes marked estimate above, until a camera is measured; the batteries are left out.
 
 ## Setup
@@ -69,7 +76,7 @@ Positions in cm from the midpoint between the arm bases: x forward, y to the rob
 |---|---|---|
 | camera | instax mini 12, mint green, upright; fixed | centre (38, 0), back towards -y (right arm), lens towards +y (left arm) |
 | back cover | mint, 3 mm, hinged along its far edge (x 43.2) | covers the back; opens towards -y |
-| film chamber | dark floor, yellow mark at its top far corner, a finger notch in each side | x 34.65-41.35, 1.1-10.9 cm up, behind the cover |
+| film chamber | dark floor, yellow mark at its top far corner, solid sides | x 34.65-41.35, 1.1-10.9 cm up, behind the cover |
 | back cover lock | grey tab | x 34.0-35.2, y -4.5 to -3.3, 11.2-11.9 cm up |
 | lens ring | silver, black front, index mark on top | centre (38.6, y 3.3-5.9), 4.8 cm up |
 | shutter button | silver | (34.6, y 3.3), 9.2 cm up |
@@ -83,6 +90,12 @@ empty, cover locked, ring at OFF, a fresh pack placed as in the setup photo.
   on the chamber's floor and centred across it (each within 3.5 mm), its back within 1.5 mm of flush with the mouth.
 - **Locked:** the cover pushed shut within 2 degrees with the lock tab up.
 - **ON:** the lens ring turned 30 degrees or more.
+- **Holes touched:** in a real trial, a 30 x 20 mm square of household aluminium foil is taped over each hole before
+  the trial (a spent pack can be used). After the trial, a close-up photo of each square shows whether the foil is
+  dented, creased or torn inside the hole's 20 x 10 mm outline. Over the hole the foil is unsupported, so any press on
+  the hole dents it; over the pack's plastic around it, a touch leaves it flat. In the sim: any part of either gripper
+  finger, pads or body (both finger links, as three boxes each, from the YAM's own finger mesh), comes within 0.5 mm of
+  a hole's 20 x 10 mm area on the pack's back, at any step.
 - **Hands clear:** no point along either gripper's pads, and neither fingertip's end, within 2 cm of the camera.
 
 | Score | When |
@@ -91,7 +104,7 @@ empty, cover locked, ring at OFF, a fresh pack placed as in the setup photo.
 | 0.75 | seated, locked and ON, but not yet ejected (or a hand near the camera) |
 | 0.5 | seated and locked |
 | 0.25 | seated |
-| 0 | anything else, including a pack in the chamber the wrong way round, a fingertip ever within 2 mm of either hole on the pack's back (and up to 3 mm above it), and the cover ever pulled 5 degrees open while locked |
+| 0 | anything else, including a pack in the chamber the wrong way round, the holes touched (as above), and the cover ever pulled 5 degrees open while locked |
 
 In a real trial, the film cover in the slot and the camera's film counter (S, then 10) show the result; a ruler gives
 the pack's seating.
@@ -115,6 +128,7 @@ inspect-robots run "${COMMON[@]}" --policy yam_scripted --log-dir ~/yam-eval/loa
 # Wrong ways (probes of the scoring rules)
 FILM_PACK_TURNED=1 inspect-robots run "${COMMON[@]}" --policy yam_scripted --log-dir ~/yam-eval/lif-turned   # yellow end down
 FILM_DEMO=noring inspect-robots run "${COMMON[@]}" --policy yam_scripted --log-dir ~/yam-eval/lif-noring     # ring left OFF
+FILM_DEMO=presshole inspect-robots run "${COMMON[@]}" --policy yam_scripted --log-dir ~/yam-eval/lif-hole  # press made on a hole
 
 # One MP4 per camera, next to each run's frames
 for log in ~/yam-eval/load-instant-film-dream/*.json; do inspect-robots video "$log"; done
@@ -132,31 +146,27 @@ simulator.
 1. The right hand, pointing down, presses the lock tab 3 mm; the cover springs 20 degrees ajar.
 2. Turned so its two closed fingertips lie along the cover, it comes down into the gap behind it and pushes it round
    its hinge, in 5-degree steps, to its stop at 95 degrees.
-3. It pinches the pack across its width, holding 16 mm of its 20 mm sides, lifts it and turns it a quarter turn about
-   the line between its fingers, to point at the chamber: yellow end up, back out.
-4. It carries the pack straight in, its fingers in the side notches, 2 mm past flush, opens to 72 mm (inside the
-   notches) and backs out. The pack stands home on the chamber's floor.
+3. It pinches the pack across its width, holding 16 mm of its 20 mm sides, lifts it, turns it upright (yellow end up,
+   back towards the arm) and stands it on the table.
+4. It regrips the standing pack by the top of its long sides, near its back only (6 to 12 mm deep), with the hand
+   tipped 9 degrees down, lifts it and brings it behind the chamber tilted 9 degrees out at the top, the hand now
+   pointing straight at the camera. It sets the pack's bottom edge on the chamber floor, every finger point 2.5 mm or
+   more outside the chamber's mouth, and lets go. Below 12.3 degrees off upright the pack's centre of mass is inside
+   its bottom outer edge, so it falls in upright. The closed fingertips then press its back flat, 84 mm up the pack,
+   20 mm above the top of the holes.
 5. It goes round the open cover's free edge, low, and swings the cover shut from outside to about 45 degrees, then
    turns to point at it and pushes it straight shut until it locks, and parks.
 6. The left hand, pointing at the lens, grips the ring and turns it (to its 80-degree stop), lets go, then presses
    the shutter button 2.2 mm and parks. The film cover comes out of the top.
 
 ## Runtime and seeds
-- **Official runs (2026-11-23, this version):** the scripted demo scored 1.0, ending on success at step 991 (50 s):
-  pack seated the right way (back 0.0 mm from flush, centred), cover locked, ring at its 80-degree stop, one shutter
-  press, film cover 44.7 mm out, hands clear.
-  - Seven earlier versions failed, and each failure changed the plan or the prop: the lock press sent below the table (a
-    missing table height), the pack meeting the half-open cover (the cover now has its stop), the pack slipping when held
-    by 6-8 mm and turned about two axes (now held 16 mm and turned about one), the gripper's fingers stopping at the
-    chamber's mouth (the side notches), a pack 2.6 degrees off upright stopping at 1 mm play (now 3 mm), a separate push
-    landing on the holes (now pushed home while held), and the cover reopened while being shut (now pushed the last part
-    straight on).
-  - Probes (the same demo, one thing wrong; stopped once both arms had parked, at step 1,236 and 1,232):
-    `FILM_PACK_TURNED=1` loaded the pack yellow end down, then locked the cover, turned the ring and pressed the shutter:
-    grade 0, nothing ejected. `FILM_DEMO=noring` left the ring OFF: grade 0.5 (seated and locked), the shutter press
-    ejected nothing.
-  - Dream-1 (2026-11-23, the task's instruction, 320 x 176 cameras, 2,400 steps): 0. It moved both arms for the full
-    run without touching the lock, the cover or the pack.
-- **Offline checks:** the scoring, lock logic and reach checks run without the simulator:
+- **Official runs of this version: not yet run.** The scripted demo and the probes (`FILM_PACK_TURNED=1`,
+  `FILM_DEMO=noring`, `FILM_DEMO=presshole`) still have to be run in the official simulator on this geometry; no score
+  for this version is claimed here.
+- **The reviewed version** (with side notches) scored 1.0 at step 991; that run used the notched chamber and does not
+  carry over.
+- **Offline checks:** the scoring, lock logic, reach, the solid chamber, the hole rule, and the planned finger geometry
+  (from the YAM's URDF kinematics: outside the chamber while loading, never on a hole, on a hole in the
+  `presshole` probe) run without the simulator:
   `python -m pytest -q test_load_instant_film.py` (needs `yam_arena` importable).
 - **Seeds:** one fixed layout (`-E object_jitter=0`), so the seed doesn't change the start.

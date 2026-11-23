@@ -53,9 +53,9 @@ CH_W, CH_H, CH_D = PACK[1] + 0.006, PACK[0] + 0.006, PACK[2] + 0.0005
 CH_X, CH_Z = CX, 0.060  # the chamber's middle
 CH_WALL = YB + CH_D  # the chamber's floor (the face the pack's front rests on), y
 CH_Z0, CH_Z1 = CH_Z - CH_H / 2, CH_Z + CH_H / 2
-NOTCH_H, NOTCH_X = 0.072, 0.010  # a finger notch in each side of the chamber, at mid-height (WHY 72 mm: the gripper's
-# two fingers sit 18-30 mm either side of its pinch line; 30 mm notches stopped them at the mouth) [simplification: lets the
-# gripper's fingers carry the pack in by its long sides; a person's fingers fit past the pack's ends]
+# WHY no finger notches: the reviewed version cut a 10 mm x 72 mm notch in each side so the gripper's fingers could carry
+# the pack in; the real chamber is not known to have them, so the frame round the chamber is solid on all four sides and
+# the pack goes in the way a person loads it (bottom edge in, tilted out at the top, then pushed upright).
 # The back cover: a 3 mm plate over the back, hinged along its far edge (x X1), opening about the vertical towards -y.
 COVER_T = 0.003
 COVER_Z0, COVER_Z1 = 0.006, 0.108
@@ -104,11 +104,9 @@ def _camera():
     cx0, cx1 = CH_X - CH_W / 2, CH_X + CH_W / 2
     base = Link("body", 0.31, (
         _box(X0, X1, CH_WALL, YF, 0.0, H, MINT),  # the front of the body, behind the chamber
-        # the rear frame round the chamber: near and far sides, each with its finger notch at mid-height
-        *(_box(a, b, YB, CH_WALL, z0, z1, MINT) for a, b in ((X0, cx0), (cx1, X1))
-          for z0, z1 in ((0.0, CH_Z - NOTCH_H / 2), (CH_Z + NOTCH_H / 2, H))),
-        _box(X0, cx0 - NOTCH_X, YB, CH_WALL, CH_Z - NOTCH_H / 2, CH_Z + NOTCH_H / 2, MINT),
-        _box(cx1 + NOTCH_X, X1, YB, CH_WALL, CH_Z - NOTCH_H / 2, CH_Z + NOTCH_H / 2, MINT),
+        # the rear frame round the chamber: near and far sides, solid full height (no notches)
+        _box(X0, cx0, YB, CH_WALL, 0.0, H, MINT),
+        _box(cx1, X1, YB, CH_WALL, 0.0, H, MINT),
         _box(cx0, cx1, YB, CH_WALL, 0.0, CH_Z0, MINT),  # below
         _box(cx0, cx1, YB, CH_WALL, CH_Z1, H, MINT),  # above
         _box(cx0, cx1, CH_WALL - 0.0004, CH_WALL, CH_Z0, CH_Z1, DARK),  # the chamber floor, dark
@@ -218,11 +216,13 @@ def _pack_spawner():
 @dataclass(frozen=True)
 class Pads:
     """One gripper after a control step (world frame, m): the span along its pointing axis from the pads' back to
-    their tips, and points across the end of each of its two fingertips."""
+    their tips, points across the end of each of its two fingertips, and points over the surface of both finger links'
+    collision boxes (``finger_points``, an (N, 3) array; empty in offline tests that give only tips)."""
 
     back: np.ndarray
     tips: np.ndarray
     fingertips: tuple = ()
+    finger_points: np.ndarray = None
 
 
 PAD_BACK = 0.025  # the pads reach this far behind the TCP
@@ -230,6 +230,36 @@ GRIPPERS = ("left_gripper", "right_gripper")
 FINGERTIP_ENDS = {  # as in copy-id-card: the end of each fingertip in its link's frame (m)
     "tip_left": [(x, -0.04454, -0.09016) for x in (0.01799, 0.02399, 0.02999)],
     "tip_right": [(x, 0.04454, -0.09016) for x in (-0.02999, -0.02399, -0.01799)],
+}
+# Each finger link's shape as three boxes in its own frame (m): (x0, x1), (y0, y1), (z0, z1). Read from yam_arena's
+# assets/yam/tip_left.stl with the URDF's visual offset, in three bands from the fingertip's end (z -0.0902) up:
+# 0-30 mm, 30-60 mm, and the rest up to the finger's slide. tip_right is the same part mirrored (x and y negated).
+# WHY the whole finger and not one point per tip: the review asked for a rule on any contact with a hole, so the
+# check covers every face of both fingers, pads and bodies alike.
+FINGER_BOXES_LEFT = (
+    ((0.0059, 0.0421), (-0.0533, -0.0445), (-0.0902, -0.0608)),
+    ((0.0039, 0.0440), (-0.0646, -0.0445), (-0.0608, -0.0302)),
+    ((-0.0100, 0.0580), (-0.0683, 0.0033), (-0.0302, 0.0037)),
+)
+
+
+def _box_surface(box, step=0.001) -> np.ndarray:
+    """Points over a box's six faces, at most ``step`` apart (m)."""
+    axes = [np.linspace(lo, hi, max(2, int(math.ceil((hi - lo) / step)) + 1)) for lo, hi in box]
+    pts = []
+    for k in range(3):
+        i, j = [a for a in range(3) if a != k]
+        u, v = np.meshgrid(axes[i], axes[j], indexing="ij")
+        for side in box[k]:
+            q = np.empty((u.size, 3))
+            q[:, i], q[:, j], q[:, k] = u.ravel(), v.ravel(), side
+            pts.append(q)
+    return np.unique(np.concatenate(pts), axis=0)
+
+
+FINGER_POINTS = {
+    "tip_left": np.concatenate([_box_surface(b) for b in FINGER_BOXES_LEFT]),
+    "tip_right": np.concatenate([_box_surface(b) for b in FINGER_BOXES_LEFT]) * np.array([-1.0, -1.0, 1.0]),
 }
 
 
@@ -246,7 +276,10 @@ def _gripper_states(env) -> dict:
         tcp = runtime.tcp_world(robot) - origin
         ends = tuple(poses[link][:3, :3] @ np.array(p) + poses[link][:3, 3] - origin
                      for link, points in FINGERTIP_ENDS.items() for p in points)
-        out[f"{side}_gripper"] = Pads(back=tcp - PAD_BACK * axis, tips=tcp + PAD_TIP_PAST_TCP * axis, fingertips=ends)
+        cloud = np.concatenate([pts @ poses[link][:3, :3].T + poses[link][:3, 3] - origin
+                                for link, pts in FINGER_POINTS.items()])
+        out[f"{side}_gripper"] = Pads(back=tcp - PAD_BACK * axis, tips=tcp + PAD_TIP_PAST_TCP * axis, fingertips=ends,
+                                      finger_points=cloud)
     return out
 
 
@@ -362,8 +395,7 @@ if "yam_arena.scene" in sys.modules:
 TURN_DEG = 10.0  # the pack's axes within this of where they belong
 CENTRE_MM = 3.5  # the pack's middle within this of the chamber's (x and z): its 3 mm play, and 0.5 mm
 SEATED_MM = 1.5  # its back within this of where a fully seated pack's back is
-HOLE_MARGIN = 0.002  # a fingertip this close round a hole, and
-HOLE_DEPTH = 0.003  # this close above the pack's back (or into it), presses it
+HOLE_TOUCH = 0.0005  # any finger surface this close to a hole's patch touches it (a real trial: the foil dents)
 CLEAR = 0.02  # hands off: no point along either gripper's pads or fingertips within 2 cm of the camera
 COMPLETE_SCORE = 0.9  # score() for a finished load; 1.0 comes only from success() holding 1 s, which ends the trial
 
@@ -414,18 +446,21 @@ def ready(objects) -> bool:
 
 
 def presses_holes(pads, pack) -> bool:
-    """A fingertip on (or just above, or in) either of the pack's two holes."""
+    """Any part of either finger (pads or bodies) within HOLE_TOUCH of either hole's patch on the pack's back: a
+    touch on a hole. The patch is the hole's rectangle in the plane of the back."""
     if pads is None:
         return False
     r, p = _rot(pack.quat_xyzw), np.asarray(pack.pos, float)
-    points = [np.asarray(q, float) for q in pads.fingertips] or [np.asarray(pads.tips, float)]
-    for q in points:
-        local = r.T @ (q - p)
-        if not -PACK[2] / 2 <= local[2] <= PACK[2] / 2 + HOLE_DEPTH:
-            continue
-        for (hx, hy), (sx, sy) in HOLES:
-            if abs(local[0] - hx) <= sx / 2 + HOLE_MARGIN and abs(local[1] - hy) <= sy / 2 + HOLE_MARGIN:
-                return True
+    pts = pads.finger_points
+    if pts is None or len(pts) == 0:
+        pts = np.array([np.asarray(q, float) for q in pads.fingertips] or [np.asarray(pads.tips, float)])
+    local = (np.asarray(pts, float) - p) @ r  # each row: the point in the pack's frame
+    dz = np.abs(local[:, 2] - PACK[2] / 2)
+    for (hx, hy), (sx, sy) in HOLES:
+        dx = np.maximum(np.abs(local[:, 0] - hx) - sx / 2, 0.0)
+        dy = np.maximum(np.abs(local[:, 1] - hy) - sy / 2, 0.0)
+        if bool(np.any(dx * dx + dy * dy + dz * dz <= HOLE_TOUCH * HOLE_TOUCH)):
+            return True
     return False
 
 
@@ -446,7 +481,7 @@ def grade(objects) -> float:
     and the camera on; still so, both hands 2 cm clear of the camera, the pack still. 0.75: the pack seated the right
     way, the cover locked, the ring at ON (not yet ejected, or a hand near). 0.5: seated the right way and the cover
     locked. 0.25: seated the right way. 0: anything else, including a pack in the chamber the wrong way round, any
-    fingertip ever on the pack's holes, and the back cover ever pulled open past its lock."""
+    finger ever touching either of the pack's holes, and the back cover ever pulled open past its lock."""
     pack = objects["film_pack"]
     record = objects.get("film_record") or FilmRecord()
     if record.holes_pressed or record.forced or not seated(pack):
@@ -562,9 +597,6 @@ def on_cover(deg: float, along: float, off: float, z: float) -> tuple:
 PICK_GRIP = DOWN_X  # fingers across the pack's width
 PICK_TIPS_UNDER_TOP = 0.016  # the fingertips this far below the pack's top: they hold 16 mm of its 20 mm sides
 # (WHY: held by its back 6 or 8 mm, it turned 18 degrees in the grip; official sim, 2026-11-22)
-# Held so, the pack reaches the chamber on target (official sim, 2026-11-22: aimed 11 mm high to allow for a droop
-# seen with the shallower grip, it arrived 10.6 mm high); FILM_CARRY_DZ shifts the carry's height for margin runs.
-CARRY_DZ = float(os.environ.get("FILM_CARRY_DZ", "0.0"))
 PICK_TCP = down_tcp(PACK_START[0], PACK_START[1], PACK_START[2] + PACK[2] / 2 - PICK_TIPS_UNDER_TOP)
 PARK_RIGHT, PARK_LEFT = _pt(0.16, -0.33, TOP + 0.14), _pt(0.16, 0.33, TOP + 0.14)
 LOW_TRAVEL_Z = TOP + 0.125  # far out (x 0.44), the arm pointing down reaches only this high; clear of the cover (11 cm)
@@ -580,10 +612,49 @@ OPEN_R, CLOSE_R = 0.070, 0.075  # how far from the hinge the hand pushes the cov
 # hand's fingers come down onto the lock tab)
 GAP_OFF, OPEN_OFF, CLOSE_OFF = 0.008, 0.0035, -0.004  # off the cover's middle plane: coming down into the gap,
 # pushing it open from inside, pushing it shut from outside (the fingers overlap the 3 mm cover, so they push it)
-INSERT_PAST = float(os.environ.get("FILM_INSERT_PAST", "0.002"))  # aimed this far past flush, so it goes fully home
-# (WHY: aimed at flush, it stopped 1.8 mm out; official sim, 2026-11-22)
-INSERT_TIPS_Y = YB + 0.0005 + PICK_TIPS_UNDER_TOP + INSERT_PAST  # carried in, the fingers in the notches
-NOTCH_RELEASE = -0.036  # finger target (m): 72 mm apart, inside the notches (fully open, 94 mm, they hit them)
+# The pack is loaded as a person loads it, with no finger room inside the chamber: stood up on the table, regripped by
+# the top of its long sides near its back, set bottom edge first onto the chamber's floor tilted out at the top, let go
+# (it falls in upright), then pressed flat with the closed fingertips on a spot well away from both holes.
+STAND = (0.31, -0.085)  # where the right hand stands the pack upright on the table (its middle, x and y)
+LOAD_TILT_DEG = float(os.environ.get("FILM_LOAD_TILT", "9"))  # set down this far off upright, top out. WHY 9: the pack
+# falls inwards (upright) when let go below 12.3 degrees off upright (its centre of mass, 10 mm in and 46 mm up from its
+# bottom outer edge, is then inside that edge)
+LOAD_BO_Y = YB + 0.0005  # the pack's bottom outer edge (back face, bottom end) is set down here, on the chamber floor
+LOAD_TIPS_Y = YB - 0.0025  # set down, the fingertips are all 2.5 mm outside the chamber's mouth (WHY: no finger room
+# inside); the hand then points straight at the camera (+y), the only way the arm reaches there (offline IK, 2026-11-23)
+LOAD_TCP_Z = 0.073  # the TCP this far above the chamber floor when set down: the fingertips (36 mm tall) hold the long
+# sides from 55 to 91 mm up the tilted pack, 6 mm deep from its back at the lowest point, 12 mm at the highest
+PRESS_H = 0.084  # the press flat: the closed fingertips' middle this far up the seated pack (the holes end at 56 mm)
+PRESS_IN = 0.0003  # aimed this far past the seated back (YB + 0.5 mm)
+HOLE_PROBE_H = 0.046  # FILM_DEMO=presshole: the same press made at the holes' height (a probe; scores 0)
+
+
+def _bo_set() -> np.ndarray:
+    """Where the pack's bottom outer edge is set down (its middle), on the chamber floor."""
+    return np.array([CH_X, LOAD_BO_Y, TOP + CH_Z0 + 0.0005])
+
+
+def _grip_in_pack() -> np.ndarray:
+    """The regrip's TCP relative to the pack's bottom outer edge, in the upright pack's axes (x, y out of the back is -y,
+    z up), from where it must be when the pack is set down tilted LOAD_TILT_DEG."""
+    r = axis_angle_matrix(X_AXIS, math.radians(LOAD_TILT_DEG))
+    tcp = np.array([CH_X, LOAD_TIPS_Y - PAD_TIP_PAST_TCP, TOP + CH_Z0 + 0.0005 + LOAD_TCP_Z])
+    return r.T @ (tcp - _bo_set())
+
+
+def _load_tcp(lift: float = 0.0, out: float = 0.0) -> tuple:
+    """The right hand's TCP holding the regripped pack tilted LOAD_TILT_DEG, its bottom outer edge ``out`` behind and
+    ``lift`` above where it is set down."""
+    r = axis_angle_matrix(X_AXIS, math.radians(LOAD_TILT_DEG))
+    return _pt(*(_bo_set() + np.array([0.0, -out, lift]) + r @ _grip_in_pack()))
+
+
+REGRIP_R = axis_angle_matrix(X_AXIS, -math.radians(LOAD_TILT_DEG)) @ BACK_PINCH  # pointing +y, tipped 9 degrees down
+
+
+def _regrip_tcp() -> tuple:
+    """The regrip on the pack standing on the table (its bottom outer edge at STAND, y - 10 mm)."""
+    return _pt(*(np.array([STAND[0], STAND[1] - PACK[2] / 2, TOP]) + _grip_in_pack()))
 
 
 def _right():
@@ -605,10 +676,51 @@ def _right():
     along = np.array([-math.cos(COVER_OPEN_MAX), -math.sin(COVER_OPEN_MAX)])
     b = np.array(edge[:2]) + 0.035 * along + 0.010 * out_n
     beyond = _pt(b[0], b[1], edge[2])  # past its free edge (the hand's two fingertips lie along the cover), outside
-    # The pack, turned to the chamber: its middle on the chamber's line, carried in until its back is flush.
-    insert_tcp = into_back_tcp(CH_X, INSERT_TIPS_Y, TOP + CH_Z + CARRY_DZ)
-    approach = _pt(insert_tcp[0], insert_tcp[1] - 0.05, insert_tcp[2])
+    approach_x = CH_X
     tilted = axis_angle_matrix(X_AXIS, math.pi / 4) @ PICK_GRIP
+    stand_tcp = _pt(STAND[0], STAND[1] + (PICK_TIPS_UNDER_TOP - PACK[2] / 2) - PAD_TIP_PAST_TCP, TOP + PACK[0] / 2 + 0.001)
+    regrip = _regrip_tcp()
+    regrip_out = _pt(regrip[0], regrip[1] - 0.03, regrip[2])
+    load_r = BACK_PINCH  # = REGRIP_R turned LOAD_TILT_DEG top out with the pack
+    load_out = _load_tcp(lift=0.004, out=0.05)
+    load_over = _load_tcp(lift=0.0015)
+    load_set = _load_tcp(lift=-0.0005)
+    press_h = HOLE_PROBE_H if os.environ.get("FILM_DEMO") == "presshole" else PRESS_H
+    press_in = into_back_tcp(CH_X, YB + 0.0005 + PRESS_IN, TOP + CH_Z0 + press_h)
+    press_out = _pt(press_in[0], press_in[1] - 0.04, press_in[2])
+    pack_moves = [
+        # The pack: pinched across its width, then turned upright and stood on the table.
+        Waypoint(1.5, _pt(PICK_TCP[0], PICK_TCP[1], TRAVEL_Z), FINGER_OPEN, "over the pack", PICK_GRIP),
+        Waypoint(1.0, PICK_TCP, FINGER_OPEN, "down astride it", PICK_GRIP),
+        Waypoint(1.5, PICK_TCP, FINGER_CLOSED, "pinch it by its long sides", PICK_GRIP),
+        Waypoint(0.5, PICK_TCP, FINGER_CLOSED, "hold the pinch", PICK_GRIP),
+        Waypoint(0.8, _pt(PICK_TCP[0], PICK_TCP[1], TOP + 0.12), FINGER_CLOSED, "lift it", PICK_GRIP),
+        Waypoint(1.2, _pt(STAND[0], STAND[1] - 0.03, TOP + 0.12), FINGER_CLOSED, "tipping it", tilted),
+        Waypoint(1.2, _pt(stand_tcp[0], stand_tcp[1], stand_tcp[2] + 0.03), FINGER_CLOSED,
+                 "upright, yellow end up, back towards the arm", BACK_PINCH),
+        Waypoint(1.0, stand_tcp, FINGER_CLOSED, "stand it on the table", BACK_PINCH),
+        Waypoint(0.8, stand_tcp, FINGER_OPEN, "let go: it stands", BACK_PINCH),
+        Waypoint(0.8, _pt(stand_tcp[0], stand_tcp[1] - 0.03, stand_tcp[2]), FINGER_OPEN, "back off the standing pack", BACK_PINCH),
+        # Regrip by the top of its long sides, near its back only, so the fingers can stay outside the chamber.
+        Waypoint(0.8, regrip_out, FINGER_OPEN, "behind its top", REGRIP_R),
+        Waypoint(1.0, regrip, FINGER_OPEN, "astride its top, near its back", REGRIP_R),
+        Waypoint(1.2, regrip, FINGER_CLOSED, "regrip it", REGRIP_R),
+        Waypoint(0.4, regrip, FINGER_CLOSED, "hold the regrip", REGRIP_R),
+        Waypoint(0.8, _pt(regrip[0], regrip[1], regrip[2] + 0.03), FINGER_CLOSED, "lift it off the table", REGRIP_R),
+        # Bottom edge first onto the chamber's floor, tilted out at the top; let go and it falls in upright.
+        Waypoint(1.5, _pt(load_out[0], load_out[1], load_out[2] + 0.01), FINGER_CLOSED, "behind the chamber, tilted",
+                 load_r),
+        Waypoint(1.0, load_out, FINGER_CLOSED, "level with the chamber floor", load_r),
+        Waypoint(1.5, load_over, FINGER_CLOSED, "bottom edge in, over the floor", load_r),
+        Waypoint(0.8, load_set, FINGER_CLOSED, "set it down on the floor", load_r),
+        Waypoint(0.8, load_set, FINGER_OPEN, "let go: it falls in upright", load_r),
+        Waypoint(0.8, _pt(load_set[0], load_set[1] - 0.05, load_set[2]), FINGER_OPEN, "back off the chamber", load_r),
+        # Press it flat with the closed fingertips, well above the holes.
+        Waypoint(1.0, press_out, FINGER_CLOSED, "in front of its back, above the holes", BACK_FLAT),
+        Waypoint(1.0, press_in, FINGER_CLOSED, "press it flat", BACK_FLAT),
+        Waypoint(0.5, press_in, FINGER_CLOSED, "hold the press", BACK_FLAT),
+        Waypoint(0.6, press_out, FINGER_CLOSED, "off it", BACK_FLAT),
+    ]
     return [
         # WHY a lead-in: straight from the ready pose, the arm's IK took a branch 22 cm off target (offline, 2026-11-22).
         Waypoint(1.5, _pt(0.28, -0.14, TRAVEL_Z), FINGER_CLOSED, "up, towards the camera's back", DOWN),
@@ -625,23 +737,11 @@ def _right():
         # WHY out towards the arms first: the open cover's inside faces them; straight up, the arm can't reach.
         Waypoint(0.6, _pt(open_end[0] - 0.04, open_end[1], open_end[2]), FINGER_CLOSED, "out from the cover", DOWN),
         Waypoint(0.8, _pt(open_end[0] - 0.04, open_end[1], LOW_TRAVEL_Z), FINGER_CLOSED, "up", DOWN),
-        # The pack: pinched across its width, near its back only, then turned to the chamber.
-        Waypoint(1.5, _pt(PICK_TCP[0], PICK_TCP[1], TRAVEL_Z), FINGER_OPEN, "over the pack", PICK_GRIP),
-        Waypoint(1.0, PICK_TCP, FINGER_OPEN, "down astride it", PICK_GRIP),
-        Waypoint(1.5, PICK_TCP, FINGER_CLOSED, "pinch it by its long sides", PICK_GRIP),
-        Waypoint(0.5, PICK_TCP, FINGER_CLOSED, "hold", PICK_GRIP),
-        Waypoint(0.8, _pt(PICK_TCP[0], PICK_TCP[1], TOP + 0.12), FINGER_CLOSED, "lift it", PICK_GRIP),
-        Waypoint(1.2, _pt(0.32, -0.14, TOP + 0.12), FINGER_CLOSED, "towards the camera, tipping it", tilted),
-        Waypoint(1.2, _pt(approach[0], approach[1], approach[2] + 0.03), FINGER_CLOSED, "upright, above the line",
-                 BACK_PINCH),
-        Waypoint(1.2, approach, FINGER_CLOSED, "behind the chamber, yellow end up, back out", BACK_PINCH),
-        Waypoint(1.5, insert_tcp, FINGER_CLOSED, "into the chamber, fingers in the notches", BACK_PINCH),
-        Waypoint(0.8, insert_tcp, NOTCH_RELEASE, "let go, opening only within the notches", BACK_PINCH),
-        Waypoint(0.8, approach, NOTCH_RELEASE, "back out", BACK_PINCH),
+        *pack_moves,
         # The cover's outside faces away from the arms: round its free edge, low, and in along its outside.
         # WHY turned back through 45 degrees, as on the way in: turned straight to pointing down, the arm's IK lost its
         # branch by 90 degrees (offline, 2026-11-22).
-        Waypoint(0.8, _pt(approach[0], -0.12, TOP + 0.08), FINGER_CLOSED, "back from the camera", BACK_FLAT),
+        Waypoint(0.8, _pt(approach_x, -0.12, TOP + 0.08), FINGER_CLOSED, "back from the camera", BACK_FLAT),
         Waypoint(1.0, _pt(0.33, -0.15, TOP + 0.10), FINGER_CLOSED, "turning down", axis_angle_matrix(X_AXIS, math.pi / 4) @ DOWN),
         Waypoint(1.0, _pt(0.37, beyond[1] - 0.01, TOP + 0.10), FINGER_CLOSED, "pointing down", DOWN),
         Waypoint(1.2, beyond, FINGER_CLOSED, "round the cover's free edge", along_cover(math.degrees(COVER_OPEN_MAX))),
